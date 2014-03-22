@@ -1,7 +1,6 @@
 
 # Imports
 library(gdata)
-help(read.xls)
 
 # Global options
 options(stringsAsFactors=F)
@@ -76,59 +75,49 @@ proportionOfHospitalisedInjury <- function() {
   0.2
 }
 
-# Total cost for evant
-totalCostForEvent <- function() {
+
+# Costs
+
+## Get all events for the purpose of generating costs
+getEvents <- function() {
   events <- mydata[c("Year", "Indexed.Insured.Costs", "Calls.to.SES", "Deaths", "Injuries")]
   events$Deaths <- as.numeric(events$Deaths)
   events$Injuries <- as.numeric(events$Injuries)
   xsub <- events[,1:5] 
   xsub[is.na(xsub)] <- 0 
   events[,1:5]<-xsub
-  
+  return (events)
+}
+
+# Calculate direct costs
+directCosts <- function(events) {
   events$directCost <- with(events, Indexed.Insured.Costs)
+  return (events)
+}
+
+# Calculate indirect costs
+indirectCosts <- function(events) {
+  
   events$indirectCost <- with(events, Calls.to.SES * 10)
+  return (events)
+}
+
+# Calculate indirect costs
+intangibleCosts <- function(events) {
   events$deathCosts <- with(events, Deaths * costOfLife())
   events$injuryCosts <- with(events, 
                              Injuries  * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
                                Injuries * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury())
   events$intangibleCost <- events$deathCosts + events$injuryCosts
+  return (events)
+}
+
+## Total cost for evant
+totalCostForEvent <- function() {
+  events <- getEvents()
+  events <- directCosts(events)
+  events <- indirectCosts(events)
+  events <- intangibleCosts(events)
   events$total <- events$directCost + events$indirectCost + events$intangibleCost
   return(events) 
 }
-
-# Global procedures
-loadData()
-
-computeColumns()
-
-
-# Global variable declarations
-
-## Normalise variables
-
-
-
-# Annual CPI (sourced from ABS - http://www.abs.gov.au/AUSSTATS/abs@.nsf/DetailsPage/6401.0Jun%202013#Time, Table 2)
-baseYear <- 85
-cpiJune67 = cpi$Index.Numbers....All.groups.CPI....Australia[baseYear]
-cpiJune67
-
-# Loop in multiples of 4 for each year's figure
-lastYear <- baseYear + 46 * 4
-cpiJune13 = cpi$Index.Numbers....All.groups.CPI....Australia[lastYear]
-cpiJune13
-
-lastYear <- baseYear + 32 * 4
-cpiJune99 = cpi$Index.Numbers....All.groups.CPI....Australia[lastYear]
-cpiJune99
-
-
-costsByYear <- with(totalCostForEvent(), aggregate(total, by=list(Year), FUN=safeSum))
-costsByYear
-
-# write.csv(mydata, file = "MyData.csv")
-heading = "Total Costs" 
-plot(costsByYear, type="l", main=heading) 
-lines(costsByYear, type="l")
-
-
