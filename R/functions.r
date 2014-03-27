@@ -80,12 +80,12 @@ proportionOfHospitalisedInjury <- function() {
 
 ## Get all events for the purpose of generating costs
 getEvents <- function() {
-  events <- mydata[c("Year", "Indexed.Insured.Costs", "Calls.to.SES", "Deaths", "Injuries")]
+  events <- mydata[c("Year", "resourceType", "State.1", "State.2..", "Indexed.Insured.Costs", "Calls.to.SES", "Deaths", "Injuries")]
   events$Deaths <- as.numeric(events$Deaths)
   events$Injuries <- as.numeric(events$Injuries)
-  xsub <- events[,1:5] 
+  xsub <- events[,4:8] 
   xsub[is.na(xsub)] <- 0 
-  events[,1:5]<-xsub
+  events[,4:8]<-xsub
   return (events)
 }
 

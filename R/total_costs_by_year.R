@@ -32,7 +32,7 @@ lines(intangibleCostsByYear, type="o", col="grey")
 axis(1, las=1, at=seq(y_range[1], y_range[2], by=1))
 
 # Make y axis with horizontal labels that display ticks at 
-billions <- 1000000000 * 0:(g_range[2] / 1000000000)
+billions <- 1000000000 * 0:(c_range[2] / 1000000000)
 axis(2, las=1, at=billions, labels=format(billions / 1000000, big.mark = ","))
 
 # Create a legend at (1, g_range[2]) that is slightly smaller 

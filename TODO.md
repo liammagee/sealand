@@ -27,6 +27,13 @@ TODOs
     - state
     - disaster class
 
+## Issues
+
+* Date boundaries
+* Multiple states
+* Incomplete data
+
+
 
 ## References to consider
 
