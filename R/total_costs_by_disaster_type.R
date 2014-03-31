@@ -22,6 +22,7 @@ x_range <- range(0, totalCostsByType[2])
 
 # Generate bar chart
 x <- as.matrix(totalCostsByType)
+x
 barplot(as.vector(as.numeric(x[,2]), names.arg = c(x[,1]))
 
         

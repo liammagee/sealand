@@ -21,32 +21,60 @@ financialYear <- function(range) {
   finYear <- if (is.element(month, firstMonths)) as.numeric(year) else as.numeric(year) + 1
   return(finYear)
 }
-## Generates an CPI indexed cost (based on June 2013)
-indexCosts <- function(range) {
-  finYear <- range[1]
-  insuredCost <- range[2]
-  cpiRow <- 85 + (finYear - 1967) * 4
+## Generates a population ratio (based on June 2013)
+popRatio <- function(baseYear) {
+  if ((baseYear - 1967) < 14) {
+    popRow <- 10 + (baseYear - 1967)
+  }
+  else {
+    popRow <- 24 + (baseYear - 1981) * 4  
+  }
+  popTest <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[popRow])
+  pop2013 <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[152])
+  return(pop2013 / popTest)
+}
+## Generates a cpi ratio (based on June 2013)
+cpiRatio <- function(baseYear) {
+  cpiRow <- 85 + (baseYear - 1967) * 4
   cpiTest <- as.numeric(cpi$Index.Numbers....All.groups.CPI....Australia[cpiRow])
   cpi2013 <- as.numeric(cpi$Index.Numbers....All.groups.CPI....Australia[269])
-  return(insuredCost * (cpi2013 / cpiTest))
+  return(cpi2013 / cpiTest)
 }
+## Generates an CPI indexed cost (based on June 2013)
+indexCosts <- function(range) {
+  baseYear <- range[1]
+  insuredCost <- range[2]
+  return(insuredCost * cpiRatio(baseYear))
+}
+## Normalise cost - TODO: this needs to be much more robust (cf. discussion on normalisation)
+normalisedCosts <- function(range) {
+  baseYear <- range[1]
+  cost <- range[2]
+  # Normalise for [1] inflation; [2] population growth; [3] wealth increase (CPI as a temporary proxy)
+  return(cost * cpiRatio(baseYear) * popRatio(baseYear) * cpiRatio(baseYear))
+}
+
 ## Load data
 loadData <- function() {
   mydata <<- read.xls("./data/report_v5.xlsx", 2)
   cpi <<- read.xls("./data/cpi.xlsx", 2)
+  pop <<- read.xls("./data/pop_consolidate.xlsx", 1)
 }
 
 ## Generate computed columns
 computeColumns <- function() {
 
   # ... for cleaned up costs 
-  mydata$Normalised.Costs <<- apply(data.matrix(mydata[,20]), 1, parseCurrency)
+  mydata$Cleaned.Costs <<- apply(data.matrix(mydata[,20]), 1, parseCurrency)
   
   # ... for financial years
   mydata$Fin.Years <<- apply(mydata[c("Month", "Year")], 1, financialYear)
   
   # ... for CPI-indexed insured costs
-  mydata$Indexed.Insured.Costs <<- apply(mydata[c("Fin.Years", "Normalised.Costs")], 1, indexCosts)
+  mydata$Indexed.Insured.Costs <<- apply(mydata[c("Fin.Years", "Cleaned.Costs")], 1, indexCosts)
+  
+  # ... for CPI-indexed insured costs
+  mydata$Normalised.Insured.Costs <<- apply(mydata[c("Fin.Years", "Cleaned.Costs")], 1, normalisedCosts)
 }
 
 ## Specific cost estimation functions
@@ -59,8 +87,15 @@ costOfPublicServices <- function() {
 #### Cost of life
 costOfLife <- function() {
   # 2006 BTE figure, adjusted to 2013
-  return(indexCosts(c(2006, 2400000)))
+  # return(indexCosts(c(2006, 2400000)))
+  # 2008 Best Practice Regulation - Value of Statistical Life
+  return(indexCosts(c(2008, 3500000)))
+  # Victorian Guidance Note on Dam Safety Decision DSE 2012
+  #return(indexCosts(c(2012, 4500000)))
+  # US - value of safety in different industries
 }
+costOfLife()
+
 costOfHospitalisedInjury <- function() {
   # 2006 BTE figure, adjusted to 2013
   return(indexCosts(c(2006, 214000)))
@@ -80,7 +115,7 @@ proportionOfHospitalisedInjury <- function() {
 
 ## Get all events for the purpose of generating costs
 getEvents <- function() {
-  events <- mydata[c("Year", "resourceType", "State.1", "State.2..", "Indexed.Insured.Costs", "Calls.to.SES", "Deaths", "Injuries")]
+  events <- mydata[c("Year", "resourceType", "State.1", "State.2..", "Indexed.Insured.Costs", "Normalised.Insured.Costs", "Calls.to.SES", "Deaths", "Injuries")]
   events$Deaths <- as.numeric(events$Deaths)
   events$Injuries <- as.numeric(events$Injuries)
   xsub <- events[,4:8] 
@@ -92,6 +127,7 @@ getEvents <- function() {
 # Calculate direct costs
 directCosts <- function(events) {
   events$directCost <- with(events, Indexed.Insured.Costs)
+  events$normalisedDirectCost <- with(events, Normalised.Insured.Costs)
   return (events)
 }
 
@@ -121,3 +157,8 @@ totalCostForEvent <- function() {
   events$total <- events$directCost + events$indirectCost + events$intangibleCost
   return(events) 
 }
+
+
+
+
+
