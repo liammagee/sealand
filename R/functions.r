@@ -10,7 +10,7 @@ options(scipen=999)
 # Functions
 
 ## Ignores "NA" values for sum
-safeSum <- function(value) sum(na.omit(value))
+safeSum <- function(value) sum(value, TRUE)
 ## Parses a currency value in the form "$1,000,000"
 parseCurrency <- function(value) as.numeric(gsub(",", "", sub("\\$","", value)))
 ## Returns the correct financial year for a month and year
@@ -118,9 +118,9 @@ getEvents <- function() {
   events <- mydata[c("Year", "resourceType", "State.1", "State.2..", "Indexed.Insured.Costs", "Normalised.Insured.Costs", "Calls.to.SES", "Deaths", "Injuries")]
   events$Deaths <- as.numeric(events$Deaths)
   events$Injuries <- as.numeric(events$Injuries)
-  xsub <- events[,4:8] 
+  xsub <- events[,4:9] 
   xsub[is.na(xsub)] <- 0 
-  events[,4:8]<-xsub
+  events[,4:9]<-xsub
   return (events)
 }
 
@@ -144,7 +144,7 @@ intangibleCosts <- function(events) {
   events$injuryCosts <- with(events, 
                              Injuries  * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
                                Injuries * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury())
-  events$intangibleCost <- events$deathCosts + events$injuryCosts
+  events$intangibleCost <- rowSums(subset(events, select = c(deathCosts, injuryCosts)), na.rm = TRUE)
   return (events)
 }
 
@@ -154,11 +154,6 @@ totalCostForEvent <- function() {
   events <- directCosts(events)
   events <- indirectCosts(events)
   events <- intangibleCosts(events)
-  events$total <- events$directCost + events$indirectCost + events$intangibleCost
+  events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
   return(events) 
 }
-
-
-
-
-
