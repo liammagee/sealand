@@ -19,10 +19,11 @@ financialYear <- function(range) {
   year <- range[2]
   firstMonths = c("January", "February", "March", "April", "May", "June")
   finYear <- if (is.element(month, firstMonths)) as.numeric(year) else as.numeric(year) + 1
-  return(finYear)
+  return(as.numeric(finYear))
 }
 ## Generates a population ratio (based on June 2013)
 popRatio <- function(baseYear) {
+  baseYear <- as.numeric(baseYear)
   if ((baseYear - 1967) < 14) {
     popRow <- 10 + (baseYear - 1967)
   }
@@ -40,6 +41,16 @@ cpiRatio <- function(baseYear) {
   cpi2013 <- as.numeric(cpi$Index.Numbers....All.groups.CPI....Australia[269])
   return(cpi2013 / cpiTest)
 }
+## Generates a gdp ratio based on chain volume measures (based on June 2013)
+gdpRatio <- function(baseYear) {
+  gdpRow <- 41 + (baseYear - 1967) * 4
+  gdpTest <- as.numeric(gdp$Gross.domestic.product..Chain.volume.measures..[gdpRow])
+  gdp2013 <- as.numeric(gdp$Gross.domestic.product..Chain.volume.measures..[225])
+  gdpGross <- (gdp2013 / gdpTest)
+  # Correct for Pop ratio to correct for per capita
+  gdpGross <- gdpGross / popRatio(baseYear)
+  return(gdpGross)
+}
 ## Generates an CPI indexed cost (based on June 2013)
 indexCosts <- function(range) {
   baseYear <- range[1]
@@ -50,17 +61,24 @@ indexCosts <- function(range) {
 normalisedCosts <- function(range) {
   baseYear <- range[1]
   cost <- range[2]
-  # Normalise for [1] inflation; [2] population growth; [3] wealth increase (CPI as a temporary proxy)
-  return(cost * cpiRatio(baseYear) * popRatio(baseYear) * cpiRatio(baseYear))
+  # Normalise for [1] inflation; [2] population growth; [3] wealth increase (GDP as a temporary proxy)
+  # TODO: Add at least state-based equivalents
+  return(cost * cpiRatio(baseYear) * popRatio(baseYear) * gdpRatio(baseYear))
 }
-
+## Normalise population
+normalisedPopulation <- function(range) {
+  baseYear <- as.numeric(range[1])
+  pop <- as.numeric(range[2])
+  # Normalise for inflation
+  return(pop * popRatio(baseYear))
+}
 ## Load data
 loadData <- function() {
   mydata <<- read.xls("./data/report_v5.xlsx", 2)
   cpi <<- read.xls("./data/cpi.xlsx", 2)
   pop <<- read.xls("./data/pop_consolidate.xlsx", 1)
+  gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
 }
-
 ## Generate computed columns
 computeColumns <- function() {
 
@@ -68,13 +86,17 @@ computeColumns <- function() {
   mydata$Cleaned.Costs <<- apply(data.matrix(mydata[,20]), 1, parseCurrency)
   
   # ... for financial years
-  mydata$Fin.Years <<- apply(mydata[c("Month", "Year")], 1, financialYear)
-  
+  mydata$Fin.Year <<- apply(mydata[c("Month", "Year")], 1, financialYear)
+
   # ... for CPI-indexed insured costs
-  mydata$Indexed.Insured.Costs <<- apply(mydata[c("Fin.Years", "Cleaned.Costs")], 1, indexCosts)
+  mydata$Indexed.Insured.Costs <<- apply(mydata[c("Fin.Year", "Cleaned.Costs")], 1, indexCosts)
   
-  # ... for CPI-indexed insured costs
-  mydata$Normalised.Insured.Costs <<- apply(mydata[c("Fin.Years", "Cleaned.Costs")], 1, normalisedCosts)
+  # ... for normalised insured costs
+  mydata$Normalised.Insured.Costs <<- apply(mydata[c("Fin.Year", "Cleaned.Costs")], 1, normalisedCosts)
+  
+  # ... for population-inflated deaths and injuries
+  mydata$Scaled.Deaths <<- apply(mydata[c("Fin.Year", "Deaths")], 1, normalisedPopulation)
+  mydata$Scaled.Injuries <<- apply(mydata[c("Fin.Year", "Injuries")], 1, normalisedPopulation)
 }
 
 ## Specific cost estimation functions
@@ -115,12 +137,12 @@ proportionOfHospitalisedInjury <- function() {
 
 ## Get all events for the purpose of generating costs
 getEvents <- function() {
-  events <- mydata[c("Year", "resourceType", "State.1", "State.2..", "Indexed.Insured.Costs", "Normalised.Insured.Costs", "Calls.to.SES", "Deaths", "Injuries")]
-  events$Deaths <- as.numeric(events$Deaths)
-  events$Injuries <- as.numeric(events$Injuries)
-  xsub <- events[,4:9] 
+  events <- mydata[c("Fin.Year", "resourceType", "State.1", "State.2..", "Indexed.Insured.Costs", "Normalised.Insured.Costs", "Calls.to.SES", "Scaled.Deaths", "Scaled.Injuries", "Deaths", "Injuries")]
+  events$Scaled.Deaths <- as.numeric(events$Scaled.Deaths)
+  events$Scaled.Injuries <- as.numeric(events$Scaled.Injuries)
+  xsub <- events[,4:11] 
   xsub[is.na(xsub)] <- 0 
-  events[,4:9]<-xsub
+  events[,4:11]<-xsub
   return (events)
 }
 
@@ -138,12 +160,12 @@ indirectCosts <- function(events) {
   return (events)
 }
 
-# Calculate indirect costs
+# Calculate intangible costs
 intangibleCosts <- function(events) {
-  events$deathCosts <- with(events, Deaths * costOfLife())
+  events$deathCosts <- with(events, Scaled.Deaths * costOfLife())
   events$injuryCosts <- with(events, 
-                             Injuries  * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
-                               Injuries * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury())
+                             Scaled.Injuries * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
+                               Scaled.Injuries * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury())
   events$intangibleCost <- rowSums(subset(events, select = c(deathCosts, injuryCosts)), na.rm = TRUE)
   return (events)
 }

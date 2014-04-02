@@ -38,9 +38,9 @@ axis(2, las=1, at=billions, labels=format(billions / 1000000, big.mark = ","))
 # Create a legend at (1, g_range[2]) that is slightly smaller 
 # (cex) and uses the same line colors and points used by 
 # the actual plots 
-legend(x="1970", y=5000000000, legend=c("Total","Direct", "Indirect", "Intangible"), col=c("blue", "red", "green", "grey"))
-lty=c(1,1), # gives the legend appropriate symbols (lines)
-lwd=c(2.5,2.5),col=c("blue", "red", "green", "grey")) # gives the legend lines the correct color and width
+legend(x="topleft", y=5000000000, legend=c("Total","Direct", "Indirect", "Intangible"), col=c("blue", "red", "green", "grey"),
+  lty=c(1,1), # gives the legend appropriate symbols (lines)
+  lwd=c(2.5,2.5)) # gives the legend lines the correct color and width
 
 # Add title
 title("Total Costs", col.main = "blue")
@@ -50,4 +50,7 @@ title(xlab="Years", col.lab=rgb(0,0.5,0))
 title(ylab="(2013 Dollars in $millions)", col.lab=rgb(0,0.5,0))
 
 #dev.off()
+
+events <- getEvents()
+intangibleCosts(events)
 
