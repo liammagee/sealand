@@ -10,18 +10,18 @@ computeColumns()
 
 # Store the total costs by year
 totalCosts <- totalCostForEvent()
-totalCostsByYear <- with(totalCosts, aggregate(total, by=list(Year), FUN=safeSum))
-directCostsByYear <- with(totalCosts, aggregate(directCost, by=list(Year), FUN=safeSum))
-indirectCostsByYear <- with(totalCosts, aggregate(indirectCost, by=list(Year), FUN=safeSum))
-intangibleCostsByYear <- with(totalCosts, aggregate(intangibleCost, by=list(Year), FUN=safeSum))
+totalCostsByYear <- with(totalCosts, aggregate(total, by=list(Year.financial), FUN=safeSum))
+directCostsByYear <- with(totalCosts, aggregate(directCost, by=list(Year.financial), FUN=safeSum))
+indirectCostsByYear <- with(totalCosts, aggregate(indirectCost, by=list(Year.financial), FUN=safeSum))
+intangibleCostsByYear <- with(totalCosts, aggregate(intangibleCost, by=list(Year.financial), FUN=safeSum))
 
 # Plot a basic graph of costs
 #pdf(file="./figs/total_costs.pdf")
 
 # Calculate range from 0 to max value of costs
-c_range <- range(0, totalCostsByYear, directCostsByYear, indirectCostsByYear, intangibleCostsByYear)
+c_range <- range(0, totalCostsByYear + 2000000000)
 
-y_range <- range(totalCosts$Year)
+y_range <- range(totalCosts$Fin.Year)
 
 
 plot(totalCostsByYear, type="o", col="blue", ylim=c_range, axes=FALSE, ann=FALSE) 
@@ -50,7 +50,3 @@ title(xlab="Years", col.lab=rgb(0,0.5,0))
 title(ylab="(2013 Dollars in $millions)", col.lab=rgb(0,0.5,0))
 
 #dev.off()
-
-events <- getEvents()
-intangibleCosts(events)
-

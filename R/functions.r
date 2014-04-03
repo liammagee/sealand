@@ -9,8 +9,10 @@ options(scipen=999)
 
 # Functions
 
-## Ignores "NA" values for sum
-safeSum <- function(value) sum(value, TRUE)
+## Ignores "NA" values for standard functions
+safeSum <- function(value) sum(value, na.rm = TRUE)
+safeMean <- function(value) mean(value, na.rm = TRUE)
+
 ## Parses a currency value in the form "$1,000,000"
 parseCurrency <- function(value) as.numeric(gsub(",", "", sub("\\$","", value)))
 ## Returns the correct financial year for a month and year
@@ -83,20 +85,20 @@ loadData <- function() {
 computeColumns <- function() {
 
   # ... for cleaned up costs 
-  mydata$Cleaned.Costs <<- apply(data.matrix(mydata[,20]), 1, parseCurrency)
+  mydata$Costs.cleaned <<- apply(data.matrix(mydata[,20]), 1, parseCurrency)
   
   # ... for financial years
-  mydata$Fin.Year <<- apply(mydata[c("Month", "Year")], 1, financialYear)
+  mydata$Year.financial <<- apply(mydata[c("Month", "Year")], 1, financialYear)
 
   # ... for CPI-indexed insured costs
-  mydata$Indexed.Insured.Costs <<- apply(mydata[c("Fin.Year", "Cleaned.Costs")], 1, indexCosts)
+  mydata$Insured.Costs.indexed <<- apply(mydata[c("Year.financial", "Costs.cleaned")], 1, indexCosts)
   
   # ... for normalised insured costs
-  mydata$Normalised.Insured.Costs <<- apply(mydata[c("Fin.Year", "Cleaned.Costs")], 1, normalisedCosts)
+  mydata$Insured.Costs.normalised <<- apply(mydata[c("Year.financial", "Costs.cleaned")], 1, normalisedCosts)
   
   # ... for population-inflated deaths and injuries
-  mydata$Scaled.Deaths <<- apply(mydata[c("Fin.Year", "Deaths")], 1, normalisedPopulation)
-  mydata$Scaled.Injuries <<- apply(mydata[c("Fin.Year", "Injuries")], 1, normalisedPopulation)
+  mydata$Deaths.normalised <<- apply(mydata[c("Year.financial", "Deaths")], 1, normalisedPopulation)
+  mydata$Injuries.normalised <<- apply(mydata[c("Year.financial", "Injuries")], 1, normalisedPopulation)
 }
 
 ## Specific cost estimation functions
@@ -137,9 +139,11 @@ proportionOfHospitalisedInjury <- function() {
 
 ## Get all events for the purpose of generating costs
 getEvents <- function() {
-  events <- mydata[c("Fin.Year", "resourceType", "State.1", "State.2..", "Indexed.Insured.Costs", "Normalised.Insured.Costs", "Calls.to.SES", "Scaled.Deaths", "Scaled.Injuries", "Deaths", "Injuries")]
-  events$Scaled.Deaths <- as.numeric(events$Scaled.Deaths)
-  events$Scaled.Injuries <- as.numeric(events$Scaled.Injuries)
+  events <- mydata[c("Year.financial", "resourceType", "State.1", "State.2..", "Insured.Costs.indexed", "Insured.Costs.normalised", "Calls.to.SES", "Deaths", "Injuries", "Deaths.normalised", "Injuries.normalised")]
+  events$Deaths <- as.numeric(events$Deaths)
+  events$Injuries <- as.numeric(events$Injuries)
+  events$Deaths.normalised <- as.numeric(events$Deaths.normalised)
+  events$Injuries.normalised <- as.numeric(events$Injuries.normalised)
   xsub <- events[,4:11] 
   xsub[is.na(xsub)] <- 0 
   events[,4:11]<-xsub
@@ -148,25 +152,38 @@ getEvents <- function() {
 
 # Calculate direct costs
 directCosts <- function(events) {
-  events$directCost <- with(events, Indexed.Insured.Costs)
-  events$normalisedDirectCost <- with(events, Normalised.Insured.Costs)
+  events$directCost <- with(events, Insured.Costs.indexed)
+  
+  # Normalised values
+  events$directCost.normalised <- with(events, Insured.Costs.normalised)
+
   return (events)
 }
 
 # Calculate indirect costs
 indirectCosts <- function(events) {
-  
   events$indirectCost <- with(events, Calls.to.SES * 10)
+  
+  # Normalised values
+  events$indirectCost.normalised <- events$indirectCost
+
   return (events)
 }
 
 # Calculate intangible costs
 intangibleCosts <- function(events) {
-  events$deathCosts <- with(events, Scaled.Deaths * costOfLife())
+  events$deathCosts <- with(events, Deaths * costOfLife())
   events$injuryCosts <- with(events, 
-                             Scaled.Injuries * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
-                               Scaled.Injuries * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury())
+                             Injuries * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
+                               Injuries * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury())
   events$intangibleCost <- rowSums(subset(events, select = c(deathCosts, injuryCosts)), na.rm = TRUE)
+
+  # Normalised values
+  events$deathCosts.normalised <- with(events, Deaths.normalised * costOfLife())
+  events$injuryCosts.normalised <- with(events, 
+                                        Injuries.normalised * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
+                                          Injuries.normalised * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury())
+  events$intangibleCost.normalised <- rowSums(subset(events, select = c(deathCosts.normalised, injuryCosts.normalised)), na.rm = TRUE)
   return (events)
 }
 
@@ -177,5 +194,6 @@ totalCostForEvent <- function() {
   events <- indirectCosts(events)
   events <- intangibleCosts(events)
   events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
+  events$total.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
   return(events) 
 }
