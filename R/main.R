@@ -1,3 +1,7 @@
+
+# Imports
+library(gdata)
+
 # Sources
 source("R/figures.R", TRUE)
 
@@ -56,5 +60,4 @@ run <- function() {
 	average_annual_cost_of_natural_disasters_by_state_and_territory()
 	deaths_and_injuries_by_hazard_type()
 }
-
 run()

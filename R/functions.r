@@ -15,6 +15,37 @@ safeMean <- function(value) mean(value, na.rm = TRUE)
 
 ## Parses a currency value in the form "$1,000,000"
 parseCurrency <- function(value) as.numeric(gsub(",", "", sub("\\$","", value)))
+
+## Return an abbreviated state
+abbreviateState <- function(value) {
+  if (value == "Victoria") {
+    "VIC"
+  }
+  else if (value == "New South Wales") {
+    "NSW"
+  }
+  else if (value == "Tasmania") {
+    "TAS"
+  }
+  else if (value == "Western Australia") {
+    "WA"
+  }
+  else if (value == "Queensland") {
+    "QLD"
+  }
+  else if (value == "Australian Capital Territory") {
+    "ACT"
+  }
+  else if (value == "Northern Territory") {
+    "NT"
+  }
+  else if (value == "South Australia") {
+    "SA"
+  }
+  else  {
+    "Other"
+  }
+}
 ## Returns the correct financial year for a month and year
 financialYear <- function(range) {
   month <- range[1]
@@ -83,9 +114,12 @@ loadData <- function() {
 }
 ## Generate computed columns
 computeColumns <- function() {
-
+  
   # ... for cleaned up costs 
   mydata$Costs.cleaned <<- apply(data.matrix(mydata[,20]), 1, parseCurrency)
+  
+  # ... for cleaned up states
+  mydata$State.abbreviated <<- apply(data.matrix(mydata$State.1), 1, abbreviateState)
   
   # ... for financial years
   mydata$Year.financial <<- apply(mydata[c("Month", "Year")], 1, financialYear)
@@ -138,15 +172,18 @@ proportionOfHospitalisedInjury <- function() {
 # Costs
 
 ## Get all events for the purpose of generating costs
-getEvents <- function() {
-  events <- mydata[c("Year.financial", "resourceType", "State.1", "State.2..", "Insured.Costs.indexed", "Insured.Costs.normalised", "Calls.to.SES", "Deaths", "Injuries", "Deaths.normalised", "Injuries.normalised")]
+getEvents <- function(resourceTypeParam = NULL) {
+  events <- mydata[c("Year.financial", "resourceType", "State.abbreviated", "State.1", "State.2..", "Insured.Costs.indexed", "Insured.Costs.normalised", "Calls.to.SES", "Deaths", "Injuries", "Deaths.normalised", "Injuries.normalised")]
+  if (! is.null(resourceTypeParam)) {
+    events <- subset(events, resourceType == resourceTypeParam)
+  }
   events$Deaths <- as.numeric(events$Deaths)
   events$Injuries <- as.numeric(events$Injuries)
   events$Deaths.normalised <- as.numeric(events$Deaths.normalised)
   events$Injuries.normalised <- as.numeric(events$Injuries.normalised)
-  xsub <- events[,4:11] 
+  xsub <- events[,5:12] 
   xsub[is.na(xsub)] <- 0 
-  events[,4:11]<-xsub
+  events[,5:12]<-xsub
   return (events)
 }
 
@@ -188,8 +225,8 @@ intangibleCosts <- function(events) {
 }
 
 ## Total cost for evant
-totalCostForEvent <- function() {
-  events <- getEvents()
+totalCostForEvent <- function(resourceTypeParam = NULL) {
+  events <- getEvents(resourceTypeParam)
   events <- directCosts(events)
   events <- indirectCosts(events)
   events <- intangibleCosts(events)
@@ -197,3 +234,26 @@ totalCostForEvent <- function() {
   events$total.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
   return(events) 
 }
+
+## Provide a code for cost breaks
+codeCosts <- function(value) {
+  if (value < 10) {
+    1
+  } else if (value < 50) {
+    2
+  } else if (value < 100) {
+    3
+  } else if (value < 150) {
+    4
+  } else if (value < 500) {
+    5
+  } else {
+    6
+  } 
+}
+
+## Provide a code for cost breaks
+codeCostLabels <- function() {
+  c("< $10m", "$10 to $50m", "$50 to $100m", "$100 to $150m", "$150 to $500m", "> $500m")
+}
+
