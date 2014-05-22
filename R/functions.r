@@ -107,16 +107,17 @@ normalisedPopulation <- function(range) {
 }
 ## Load data
 loadData <- function() {
-  mydata <<- read.xls("./data/report_v5.xlsx", 2)
+  mydata <<- read.xls("./data/report_v5.xlsx", 1)
   cpi <<- read.xls("./data/cpi.xlsx", 2)
   pop <<- read.xls("./data/pop_consolidate.xlsx", 1)
   gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
 }
+
 ## Generate computed columns
 computeColumns <- function() {
   
   # ... for cleaned up costs 
-  mydata$Costs.cleaned <<- apply(data.matrix(mydata[,20]), 1, parseCurrency)
+  mydata$Costs.cleaned <<- apply(data.matrix(mydata$Insured.Cost), 1, parseCurrency)
   
   # ... for cleaned up states
   mydata$State.abbreviated <<- apply(data.matrix(mydata$State.1), 1, abbreviateState)

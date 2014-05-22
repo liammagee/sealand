@@ -89,13 +89,15 @@ australian_natural_disaster_costs_by_decade <- function() {
 
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
+  
+  # Aggregate normalised costs by decade
 	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised, by=list(floor(Year.financial / 10)), FUN=safeSum))
-
-	# Multiply decades back up to 000's
+  
+	# Multiply decades back up to years
 	totalCostsByDecade[,1] <- totalCostsByDecade[,1] * 10
-
+	
 	# Calculate range from 0 to max value of costs
-	y_range <- range(0, totalCostsByDecade + 2000000000)
+	y_range <- range(0, totalCostsByDecade + 1000000000)
 
 	standardBarChart(totalCostsByDecade, 
 		"fig3_2_australian_natural_disaster_costs_by_decade",
@@ -152,7 +154,7 @@ distribution_of_disasters <- function() {
 	# Calculate range from 0 to max value of costs
 	y_range <- range(0, totalCostDistribution[,2] + 10)
 	
-	standardBarChart(totalCostsByDecade, 
+	standardBarChart(totalCostDistribution, 
 		"fig3_4_distribution_of_disasters",
 		"FIGURE 3.4: DISTRIBUTION OF DISASTERS (FREQUENCY) BY COSTS, 1967-2013",
 		"Years",
@@ -174,7 +176,7 @@ annual_insurance_cost_of_disasters <- function() {
 	totalCosts <- totalCostForEvent()
 	directCostsByYear <- with(totalCosts, aggregate(directCost.normalised, by=list(Year.financial), FUN=safeSum))
 
-	# Calculate range from 0 to max value of costs
+  # Calculate range from 0 to max value of costs
 	x_range <- range(totalCosts$Year.financial)
 	y_range <- range(0, directCostsByYear + 2000000000)
 	
@@ -718,7 +720,7 @@ number_of_natural_disasters_deaths <- function() {
 		"fig3_28_number_of_natural_disasters_deaths",
 		"FIGURE 3.28: NUMBER OF DEATHS IN AUSTRALIA, 1967-2013",
 		"Years",
-		"Number of events",
+		"Number of deaths",
 		y_range
 		)
 
@@ -740,7 +742,7 @@ number_of_natural_disasters_injuries <- function() {
 		"fig3_29_number_of_natural_disasters_injuries",
 		"FIGURE 3.29: NUMBER OF INJURIES IN AUSTRALIA, 1967-2013",
 		"Years",
-		"Number of events",
+		"Number of injuries",
 		y_range
 		)
 
@@ -755,17 +757,17 @@ number_of_deaths_by_decade <- function() {
 
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
-	numberOfDeathsByDecade <- with(totalCosts, aggregate(deathCosts.normalised, by=list(floor(Year.financial / 10)), FUN=length))
-
-	# Multiply decades back up to 000's
-	numberOfDeathsByDecade[,1] <- numberOfDeathsByDecade[,1] * 10
+	costOfDeathsByDecade <- with(totalCosts, aggregate(deathCosts.normalised, by=list(floor(Year.financial / 10)), FUN=safeSum))
+	
+  # Multiply decades back up to 000's
+	costOfDeathsByDecade[,1] <- costOfDeathsByDecade[,1] * 10
 
 	# Calculate range from 0 to max value of costs
-	y_range <- range(0, numberOfDeathsByDecade + 2000)
+	y_range <- range(0, costOfDeathsByDecade + 1000000000)
 
-	standardBarChart(numberOfDeathsByDecade, 
-		"fig3_2_australian_natural_disaster_costs_by_decade",
-		"FIGURE 3.2: AUSTRALIAN NATURAL DISASTER COSTS BY DECADE, 1967-2013",
+	standardBarChart(costOfDeathsByDecade, 
+		"fig3_30_australian_natural_disaster_costs_by_decade",
+		"FIGURE 3.30: COST OF DEATHS BY DECADE, 1967-2013",
 		"Decades",
 		"(2013 Dollars in $millions)",
 		y_range
