@@ -200,7 +200,7 @@ directCosts <- function(events) {
 
 # Calculate indirect costs
 indirectCosts <- function(events) {
-  events$indirectCost <- with(events, Calls.to.SES * 10)
+  events$indirectCost <- with(events, Calls.to.SES * 0)
   
   # Normalised values
   events$indirectCost.normalised <- events$indirectCost
