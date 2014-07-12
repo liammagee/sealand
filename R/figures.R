@@ -86,18 +86,19 @@ annual_total_costs_of_disasters_in_australia <- function() {
 australian_natural_disaster_costs_by_decade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent()
-
+	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
+	
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
   
   # Aggregate normalised costs by decade
-	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised / 1000000, by=list(floor(Year.financial / 10)), FUN=safeSum))
+	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
 	
   # Multiply decades back up to years
 	totalCostsByDecade[,1] <- totalCostsByDecade[,1] * 10
 	
 	# Calculate range from 0 to max value of costs
-	y_range <- range(0, totalCostsByDecade + 1000000000)
+	y_range <- range(0, totalCostsByDecade + 1000)
 
 	standardBarChart(totalCostsByDecade, 
 		"fig3_2_australian_natural_disaster_costs_by_decade",
@@ -145,7 +146,6 @@ distribution_of_disasters <- function() {
 
 	# Filter by cost bracket
 	cost_brackets <- list(10000000, 50000000, 100000000, 150000000, 500000000)
-	totalCosts$total.normalised
 	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
   
 	totalCosts$total.normalised.code <- apply(data.matrix(totalCosts$total.normalised.millions), 1, codeCosts)
@@ -253,7 +253,7 @@ disaster_costs_by_state_and_territory <- function() {
 
 	# Calculate range from 0 to max value of costs
   x_range <- range(totalCosts$State.abbreviated)
-	y_range <- range(0, as.numeric(totalCostsByState[,2]) + 10000000000)
+	y_range <- range(0, as.numeric(totalCostsByState[,2]) + 10000)
 	
 	standardBarChart(totalCostsByState, 
 		"fig3_10_disaster_costs_by_state_and_territory",
@@ -274,6 +274,10 @@ number_of_disaster_events_by_state_and_territory <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEvent()
   totalCountsByState <- with(totalCosts, aggregate(total.normalised, by=list(State.abbreviated), FUN=length))
+  
+  # Remove 'Other' column
+  totalCountsByState <- totalCountsByState[!(totalCountsByState$Group.1 %in% c('Other')),]
+  
   o <- order(totalCountsByState[,2], decreasing=TRUE)
   totalCountsByState <- data.frame(cbind(totalCountsByState[,1][o], totalCountsByState[,2][o]))
   states <- totalCountsByState[,1]
