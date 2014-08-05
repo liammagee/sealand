@@ -8,6 +8,7 @@ character_size <- 0.6
 
 # Functions for generating figures
 
+
 ## Provides a single function for generating bar charts
 standardBarChart <- function(data, file_name, title, x_label, y_label, y_range=NULL, axes=TRUE) {
 
@@ -53,32 +54,97 @@ doAxis <- function(number, at=NULL, labels=NULL) {
 
 ## Generates Figure 3.1
 annual_total_costs_of_disasters_in_australia <- function() {
-	# Store the total costs by year
-	totalCosts <- totalCostForEvent()
-	totalCostsByYear <- with(totalCosts, aggregate(total.normalised, by=list(Year.financial), FUN=safeSum))
+  # Store the total costs by year
+  totalCosts <- totalCostForEvent()
+  # Just for normalised data
+  totalCostsByYear <- with(totalCosts, aggregate(total.normalised, by=list(Year.financial), FUN=safeSum))
+  
+  # Calculate range from 0 to max value of costs
+  x_range <- range(totalCosts$Year.financial)
+  y_range <- range(0, totalCostsByYear + 2000000000)
+  
+  # Graph the results
+  standardBarChart(totalCostsByYear, 
+                   "fig3_1_annual_total_costs_of_disasters_in_australia",
+                   "FIGURE 3.1: ANNUAL TOTAL COSTS OF DISASTERS IN AUSTRALIA, 1967-2013",
+                   "Years",
+                   "(2013 Dollars in $millions)",
+                   y_range,
+                   FALSE
+  )
+  
+  # Default x axis
+  doAxis(1, at=seq(x_range[1], x_range[2], by=1))
+  
+  # Make y axis with horizontal labels that display ticks at 
+  billions <- 1000000000 * 0:(y_range[2] / 1000000000)
+  doAxis(2, at=billions, labels=format(billions / 1000000, big.mark = ","))
+  
+  dev.off()
+}
 
-	# Calculate range from 0 to max value of costs
-	x_range <- range(totalCosts$Year.financial)
-	y_range <- range(0, totalCostsByYear + 2000000000)
+## Generates Figure 3.1 - with both normalised and denormalised data
+annual_total_costs_of_disasters_in_australia_denormalised <- function() {
+  # Store the total costs by year
+  totalCosts <- totalCostForEvent()
+  # For both normalised and denormalised data
+  totalCostsByYear <- with(totalCosts, aggregate(cbind(total.normalised / 1000000, total / 1000000), by=list(Year.financial), FUN=safeSum))
+  
+  # Checks total costs
+  #write.table(totalCosts, file = "./output/totalCosts.csv", append = FALSE, quote = TRUE, sep = ",",
+  #            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+  #            col.names = TRUE, qmethod = c("escape", "double"),
+  #            fileEncoding = "")
+  
+  
+  # Calculate range from 0 to max value of costs
+  x_range <- range(totalCosts$Year.financial)
+  y_range <- range(0, totalCostsByYear + 2000)
+  
+  ## Graph the results
 
-	# Graph the results
-	standardBarChart(totalCostsByYear, 
-		"fig3_1_annual_total_costs_of_disasters_in_australia",
-		"FIGURE 3.1: ANNUAL TOTAL COSTS OF DISASTERS IN AUSTRALIA, 1967-2013",
-		"Years",
-		"(2013 Dollars in $millions)",
-		y_range,
-		FALSE
-		)
-
-	# Default x axis
-	doAxis(1, at=seq(x_range[1], x_range[2], by=1))
-
-	# Make y axis with horizontal labels that display ticks at 
-	billions <- 1000000000 * 0:(y_range[2] / 1000000000)
-	doAxis(2, at=billions, labels=format(billions / 1000000, big.mark = ","))
-
-	dev.off()
+  # Plot a basic graph of costs
+  pdf(file=paste("./figs/", "fig3_1_annual_total_costs_of_disasters_in_australia_denormalised", ".pdf", sep=""))
+  
+  # Set an upper y value based on the data passed in
+  # Note: this will often be too little
+  if (is.null(y_range)) {
+    y_range <- range(0, data)
+  }
+  data <- t(cbind(totalCostsByYear[, 2], totalCostsByYear[, 3]))
+  colnames(data) <- totalCostsByYear[, 1]
+  rownames(data) <- c("Normalised", "Raw")
+  
+    # Plot normalised data
+  barplot(data, beside=T, 
+          axisnames=T,
+          cex=title_size,
+          cex.lab=title_size, 
+          cex.axis=title_size, 
+          cex.main=title_size, 
+          cex.sub=title_size,
+          cex.names=0.8, las=2, ylim=y_range, col=c("blue","red"))
+  
+  # Add title
+  title("FIGURE 3.1a: ANNUAL TOTAL COSTS OF DISASTERS IN AUSTRALIA, 1967-2013", col.main = "blue",
+        cex=title_size,
+        cex.lab=title_size, 
+        cex.axis=title_size, 
+        cex.main=title_size, 
+        cex.sub=title_size)
+  
+  # Label the x and y axes with dark green text
+  title(xlab="Years", col.lab=rgb(0,0.5,0))
+  title(ylab="(2013 Dollars in $millions)", col.lab=rgb(0,0.5,0))
+  
+  # Default x axis
+  doAxis(1, at=seq(x_range[1], x_range[2], by=1))
+  
+  # Make y axis with horizontal labels that display ticks at 
+  # billions <- 1000000000 * 0:(y_range[2] / 1000000000)
+  # doAxis(2, at=billions, labels=format(billions / 1000000, big.mark = ","))
+  
+  dev.off()
 }
 
 
@@ -266,6 +332,112 @@ disaster_costs_by_state_and_territory <- function() {
 	doAxis(1, at=totalCostsByState[,1], labels=states)
 	doAxis(2)
 	dev.off()
+}
+
+
+
+## Generate Figure 3.10a
+## STILL EXPERIMENTAL
+disaster_costs_by_state_and_territory_compared_with_ndrra <- function() {
+  
+  # Taken from http://www.budget.gov.au/2013-14/content/bp3/html/bp3_03_part_2i.htm
+  ndrra <- read.table(header = T, text = "NSW  VIC  QLD  WA	SA	TAS	ACT	NT	Total
+    2012	84.3	50	1,738.60	3.2	0.2	16.7	0	0.4	1,893.30
+    2013	5.9	2.6	136.6	1.2	0.1	0.4	0	0	146.8")
+  
+  
+  
+  # Store the total costs by year
+  totalCosts <- totalCostForEvent()
+  totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
+  totalCostsByState <- with(totalCosts, aggregate(total.normalised.millions, by=list(Year.financial, State.abbreviated), FUN=safeSum))
+  
+  # Get the last 10 years of data
+  data <- totalCostsByState[totalCostsByState$Group.1 > 2002,]
+  
+  # Convert to a table
+  install.packages('reshape')
+  library(reshape)
+  pivotted_data <- cast(data, Group.1 ~ Group.2)
+  write.table(pivotted_data, file = "./output/pivottedStateDataForLast10Years.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+  
+  
+  o <- order(totalCostsByState[,2], decreasing=TRUE)
+  totalCostsByState <- data.frame(cbind(totalCostsByState[,1][o], totalCostsByState[,2][o]))
+  states <- totalCostsByState[,1]
+  
+  # Remove 'Other' column
+  totalCountsByState <- totalCountsByState[!(totalCountsByState$Group.1 %in% c('Other')),]
+  totalCostsByState
+  ndrra
+  
+  # Replace state names with IDs
+  totalCostsByState[,1] <- 1:length(totalCostsByState[,1])
+  
+  # Calculate range from 0 to max value of costs
+  x_range <- range(totalCosts$State.abbreviated)
+  y_range <- range(0, as.numeric(totalCostsByState[,2]) + 10000)
+  
+  
+  ## Graph the results
+  
+  # Plot a basic graph of costs
+  pdf(file=paste("./figs/", "fig3_10_fig3_10_disaster_costs_by_state_and_territory_compared_with_ndrra", ".pdf", sep=""))
+  
+  # Set an upper y value based on the data passed in
+  # Note: this will often be too little
+  if (is.null(y_range)) {
+    y_range <- range(0, data)
+  }
+  totalCostsByState
+  data <- t(cbind(totalCostsByState[, 2], totalCostsByYear[, 3]))
+  colnames(data) <- totalCostsByYear[, 1]
+  rownames(data) <- c("Calculated", "NDRRA")
+  
+  # Plot normalised data
+  barplot(data, beside=T, 
+          axisnames=T,
+          cex=title_size,
+          cex.lab=title_size, 
+          cex.axis=title_size, 
+          cex.main=title_size, 
+          cex.sub=title_size,
+          cex.names=0.8, las=2, ylim=y_range, col=c("blue","red"))
+  
+  # Add title
+  title("FIGURE 3.1a: ANNUAL TOTAL COSTS OF DISASTERS IN AUSTRALIA, 1967-2013", col.main = "blue",
+        cex=title_size,
+        cex.lab=title_size, 
+        cex.axis=title_size, 
+        cex.main=title_size, 
+        cex.sub=title_size)
+  
+  # Label the x and y axes with dark green text
+  title(xlab="Years", col.lab=rgb(0,0.5,0))
+  title(ylab="(2013 Dollars in $millions)", col.lab=rgb(0,0.5,0))
+  
+  # Default x axis
+  doAxis(1, at=seq(x_range[1], x_range[2], by=1))
+  
+  # Make y axis with horizontal labels that display ticks at 
+  # billions <- 1000000000 * 0:(y_range[2] / 1000000000)
+  # doAxis(2, at=billions, labels=format(billions / 1000000, big.mark = ","))
+  
+  
+  standardBarChart(totalCostsByState, 
+                   "fig3_10_disaster_costs_by_state_and_territory_compared_with_ndrra",
+                   "FIGURE 3.10: DISASTER COSTS BY STATE AND TERRITORY IN AUSTRALIA",
+                   "States",
+                   "(2013 Dollars in $millions)",
+                   y_range,
+                   FALSE
+  )
+  doAxis(1, at=totalCostsByState[,1], labels=states)
+  doAxis(2)
+  dev.off()
 }
 
 

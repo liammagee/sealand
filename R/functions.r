@@ -108,6 +108,8 @@ normalisedPopulation <- function(range) {
 ## Load data
 loadData <- function() {
   mydata <<- read.xls("./data/report_v5.xlsx", 1)
+  # Hack to ignore any rows without a year value - such as rows added for computation
+  mydata <<- mydata[!is.na(mydata$Year), ]
   cpi <<- read.xls("./data/cpi.xlsx", 2)
   pop <<- read.xls("./data/pop_consolidate.xlsx", 1)
   gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
@@ -166,7 +168,9 @@ costOfNonHospitalisedInjury <- function() {
 ## Returns the proportion of hospitalised injury to overall injuries
 proportionOfHospitalisedInjury <- function() {
   # Completely manufactured - TODO: NEEDS BETTER EVIDENCE
-  0.2
+  # 0.2
+  # NO LONGER MADE UP - SOURCED FROM DELOITTE'S (MADE-UP?) FIGURES
+  0.33
 }
 
 
@@ -258,3 +262,40 @@ codeCostLabels <- function() {
   c("< $10m", "$10 to $50m", "$50 to $100m", "$100 to $150m", "$150 to $500m", "> $500m")
 }
 
+
+## Generate event-type multipliers, to estimate total direct costs from insured losses
+eventTypeMultiplier <- function(eventType) {
+  ## NOTE: This approach is derived from Table 2.2 of 1999 BTE report,
+  ## which in turn is derived from Joy 1991, which states:
+  ## "These estimates were provided by the ICA and are subjective impressions based on experience rather than analytical estimates… The estimates include the effects of underinsurance."
+  ## OTHER APPROACHES ARE POSSIBLE -- SEE 
+  ## http://www.gao.gov/new.items/d02700r.pdf
+  ## http://www.investigativeproject.org/documents/testimony/105.pdf
+  if (eventType == "Bushfire") {
+    3.0
+  }
+  else if (value == "Cyclone") {
+    5.0
+  }
+  else if (value == "Flood") {
+    10.0
+  }
+  else if (value == "Severe Storm") {
+    3.0
+  }
+  else if (value == "Earthquake") {
+    4.0
+  }
+  else if (value == "Heatwave") {
+    1.0
+  }
+  else if (value == "Landslide") {
+    1.0
+  }
+  else if (value == "Storm") {
+    1.0
+  }
+  else  {
+    1.0
+  }  
+}
