@@ -6,6 +6,7 @@
 .Rproj.user
 .RData
 .Rout
+.DS_Store
 
 # Leave out figs and output at this stage - these should be generated at any time
 figs/*

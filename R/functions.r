@@ -46,6 +46,11 @@ abbreviateState <- function(value) {
     "Other"
   }
 }
+# Helper function - zero out NAs
+zeroNA <- function(data) {
+  data[is.na(data)] <- 0 
+}
+
 ## Returns the correct financial year for a month and year
 financialYear <- function(range) {
   month <- range[1]
@@ -202,9 +207,192 @@ directCosts <- function(events) {
   return (events)
 }
 
+# Calculate cost of housing
+costOfHousing <- function(events) {
+  destroyed <- as.numeric(mydata$Private.buildings.destroyed)
+  damaged <- as.numeric(mydata$Private.buildings.damaged)
+  destroyed[is.na(destroyed)] <- 0
+  damaged[is.na(damaged)] <- 0
+  
+  # WE ASSUME A COST OF $165K in 2013 dollars per house destroyed; 50% of that per house damaged
+  # COST ARE AN AVERAGE OF AVERAGE FLOOD COSTS ($140.75K) & CAT'S NUMBER FOR FIRE (85% of $225K = $191K)
+  destroyedCost = 165000
+  damagedCost = destroyedCost * 0.5
+  
+  return (destroyed * destroyedCost + damaged * damagedCost)
+}
+
+# Calculate cost of agriculture
+costOfAgriculture <- function() {
+  land <- as.numeric(mydata$Private.land)
+  crops <- as.numeric(mydata$Crop.s..destroyed)
+  livestock <- as.numeric(mydata$Livestock.destroyed)
+
+  land[is.na(land)] <- 0
+  crops[is.na(crops)] <- 0
+  livestock[is.na(livestock)] <- 0
+  
+  # Loss of land is assumed to be $172 per hectare
+  landLoss = land * 172
+  
+  # Loss of crops is dependent upon type
+  # * Silage - $51
+  # * Wheat - $291
+  # * Oats - $210
+  # * Barley - $253
+  # * Canola - $562
+  # We assume an average of $273 per tonne
+  cropLoss = crops * 273
+  
+  # Fencing - TODO: but we have no direct data for this
+  # Measurement is per km
+  # We estimate from hectares, assuming 100 hectares (1km square) needs 4km of fencing
+  # An over-estimate most likely
+  fencingLoss = 5000 * land * 0.01
+  
+  # Equipment - don't know what we do here
+  equipmentLoss = 0
+  
+  # Livestock based on following figures:
+  # * Wool sheep: $63
+  # * Prime lambs: $111
+  # * Cattle: $788
+  # Average of $320 used
+  livestockLoss = 320 * livestock
+  
+  return (landLoss + cropLoss + fencingLoss + equipmentLoss + livestockLoss)
+}
+
+# Calculate direct costs, via component-wise computation
+computedDirectCosts <- function() {
+  computedDirectCosts <- 0
+  
+  # Add various cost components
+  computedDirectCosts <- computedDirectCosts + costOfHousing()
+  computedDirectCosts <- computedDirectCosts + costOfAgriculture()
+  
+  return (computedDirectCosts)
+}
+
+# Generate a proportion of industrial to total commercial property
+industrialProportionOfCommercial <- function() {
+  # What is a reasonable ratio of industrial to commercial? Assuming 50% for now.
+ return (0.5)
+}
+
+
+# Residential disruption
+residentialDisruptionCosts <- function() {
+  # Get key fields
+  evacuated <- as.numeric(mydata$Evacuated)
+  homeless <- as.numeric(mydata$Homeless)
+  destroyed <- as.numeric(mydata$Private.buildings.destroyed)
+  damaged <- as.numeric(mydata$Private.buildings.damaged)
+
+  # Substitute for zeros
+  evacuated[is.na(evacuated)] <- 0
+  homeless[is.na(homeless)] <- 0
+  destroyed[is.na(destroyed)] <- 0
+  damaged[is.na(damaged)] <- 0
+  
+  totalAffected = destroyed + damaged
+  
+  cleanup <- 330 * totalAffected
+  
+  # Accom costs - NOTE THIS IS MUCH TOO CHEAP
+  alternativeAccomPerNight <- indexCosts(c(1999, 26))
+  evacuatedCosts = alternativeAccomPerNight * evacuated * 7
+  homelessCosts = alternativeAccomPerNight * homeless * 70
+  accom = evacuatedCosts + homelessCosts
+  
+  # Return total
+  return (cleanup + accom)
+}
+
+# Commerical disruption
+commercialDisruptionCosts <- function() {
+  # Get key fields
+  destroyed <- as.numeric(mydata$Commercial.buildings.destroyed)
+  damaged <- as.numeric(mydata$Commercial.buildings.damaged)
+  
+  # Substitute for zeros
+  destroyed[is.na(destroyed)] <- 0
+  damaged[is.na(damaged)] <- 0
+
+  # Calculate losses - ??? NOT SURE WHAT VALUE WE SHOULD BE USING
+  # TODO: Replace 0 with proper estimates
+  destroyedLoss = 0 * destroyed
+  damagedLoss = 0 * damaged
+
+  totalLoss  = destroyedLoss + damagedLoss
+  
+  industrialLoss = totalLoss * industrialProportionOfCommercial()
+  commercialLoss =  totalLoss - industrialLoss
+  
+  disruption = commercialLoss * 0.1 + industrialLoss * 0.65
+  
+  return (disruption)
+}
+
+# Public service disruption
+publicServiceDisruptionCosts <- function() {
+  # Get key fields
+  destroyed <- as.numeric(mydata$Public.building.destroyed)
+  damaged <- as.numeric(mydata$Public.building.damaged)
+  land <- as.numeric(mydata$Public.land)
+  
+  # Substitute for zeros
+  destroyed[is.na(destroyed)] <- 0
+  damaged[is.na(damaged)] <- 0
+  land[is.na(land)] <- 0
+  
+  # Calculate losses - ??? NOT SURE WHAT VALUE WE SHOULD BE USING
+  # TODO: Replace 0 with proper estimates
+  destroyedLoss = 0 * destroyed
+  damagedLoss = 0 * damaged
+  landLoss = 0 * land
+  
+  disruption = destroyedLoss * 0.25 + damagedLoss * 0.25 + landLoss * 0.25
+  
+  return (disruption)
+}
+
+# Clean-up costs
+cleanupDisruptionCosts <- function() {
+  # Get key fields
+  destroyed <- as.numeric(mydata$Commercial.buildings.destroyed)
+  damaged <- as.numeric(mydata$Commercial.buildings.damaged)
+  
+  # Substitute for zeros
+  destroyed[is.na(destroyed)] <- 0
+  damaged[is.na(damaged)] <- 0
+  
+  # Calculate losses - ??? NOT SURE WHAT VALUE WE SHOULD BE USING
+  # TODO: Replace 0 with proper estimates
+  destroyedLoss = 0 * destroyed
+  damagedLoss = 0 * damaged
+  
+  totalLoss  = destroyedLoss + damagedLoss
+  
+  # What is a reasonable ratio of industrial to commercial? Assuming 50% for now.
+  industrialLoss = totalLoss * industrialProportionOfCommercial()
+  commercialLoss =  totalLoss - industrialLoss
+  
+  cleanup = commercialLoss * 0.09 + industrialLoss * 0.1
+  
+  return (cleanup)
+}
+
 # Calculate indirect costs
 indirectCosts <- function(events) {
-  events$indirectCost <- with(events, Calls.to.SES * 0)
+  
+  # Add different types of indirects
+  residential <- residentialDisruptionCosts()
+  commercial <- commercialDisruptionCosts()
+  publicService <- publicServiceDisruptionCosts()
+  cleanup <- cleanupDisruptionCosts()
+  
+  events$indirectCost <- residential + commercial + publicService + cleanup
   
   # Normalised values
   events$indirectCost.normalised <- events$indirectCost
