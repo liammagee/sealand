@@ -23,6 +23,7 @@ run <- function() {
 	initialise()
 
 	# Run the reports
+	annual_total_costs_of_disasters_in_australia_bte()
 	annual_total_costs_of_disasters_in_australia()
 	australian_natural_disaster_costs_by_decade()
 	average_cost_per_event()

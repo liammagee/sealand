@@ -145,10 +145,11 @@ computeColumns <- function() {
 
 ## Specific cost estimation functions
 ### Cost of public services
-costOfPublicServices <- function() {
+costOfPublicServiceCalls <- function(events) {
   # Cost per call? Say $10 - TODO: NEEDS BETTER EVIDENCE
-  callsToSES * 10
+  events$Calls.to.SES * 0
 }
+
 ### Intangibles
 #### Cost of life
 costOfLife <- function() {
@@ -160,7 +161,7 @@ costOfLife <- function() {
   #return(indexCosts(c(2012, 4500000)))
   # US - value of safety in different industries
 }
-costOfLife()
+
 
 costOfHospitalisedInjury <- function() {
   # 2006 BTE figure, adjusted to 2013
@@ -183,7 +184,34 @@ proportionOfHospitalisedInjury <- function() {
 
 ## Get all events for the purpose of generating costs
 getEvents <- function(resourceTypeParam = NULL) {
-  events <- mydata[c("Year.financial", "resourceType", "State.abbreviated", "State.1", "State.2..", "Insured.Costs.indexed", "Insured.Costs.normalised", "Calls.to.SES", "Deaths", "Injuries", "Deaths.normalised", "Injuries.normalised")]
+  events <- mydata[c(
+    "Year.financial", 
+    "Year", 
+    "resourceType", 
+    "State.abbreviated", 
+    "State.1", 
+    "State.2..", 
+    "Insured.Costs.indexed", 
+    "Insured.Costs.normalised", 
+    "Calls.to.SES", 
+    "Deaths", 
+    "Injuries", 
+    "Deaths.normalised", 
+    "Injuries.normalised",
+    "Evacuated",
+    "Homeless",
+    "Private.buildings.destroyed",
+    "Private.buildings.damaged",
+    "Commercial.buildings.destroyed",
+    "Commercial.buildings.damaged",
+    "Public.building.destroyed",
+    "Public.building.damaged",
+    "Public.land",
+    "Private.land",
+    "Livestock.destroyed",
+    "Crop.s..destroyed"
+    )
+  ]
   if (! is.null(resourceTypeParam)) {
     events <- subset(events, resourceType == resourceTypeParam)
   }
@@ -209,8 +237,8 @@ directCosts <- function(events) {
 
 # Calculate cost of housing
 costOfHousing <- function(events) {
-  destroyed <- as.numeric(mydata$Private.buildings.destroyed)
-  damaged <- as.numeric(mydata$Private.buildings.damaged)
+  destroyed <- as.numeric(events$Private.buildings.destroyed)
+  damaged <- as.numeric(events$Private.buildings.damaged)
   destroyed[is.na(destroyed)] <- 0
   damaged[is.na(damaged)] <- 0
   
@@ -223,10 +251,10 @@ costOfHousing <- function(events) {
 }
 
 # Calculate cost of agriculture
-costOfAgriculture <- function() {
-  land <- as.numeric(mydata$Private.land)
-  crops <- as.numeric(mydata$Crop.s..destroyed)
-  livestock <- as.numeric(mydata$Livestock.destroyed)
+costOfAgriculture <- function(events) {
+  land <- as.numeric(events$Private.land)
+  crops <- as.numeric(events$Crop.s..destroyed)
+  livestock <- as.numeric(events$Livestock.destroyed)
 
   land[is.na(land)] <- 0
   crops[is.na(crops)] <- 0
@@ -282,12 +310,12 @@ industrialProportionOfCommercial <- function() {
 
 
 # Residential disruption
-residentialDisruptionCosts <- function() {
+residentialDisruptionCosts <- function(events) {
   # Get key fields
-  evacuated <- as.numeric(mydata$Evacuated)
-  homeless <- as.numeric(mydata$Homeless)
-  destroyed <- as.numeric(mydata$Private.buildings.destroyed)
-  damaged <- as.numeric(mydata$Private.buildings.damaged)
+  evacuated <- as.numeric(events$Evacuated)
+  homeless <- as.numeric(events$Homeless)
+  destroyed <- as.numeric(events$Private.buildings.destroyed)
+  damaged <- as.numeric(events$Private.buildings.damaged)
 
   # Substitute for zeros
   evacuated[is.na(evacuated)] <- 0
@@ -310,10 +338,10 @@ residentialDisruptionCosts <- function() {
 }
 
 # Commerical disruption
-commercialDisruptionCosts <- function() {
+commercialDisruptionCosts <- function(events) {
   # Get key fields
-  destroyed <- as.numeric(mydata$Commercial.buildings.destroyed)
-  damaged <- as.numeric(mydata$Commercial.buildings.damaged)
+  destroyed <- as.numeric(events$Commercial.buildings.destroyed)
+  damaged <- as.numeric(events$Commercial.buildings.damaged)
   
   # Substitute for zeros
   destroyed[is.na(destroyed)] <- 0
@@ -335,11 +363,11 @@ commercialDisruptionCosts <- function() {
 }
 
 # Public service disruption
-publicServiceDisruptionCosts <- function() {
+publicServiceDisruptionCosts <- function(events) {
   # Get key fields
-  destroyed <- as.numeric(mydata$Public.building.destroyed)
-  damaged <- as.numeric(mydata$Public.building.damaged)
-  land <- as.numeric(mydata$Public.land)
+  destroyed <- as.numeric(events$Public.building.destroyed)
+  damaged <- as.numeric(events$Public.building.damaged)
+  land <- as.numeric(events$Public.land)
   
   # Substitute for zeros
   destroyed[is.na(destroyed)] <- 0
@@ -358,10 +386,10 @@ publicServiceDisruptionCosts <- function() {
 }
 
 # Clean-up costs
-cleanupDisruptionCosts <- function() {
+cleanupDisruptionCosts <- function(events) {
   # Get key fields
-  destroyed <- as.numeric(mydata$Commercial.buildings.destroyed)
-  damaged <- as.numeric(mydata$Commercial.buildings.damaged)
+  destroyed <- as.numeric(events$Commercial.buildings.destroyed)
+  damaged <- as.numeric(events$Commercial.buildings.damaged)
   
   # Substitute for zeros
   destroyed[is.na(destroyed)] <- 0
@@ -383,22 +411,135 @@ cleanupDisruptionCosts <- function() {
   return (cleanup)
 }
 
+
+# Agricultural costs
+agriculturalDisruptionCosts <- function(events) {
+  
+  # Just the case for FIRE?
+  disruptionAgriculture =  costOfAgriculture(events) * 1.178
+  
+  # Get variables
+  livestock <- as.numeric(events$Livestock.destroyed)
+  crops <- as.numeric(events$Crop.s..destroyed)
+  
+  livestock[is.na(livestock)] <- 0
+  crops[is.na(crops)] <- 0
+  
+  
+  # Costs for clean-up of:
+  # Sheep: $6-10
+  # Cows: $40-80
+  # Averaged at $34
+  cleanupLivestock = livestock * 34
+  
+  # These costs are for FLOODS
+  # $25ha floodway areas
+  # $10ha low velocity flood events
+  # $350 horticultural
+  # ASSUMPTION: Taking low value of $15ha
+  cleanupCrops = crops * 15
+  
+  return (disruptionAgriculture + cleanupLivestock + cleanupCrops)
+}
+
+# Calculate road transport delay costs
+roadTransportDelayCosts <- function(events) {
+  # We have no data for this currently
+  # However the BTE 2001 report makes the following assuptions:
+  #
+  #  - Non-business Cars: $12.94 per hour
+  #  - Business Cars: $31.67 per hour
+  #  - Rigid Trucks: $39.80 per hour
+  #  - Artic Cars: $44.58 per hour
+  # 
+  # Consequently to calculate this properly we need types of vehicles
+  # and hours delayed
+
+  return (0)
+}
+
+
+# Calculate network costs
+networkCosts <- function(events) {
+  networkCosts = 0
+
+  # Add road delay costs
+  networkCosts = networkCosts + roadTransportDelayCosts()
+
+  # Need further costs for:
+  #
+  # - Ports
+  # - Bridges
+  # - Aircrafts
+  # - Motor vehicles
+  # - Trains
+  # - Water vessels
+
+
+  # Need cost bases for 
+  return (networkCosts)
+}
+
+
 # Calculate indirect costs
 indirectCosts <- function(events) {
   
-  # Add different types of indirects
-  residential <- residentialDisruptionCosts()
-  commercial <- commercialDisruptionCosts()
-  publicService <- publicServiceDisruptionCosts()
-  cleanup <- cleanupDisruptionCosts()
+  # Disruption costs
+  residential <- residentialDisruptionCosts(events)
+  commercial <- commercialDisruptionCosts(events)
+  publicService <- publicServiceDisruptionCosts(events)
+  cleanup <- cleanupDisruptionCosts(events)
+  agricultural <- agriculturalDisruptionCosts(events)
   
-  events$indirectCost <- residential + commercial + publicService + cleanup
-  
+  disruptionCosts <- residential + commercial + publicService + cleanup + agricultural
+
+  # Network costs
+  network <- networkCosts(events)
+
+  # Provision of services
+  calls <- costOfPublicServiceCalls(events)
+
+  # Add other indirect costs for water, energy, communications
+  otherIndirects = 0
+
+  events$indirectCost <- disruptionCosts + network + calls + otherIndirects
+
   # Normalised values
   events$indirectCost.normalised <- events$indirectCost
 
   return (events)
 }
+
+# Calculate ecosystem services
+ecosystemCosts <- function(events) {
+  # Get the hectares affected
+
+  return (0)
+}
+
+# Calculate health impact
+healthImpactCosts <- function(events) {
+  # Work out relationship to Affected / Evacuated / Homes destroyed, damaged / Homeless
+
+  # For FIRE, $1000 per person
+
+  return (0)
+}
+
+# Calculate memorabilia costs
+memorabiliaCosts <- function(events) {
+  # ???
+
+  return (0)
+}
+
+# Calculate cultural heritage costs
+culturalHeritageCosts <- function(events) {
+  # ???
+
+  return (0)
+}
+
 
 # Calculate intangible costs
 intangibleCosts <- function(events) {
@@ -406,18 +547,31 @@ intangibleCosts <- function(events) {
   events$injuryCosts <- with(events, 
                              Injuries * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
                                Injuries * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury())
-  events$intangibleCost <- rowSums(subset(events, select = c(deathCosts, injuryCosts)), na.rm = TRUE)
+  deathAndInjuryCosts <- rowSums(subset(events, select = c(deathCosts, injuryCosts)), na.rm = TRUE)
+
+  ecosystemCosts <- ecosystemCosts(events)
+  healthImpactCosts <- healthImpactCosts(events)
+  memorabiliaCosts <- memorabiliaCosts(events)
+  culturalHeritageCosts <- culturalHeritageCosts(events)
+  nonDeathAndInjuryIntangibles = ecosystemCosts + healthImpactCosts + memorabiliaCosts + culturalHeritageCosts
+
+  events$intangibleCost = deathAndInjuryCosts + nonDeathAndInjuryIntangibles
 
   # Normalised values
   events$deathCosts.normalised <- with(events, Deaths.normalised * costOfLife())
   events$injuryCosts.normalised <- with(events, 
                                         Injuries.normalised * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
                                           Injuries.normalised * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury())
-  events$intangibleCost.normalised <- rowSums(subset(events, select = c(deathCosts.normalised, injuryCosts.normalised)), na.rm = TRUE)
+  deathAndInjuryCostsNormalised <- rowSums(subset(events, select = c(deathCosts.normalised, injuryCosts.normalised)), na.rm = TRUE)
+
+  # TODO: Normalise this value
+  nonDeathAndInjuryIntangiblesNormalised <- nonDeathAndInjuryIntangibles
+
+  events$intangibleCost.normalised = deathAndInjuryCostsNormalised + nonDeathAndInjuryIntangiblesNormalised
   return (events)
 }
 
-## Total cost for evant
+## Total cost for event
 totalCostForEvent <- function(resourceTypeParam = NULL) {
   events <- getEvents(resourceTypeParam)
   events <- directCosts(events)
@@ -425,6 +579,20 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
   events <- intangibleCosts(events)
   events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
   events$total.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+  return(events) 
+}
+
+## Total cost for event - BTE basis
+totalCostForEvent_BTEBasis <- function(resourceTypeParam = NULL) {
+  events <- getEvents(resourceTypeParam)
+  events <- directCosts(events)
+  events <- indirectCosts(events)
+  events <- intangibleCosts(events)
+  events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
+  events$total.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+  multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplier)
+  events$bteTotals <- events$directCost * multipliers
+  events$bteTotals.normalised <- apply(events[c("Year", "bteTotals")], 1, normalisedCosts)
   return(events) 
 }
 
@@ -462,25 +630,25 @@ eventTypeMultiplier <- function(eventType) {
   if (eventType == "Bushfire") {
     3.0
   }
-  else if (value == "Cyclone") {
+  else if (eventType == "Cyclone") {
     5.0
   }
-  else if (value == "Flood") {
+  else if (eventType == "Flood") {
     10.0
   }
-  else if (value == "Severe Storm") {
+  else if (eventType == "Severe Storm") {
     3.0
   }
-  else if (value == "Earthquake") {
+  else if (eventType == "Earthquake") {
     4.0
   }
-  else if (value == "Heatwave") {
+  else if (eventType == "Heatwave") {
     1.0
   }
-  else if (value == "Landslide") {
+  else if (eventType == "Landslide") {
     1.0
   }
-  else if (value == "Storm") {
+  else if (eventType == "Storm") {
     1.0
   }
   else  {
