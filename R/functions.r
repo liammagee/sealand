@@ -112,7 +112,7 @@ normalisedPopulation <- function(range) {
 }
 ## Load data
 loadData <- function() {
-  mydata <<- read.xls("./data/report_v5.xlsx", 1)
+  mydata <<- read.xls("./data/database.xlsx", 1)
   # Hack to ignore any rows without a year value - such as rows added for computation
   mydata <<- mydata[!is.na(mydata$Year), ]
   cpi <<- read.xls("./data/cpi.xlsx", 2)
@@ -182,8 +182,10 @@ proportionOfHospitalisedInjury <- function() {
 
 # Costs
 
-## Get all events for the purpose of generating costs
-getEvents <- function(resourceTypeParam = NULL) {
+## Get raw events, without data cleaning
+getRawEvents <- function(resourceTypeParam = NULL) {
+  
+
   events <- mydata[c(
     "Year.financial", 
     "Year", 
@@ -191,49 +193,51 @@ getEvents <- function(resourceTypeParam = NULL) {
     "State.abbreviated", 
     "State.1", 
     "State.2..", 
-    "Insured.Costs.indexed", 
-    "Insured.Costs.normalised", 
-    "Calls.to.SES", 
-    "Deaths", 
-    "Injuries", 
-    "Deaths.normalised", 
-    "Injuries.normalised",
     "Evacuated",
     "Homeless",
-    "Private.buildings.destroyed",
-    "Private.buildings.damaged",
+    "Calls.to.SES", 
+    "Deaths", 
+    "Deaths.normalised", 
+    "Injuries", 
+    "Injuries.normalised",
+    "Minor", 
+    "Severe", 
+    "Insured.Costs.indexed", 
+    "Insured.Costs.normalised", 
+    "Estimated.clean.up.costs", 
     "Commercial.buildings.destroyed",
     "Commercial.buildings.damaged",
+    "Private.buildings.destroyed",
+    "Private.buildings.damaged",
     "Public.building.destroyed",
     "Public.building.damaged",
     "Public.land",
     "Private.land",
-    "Livestock.destroyed",
-    "Crop.s..destroyed"
+    "Crop.s..destroyed",
+    "Livestock.destroyed"
     )
   ]
   if (! is.null(resourceTypeParam)) {
     events <- subset(events, resourceType == resourceTypeParam)
   }
+  return (events)
+}
+
+
+## Get all events for the purpose of generating costs
+getEvents <- function(resourceTypeParam = NULL) {
+  events <- getRawEvents(resourceTypeParam = NULL)
+
   events$Deaths <- as.numeric(events$Deaths)
   events$Injuries <- as.numeric(events$Injuries)
   events$Deaths.normalised <- as.numeric(events$Deaths.normalised)
   events$Injuries.normalised <- as.numeric(events$Injuries.normalised)
-  xsub <- events[,5:12] 
+  xsub <- events[,6:24] 
   xsub[is.na(xsub)] <- 0 
-  events[,5:12]<-xsub
+  events[,6:24]<-xsub
   return (events)
 }
 
-# Calculate direct costs
-directCosts <- function(events) {
-  events$directCost <- with(events, Insured.Costs.indexed)
-  
-  # Normalised values
-  events$directCost.normalised <- with(events, Insured.Costs.normalised)
-
-  return (events)
-}
 
 # Calculate cost of housing
 costOfHousing <- function(events) {
@@ -291,15 +295,32 @@ costOfAgriculture <- function(events) {
   return (landLoss + cropLoss + fencingLoss + equipmentLoss + livestockLoss)
 }
 
+
+
 # Calculate direct costs, via component-wise computation
-computedDirectCosts <- function() {
+computedDirectCosts <- function(events) {
   computedDirectCosts <- 0
   
   # Add various cost components
-  computedDirectCosts <- computedDirectCosts + costOfHousing()
-  computedDirectCosts <- computedDirectCosts + costOfAgriculture()
+  computedDirectCosts <- computedDirectCosts + costOfHousing(events)
+  computedDirectCosts <- computedDirectCosts + costOfAgriculture(events)
+
+  events$directCost <- computedDirectCosts
   
-  return (computedDirectCosts)
+  # Normalised values
+  events$directCost.normalised <- apply(events[c("Year.financial", "directCost")], 1, normalisedCosts)
+
+  return (events)
+}
+
+# Calculate direct costs
+directCosts <- function(events) {
+  events$directCost <- with(events, Insured.Costs.indexed)
+  
+  # Normalised values
+  events$directCost.normalised <- with(events, Insured.Costs.normalised)
+
+  return (events)
 }
 
 # Generate a proportion of industrial to total commercial property
@@ -574,7 +595,8 @@ intangibleCosts <- function(events) {
 ## Total cost for event
 totalCostForEvent <- function(resourceTypeParam = NULL) {
   events <- getEvents(resourceTypeParam)
-  events <- directCosts(events)
+  events <- computedDirectCosts(events)
+  # events <- directCosts(events)
   events <- indirectCosts(events)
   events <- intangibleCosts(events)
   events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
@@ -654,4 +676,39 @@ eventTypeMultiplier <- function(eventType) {
   else  {
     1.0
   }  
+}
+
+# Count number of empty values
+countEmptyValues <- function(data) {
+  data <- as.numeric(data)
+  emptyValues <- length(data[is.na(data)])
+  return (emptyValues)
+}
+
+# Report on the number of non-empty values each event contains
+countEmptyValuesInEvents <- function() {
+  events <- getRawEvents()
+
+  xsub <- events[,7:28] 
+  events$emptyValues <- apply(xsub, 1, countEmptyValues)
+
+  return (events)
+}
+
+# Interpollation functions
+
+## Interpollate from insured costs
+interpollate <- function(events) {
+  eventsWithCosts <- subset(events, !is.na(Insured.Costs.indexed))
+
+}
+
+
+# Interpollation functions
+interpollateInsuredCosts <- function() {
+  mydata$insured.numeric <- as.numeric(mydata$Insured.Costs.indexed)
+  mydata$reported.numeric <- as.numeric(mydata$Reported.cost)
+  eventsWithCosts <- subset(mydata, !is.na(insured.numeric) && !is.na(reported.numeric))
+  ratio <- eventsWithCosts$insured.numeric / eventsWithCosts$mydata$reported.numeric
+  return (ratio)
 }
