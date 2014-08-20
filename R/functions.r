@@ -112,12 +112,13 @@ normalisedPopulation <- function(range) {
 }
 ## Load data
 loadData <- function() {
-  mydata <<- read.xls("./data/database.xlsx", 1)
+  perl <- 'D:/strawberry/perl/bin/perl.exe'
+  mydata <<- read.xls("./data/database.xlsx", 1, perl = perl)
   # Hack to ignore any rows without a year value - such as rows added for computation
   mydata <<- mydata[!is.na(mydata$Year), ]
-  cpi <<- read.xls("./data/cpi.xlsx", 2)
-  pop <<- read.xls("./data/pop_consolidate.xlsx", 1)
-  gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
+  cpi <<- read.xls("./data/cpi.xlsx", 2, perl = perl)
+  pop <<- read.xls("./data/pop_consolidate.xlsx", 1, perl = perl)
+  gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2, perl = perl)
 }
 
 ## Generate computed columns
@@ -141,6 +142,9 @@ computeColumns <- function() {
   # ... for population-inflated deaths and injuries
   mydata$Deaths.normalised <<- apply(mydata[c("Year.financial", "Deaths")], 1, normalisedPopulation)
   mydata$Injuries.normalised <<- apply(mydata[c("Year.financial", "Injuries")], 1, normalisedPopulation)
+  
+  # Interpollated values
+  mydata$Insured.Costs.interpollated <<- apply(mydata[c("Costs.cleaned", "Reported.cost")], 1, interpollateInsuredCosts)
 }
 
 ## Specific cost estimation functions
@@ -698,17 +702,24 @@ countEmptyValuesInEvents <- function() {
 # Interpollation functions
 
 ## Interpollate from insured costs
-interpollate <- function(events) {
-  eventsWithCosts <- subset(events, !is.na(Insured.Costs.indexed))
-
+interpollateInsuredCosts <- function(range) {
+  mr <- meanRatioInsuredCosts()
+  insuredCost <- as.numeric(range[1])
+  reportedCost <- as.numeric(range[2])
+  interpollatedValue <- insuredCost
+  if (is.na(insuredCost)) {
+    interpollatedValue <- reportedCost / mr
+  }
+  return (interpollatedValue)
 }
 
 
 # Interpollation functions
-interpollateInsuredCosts <- function() {
+meanRatioInsuredCosts <- function() {
   mydata$insured.numeric <- as.numeric(mydata$Insured.Costs.indexed)
   mydata$reported.numeric <- as.numeric(mydata$Reported.cost)
-  eventsWithCosts <- subset(mydata, !is.na(insured.numeric) && !is.na(reported.numeric))
-  ratio <- eventsWithCosts$insured.numeric / eventsWithCosts$mydata$reported.numeric
-  return (ratio)
+  eventsWithCosts <- subset(mydata, !is.na(insured.numeric) & !is.na(reported.numeric))
+  ratio <- eventsWithCosts$insured.numeric / eventsWithCosts$reported.numeric
+  mr <- mean(ratio)
+  return (mr)
 }

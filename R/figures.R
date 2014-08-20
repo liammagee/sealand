@@ -52,6 +52,16 @@ doAxis <- function(number, at=NULL, labels=NULL) {
 			cex.sub=character_size)
 }
 
+
+## Generates a sheet with all the data and computed values
+generate_complete_data <- function() {
+  write.table(mydata, file = "./output/database_computed.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+  
+}
+
 ## Generates Figure 3.1
 annual_total_costs_of_disasters_in_australia <- function() {
   # Store the total costs by year
@@ -82,6 +92,7 @@ annual_total_costs_of_disasters_in_australia <- function() {
   
   dev.off()
 }
+
 
 ## Generates Figure 3.1
 annual_total_costs_of_disasters_in_australia_bte <- function() {
