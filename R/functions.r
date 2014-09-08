@@ -113,7 +113,7 @@ normalisedPopulation <- function(range) {
 ## Load data
 loadData <- function() {
   perl <- 'D:/strawberry/perl/bin/perl.exe'
-  mydata <<- read.xls("./data/database.xlsx", 1, perl = perl)
+  mydata <<- read.xls("./data/database.xlsx", 2, perl = perl)
   # Hack to ignore any rows without a year value - such as rows added for computation
   mydata <<- mydata[!is.na(mydata$Year), ]
   cpi <<- read.xls("./data/cpi.xlsx", 2, perl = perl)
@@ -123,7 +123,9 @@ loadData <- function() {
 
 ## Generate computed columns
 computeColumns <- function() {
-  
+
+  # First convert dollars to a basic count
+  adjustDollarsToCounts()
   
   # ... for cleaned up costs 
   mydata$Costs.cleaned <<- apply(data.matrix(mydata$Insured.Cost), 1, parseCurrency)
@@ -220,31 +222,34 @@ getRawEvents <- function(resourceTypeParam = NULL) {
     "Insured.Costs.indexed", 
     "Insured.Costs.normalised", 
     "Estimated.clean.up.costs", 
-    "Commercial.buildings.destroyed",
-    "Commercial.buildings.damaged",
-    "Private.buildings.destroyed",
-    "Private.buildings.damaged",
-    "Public.building.destroyed",
-    "Public.building.damaged",
-    "Public.land",
-    "Private.land",
-    "Crop.s..destroyed",
-    "Livestock.destroyed", 
+    "Buildings_Commercial_Destroyed_Count",
+    "Buildings_Commercial_Damaged_Count",
+    "Buildings_Private_Destroyed_Count",
+    "Buildings_Private_Damaged_Count",
+    "Buildings_Public_Destroyed_Count",
+    "Buildings_Public_Damaged_Count",
+    "Land_Public_Count",
+    "Land_Private_Count",
+    "Crops_Destroyed_Count",
+    "Livestock_Destroyed_Count", 
+    "Environmental_Count", 
+
 
     "Evacuated.i",
     "Homeless.i",
     "Calls.to.SES.i", 
     "Estimated.clean.up.costs.i", 
-    "Commercial.buildings.destroyed.i",
-    "Commercial.buildings.damaged.i",
-    "Private.buildings.destroyed.i",
-    "Private.buildings.damaged.i",
-    "Public.building.destroyed.i",
-    "Public.building.damaged.i",
-    "Public.land.i",
-    "Private.land.i",
-    "Crop.s..destroyed.i",
-    "Livestock.destroyed.i"
+    "Buildings_Commercial_Destroyed_Count.i",
+    "Buildings_Commercial_Damaged_Count.i",
+    "Buildings_Private_Destroyed_Count.i",
+    "Buildings_Private_Damaged_Count.i",
+    "Buildings_Public_Destroyed_Count.i",
+    "Buildings_Public_Damaged_Count.i",
+    "Land_Public_Count.i",
+    "Land_Private_Count.i",
+    "Crops_Destroyed_Count.i",
+    "Livestock_Destroyed_Count.i",
+    "Environmental_Count.i" 
     )
   ]
   if (! is.null(resourceTypeParam)) {
@@ -271,8 +276,8 @@ getEvents <- function(resourceTypeParam = NULL) {
 
 # Calculate cost of housing
 costOfHousing <- function(events) {
-  destroyed <- as.numeric(events$Private.buildings.destroyed)
-  damaged <- as.numeric(events$Private.buildings.damaged)
+  destroyed <- as.numeric(events$Buildings_Private_Destroyed_Count)
+  damaged <- as.numeric(events$Buildings_Private_Damaged_Count)
   destroyed[is.na(destroyed)] <- 0
   damaged[is.na(damaged)] <- 0
   
@@ -286,9 +291,9 @@ costOfHousing <- function(events) {
 
 # Calculate cost of agriculture
 costOfAgriculture <- function(events) {
-  land <- as.numeric(events$Private.land)
-  crops <- as.numeric(events$Crop.s..destroyed)
-  livestock <- as.numeric(events$Livestock.destroyed)
+  land <- as.numeric(events$Land_Private_Count)
+  crops <- as.numeric(events$Crops_Destroyed_Count)
+  livestock <- as.numeric(events$Livestock_Destroyed_Count)
 
   land[is.na(land)] <- 0
   crops[is.na(crops)] <- 0
@@ -304,9 +309,9 @@ costOfAgriculture <- function(events) {
   # * Barley - $253
   # * Canola - $562
   # We assume an average of $273 per tonne
-  ## cropLoss = crops * 273
+  cropLoss = crops * 273
   # ACTUALLY RIGHT NOW WE NEED TO ASSUME THIS IS A DOLLAR VALUE
-  cropLoss = crops
+  # cropLoss = crops
   
   # Fencing - TODO: but we have no direct data for this
   # Measurement is per km
@@ -326,6 +331,7 @@ costOfAgriculture <- function(events) {
   
   return (landLoss + cropLoss + fencingLoss + equipmentLoss + livestockLoss)
 }
+
 
 
 
@@ -357,6 +363,7 @@ directCosts <- function(events) {
   return (events)
 }
 
+
 # Generate a proportion of industrial to total commercial property
 industrialProportionOfCommercial <- function() {
   # What is a reasonable ratio of industrial to commercial? Assuming 50% for now.
@@ -369,8 +376,8 @@ residentialDisruptionCosts <- function(events) {
   # Get key fields
   evacuated <- as.numeric(events$Evacuated)
   homeless <- as.numeric(events$Homeless)
-  destroyed <- as.numeric(events$Private.buildings.destroyed)
-  damaged <- as.numeric(events$Private.buildings.damaged)
+  destroyed <- as.numeric(events$Buildings_Private_Destroyed_Count)
+  damaged <- as.numeric(events$Buildings_Private_Damaged_Count)
 
   # Substitute for zeros
   evacuated[is.na(evacuated)] <- 0
@@ -395,8 +402,8 @@ residentialDisruptionCosts <- function(events) {
 # Commerical disruption
 commercialDisruptionCosts <- function(events) {
   # Get key fields
-  destroyed <- as.numeric(events$Commercial.buildings.destroyed)
-  damaged <- as.numeric(events$Commercial.buildings.damaged)
+  destroyed <- as.numeric(events$Buildings_Commercial_Destroyed_Count)
+  damaged <- as.numeric(events$Buildings_Commercial_Damaged_Count)
   
   # Substitute for zeros
   destroyed[is.na(destroyed)] <- 0
@@ -420,9 +427,9 @@ commercialDisruptionCosts <- function(events) {
 # Public service disruption
 publicServiceDisruptionCosts <- function(events) {
   # Get key fields
-  destroyed <- as.numeric(events$Public.building.destroyed)
-  damaged <- as.numeric(events$Public.building.damaged)
-  land <- as.numeric(events$Public.land)
+  destroyed <- as.numeric(events$Buildings_Public_Destroyed_Count)
+  damaged <- as.numeric(events$Buildings_Public_Damaged_Count)
+  land <- as.numeric(events$Land_Public_Count)
   
   # Substitute for zeros
   destroyed[is.na(destroyed)] <- 0
@@ -443,8 +450,8 @@ publicServiceDisruptionCosts <- function(events) {
 # Clean-up costs
 cleanupDisruptionCosts <- function(events) {
   # Get key fields
-  destroyed <- as.numeric(events$Commercial.buildings.destroyed.i)
-  damaged <- as.numeric(events$Commercial.buildings.damaged.i)
+  destroyed <- as.numeric(events$Buildings_Commercial_Destroyed_Count.i)
+  damaged <- as.numeric(events$Buildings_Commercial_Damaged_Count.i)
   
   # Substitute for zeros
   destroyed[is.na(destroyed)] <- 0
@@ -474,8 +481,8 @@ agriculturalDisruptionCosts <- function(events) {
   disruptionAgriculture =  costOfAgriculture(events) * 1.178
   
   # Get variables
-  livestock <- as.numeric(events$Livestock.destroyed)
-  land <- as.numeric(events$Private.land)
+  livestock <- as.numeric(events$Livestock_Destroyed_Count)
+  land <- as.numeric(events$Land_Private_Count)
   
   livestock[is.na(livestock)] <- 0
   land[is.na(land)] <- 0
@@ -748,26 +755,28 @@ interpollateAllCosts <- function() {
   mydata$Calls.to.SES.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
   data <- mydata[c("Estimated.clean.up.costs", "Insured.Costs.normalised.i")]
   mydata$Estimated.clean.up.costs.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Commercial.buildings.destroyed", "Insured.Costs.normalised.i")]
-  mydata$Commercial.buildings.destroyed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Commercial.buildings.damaged", "Insured.Costs.normalised.i")]
-  mydata$Commercial.buildings.damaged.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Private.buildings.destroyed", "Insured.Costs.normalised.i")]
-  mydata$Private.buildings.destroyed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Private.buildings.damaged", "Insured.Costs.normalised.i")]
-  mydata$Private.buildings.damaged.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Public.building.destroyed", "Insured.Costs.normalised.i")]
-  mydata$Public.building.destroyed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Public.building.damaged", "Insured.Costs.normalised.i")]
-  mydata$Public.building.damaged.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Public.land", "Insured.Costs.normalised.i")]
-  mydata$Public.land.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Private.land", "Insured.Costs.normalised.i")]
-  mydata$Private.land.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Crop.s..destroyed", "Insured.Costs.normalised.i")]
-  mydata$Crop.s..destroyed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock.destroyed", "Insured.Costs.normalised.i")]
-  mydata$Livestock.destroyed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Buildings_Commercial_Destroyed_Count", "Insured.Costs.normalised.i")]
+  mydata$Buildings_Commercial_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Buildings_Commercial_Damaged_Count", "Insured.Costs.normalised.i")]
+  mydata$Buildings_Commercial_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Buildings_Private_Destroyed_Count", "Insured.Costs.normalised.i")]
+  mydata$Buildings_Private_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Buildings_Private_Damaged_Count", "Insured.Costs.normalised.i")]
+  mydata$Buildings_Private_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Buildings_Public_Destroyed_Count", "Insured.Costs.normalised.i")]
+  mydata$Buildings_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Buildings_Public_Damaged_Count", "Insured.Costs.normalised.i")]
+  mydata$Buildings_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Land_Public_Count", "Insured.Costs.normalised.i")]
+  mydata$Land_Public_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Land_Private_Count", "Insured.Costs.normalised.i")]
+  mydata$Land_Private_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Crops_Destroyed_Count", "Insured.Costs.normalised.i")]
+  mydata$Crops_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Livestock_Destroyed_Count", "Insured.Costs.normalised.i")]
+  mydata$Livestock_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Environmental_Count", "Insured.Costs.normalised.i")]
+  mydata$Environmental_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
 
   return ()
 }
@@ -786,26 +795,28 @@ swapInterpollatedForNormalCosts <- function() {
   mydata$Calls.to.SES <<- mydata$Calls.to.SES.i
   mydata$Estimated.clean.up.costs.ni <<- mydata$Estimated.clean.up.costs
   mydata$Estimated.clean.up.costs <<- mydata$Estimated.clean.up.costs.i
-  mydata$Commercial.buildings.destroyed.ni <<- mydata$Commercial.buildings.destroyed
-  mydata$Commercial.buildings.destroyed <<- mydata$Commercial.buildings.destroyed.i
-  mydata$Commercial.buildings.damaged.ni <<- mydata$Commercial.buildings.damaged
-  mydata$Commercial.buildings.damaged <<- mydata$Commercial.buildings.damaged.i
-  mydata$Private.buildings.destroyed.ni <<- mydata$Private.buildings.destroyed
-  mydata$Private.buildings.destroyed <<- mydata$Private.buildings.destroyed.i
-  mydata$Private.buildings.damaged.ni <<- mydata$Private.buildings.damaged
-  mydata$Private.buildings.damaged <<- mydata$Private.buildings.damaged.i
+  mydata$Buildings_Commercial_Destroyed_Count.ni <<- mydata$Buildings_Commercial_Destroyed_Count
+  mydata$Buildings_Commercial_Destroyed_Count <<- mydata$Buildings_Commercial_Destroyed_Count.i
+  mydata$Buildings_Commercial_Damaged_Count.ni <<- mydata$Buildings_Commercial_Damaged_Count
+  mydata$Buildings_Commercial_Damaged_Count <<- mydata$Buildings_Commercial_Damaged_Count.i
+  mydata$Buildings_Private_Destroyed_Count.ni <<- mydata$Buildings_Private_Destroyed_Count
+  mydata$Buildings_Private_Destroyed_Count <<- mydata$Buildings_Private_Destroyed_Count.i
+  mydata$Buildings_Private_Damaged_Count.ni <<- mydata$Buildings_Private_Damaged_Count
+  mydata$Buildings_Private_Damaged_Count <<- mydata$Buildings_Private_Damaged_Count.i
   mydata$Public.buildings.destroyed.ni <<- mydata$Public.buildings.destroyed
   mydata$Public.buildings.destroyed <<- mydata$Public.buildings.destroyed.i
   mydata$Public.buildings.damaged.ni <<- mydata$Public.buildings.damaged
   mydata$Public.buildings.damaged <<- mydata$Public.buildings.damaged.i
-  mydata$Public.land.ni <<- mydata$Public.land
-  mydata$Public.land <<- mydata$Public.land.i
-  mydata$Private.land.ni <<- mydata$Private.land
-  mydata$Private.land <<- mydata$Private.land.i
-  mydata$Crop.s..destroyed.ni <<- mydata$Crop.s..destroyed
-  mydata$Crop.s..destroyed <<- mydata$Crop.s..destroyed.i
-  mydata$Livestock.destroyed.ni <<- mydata$Livestock.destroyed
-  mydata$Livestock.destroyed <<- mydata$Livestock.destroyed.i
+  mydata$Land_Public_Count.ni <<- mydata$Land_Public_Count
+  mydata$Land_Public_Count <<- mydata$Land_Public_Count.i
+  mydata$Land_Private_Count.ni <<- mydata$Land_Private_Count
+  mydata$Land_Private_Count <<- mydata$Land_Private_Count.i
+  mydata$Crops_Destroyed_Count.ni <<- mydata$Crops_Destroyed_Count
+  mydata$Crops_Destroyed_Count <<- mydata$Crops_Destroyed_Count.i
+  mydata$Livestock_Destroyed_Count.ni <<- mydata$Livestock_Destroyed_Count
+  mydata$Livestock_Destroyed_Count <<- mydata$Livestock_Destroyed_Count.i
+  mydata$Environmental_Count.ni <<- mydata$Environmental_Count
+  mydata$Environmental_Count <<- mydata$Environmental_Count.i
 }
 
 ## Swaps interpollated costs
@@ -816,16 +827,17 @@ swapNormalForInterpollatedCosts <- function() {
   mydata$Homeless <- mydata$Homeless.ni
   mydata$Calls.to.SES <- mydata$Calls.to.SES.ni
   mydata$Estimated.clean.up.costs <- mydata$Estimated.clean.up.costs.ni
-  mydata$Commercial.buildings.destroyed <- mydata$Commercial.buildings.destroyed.ni
-  mydata$Commercial.buildings.damaged <- mydata$Commercial.buildings.damaged.ni
-  mydata$Private.buildings.destroyed <- mydata$Private.buildings.destroyed.ni
-  mydata$Private.buildings.damaged <- mydata$Private.buildings.damaged.ni
+  mydata$Buildings_Commercial_Destroyed_Count <- mydata$Buildings_Commercial_Destroyed_Count.ni
+  mydata$Buildings_Commercial_Damaged_Count <- mydata$Buildings_Commercial_Damaged_Count.ni
+  mydata$Buildings_Private_Destroyed_Count <- mydata$Buildings_Private_Destroyed_Count.ni
+  mydata$Buildings_Private_Damaged_Count <- mydata$Buildings_Private_Damaged_Count.ni
   mydata$Public.buildings.destroyed <- mydata$Public.buildings.destroyed.ni
   mydata$Public.buildings.damaged <- mydata$Public.buildings.damaged.ni
-  mydata$Public.land <- mydata$Public.land.ni
-  mydata$Private.land <- mydata$Private.land.ni
-  mydata$Crop.s..destroyed <- mydata$Crop.s..destroyed.ni
-  mydata$Livestock.destroyed <- mydata$Livestock.destroyed.ni
+  mydata$Land_Public_Count <- mydata$Land_Public_Count.ni
+  mydata$Land_Private_Count <- mydata$Land_Private_Count.ni
+  mydata$Crops_Destroyed_Count <- mydata$Crops_Destroyed_Count.ni
+  mydata$Livestock_Destroyed_Count <- mydata$Livestock_Destroyed_Count.ni
+  mydata$Environmental_Count <- mydata$Environmental_Count.ni
 }
 
 ## Interpollate from insured costs
@@ -855,6 +867,100 @@ ratio <- function(range) {
 }
 
 
+
+# Cost Conversion functions
+
+convertCountsToDollars <- function() {
+  mydata$Infrastructure_Public_Damaged_Dollars <- apply(cbind(mydata[c("Infrastructure_Public_Damaged_Count", "Infrastructure_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Infrastructure_Public_Destroyed_Dollars <- apply(cbind(mydata[c("Infrastructure_Public_Destroyed_Count", "Infrastructure_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Infrastructure_Private_Damaged_Dollars <- apply(cbind(mydata[c("Infrastructure_Private_Damaged_Count", "Infrastructure_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Infrastructure_Private_Destroyed_Dollars <- apply(cbind(mydata[c("Infrastructure_Private_Destroyed_Count", "Infrastructure_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Vehicle_Public_Damaged_Dollars <- apply(cbind(mydata[c("Vehicle_Public_Damaged_Count", "Vehicle_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Vehicle_Public_Destroyed_Dollars <- apply(cbind(mydata[c("Vehicle_Public_Destroyed_Count", "Vehicle_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Vehicle_Private_Damaged_Dollars <- apply(cbind(mydata[c("Vehicle_Private_Damaged_Count", "Vehicle_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Vehicle_Private_Destroyed_Dollars <- apply(cbind(mydata[c("Vehicle_Private_Destroyed_Count", "Vehicle_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Buildings_Public_Damaged_Dollars <- apply(cbind(mydata[c("Buildings_Public_Damaged_Count", "Buildings_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Buildings_Public_Destroyed_Dollars <- apply(cbind(mydata[c("Buildings_Public_Destroyed_Count", "Buildings_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Buildings_Private_Damaged_Dollars <- apply(cbind(mydata[c("Buildings_Private_Damaged_Count", "Buildings_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Buildings_Private_Destroyed_Dollars <- apply(cbind(mydata[c("Buildings_Private_Destroyed_Count", "Buildings_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Buildings_Commercial_Damaged_Dollars <- apply(cbind(mydata[c("Buildings_Commercial_Damaged_Count", "Buildings_Commercial_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Buildings_Commercial_Destroyed_Dollars <- apply(cbind(mydata[c("Buildings_Commercial_Destroyed_Count", "Buildings_Commercial_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Land_Public_Dollars <- apply(cbind(mydata[c("Land_Public_Count", "Land_Public_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Land_Private_Dollars <- apply(cbind(mydata[c("Land_Private_Count", "Land_Private_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Crops_Destroyed_Dollars <- apply(cbind(mydata[c("Crops_Destroyed_Count", "Crops_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Livestock_Destroyed_Dollars <- apply(cbind(mydata[c("Livestock_Destroyed_Count", "Livestock_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  mydata$Environmental_Dollars <- apply(cbind(mydata[c("Environmental_Count", "Environmental_Dollars")], 1), 1, convertSingleCountToDollars)
+}
+
+adjustDollarsToCounts <- function() {
+  mydata$Infrastructure_Public_Damaged_Count <<- apply(mydata[c("Infrastructure_Public_Damaged_Dollars", "Infrastructure_Public_Damaged_Count", "Year")], 1, dollarsToCount)
+  mydata$Infrastructure_Public_Destroyed_Count <<- apply(mydata[c("Infrastructure_Public_Destroyed_Dollars", "Infrastructure_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
+  mydata$Infrastructure_Private_Damaged_Count <<- apply(mydata[c("Infrastructure_Private_Damaged_Dollars", "Infrastructure_Private_Damaged_Count", "Year")], 1, dollarsToCount)
+  mydata$Infrastructure_Private_Destroyed_Count <<- apply(mydata[c("Infrastructure_Private_Destroyed_Dollars", "Infrastructure_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
+  mydata$Vehicle_Public_Damaged_Count <<- apply(mydata[c("Vehicle_Public_Damaged_Dollars", "Vehicle_Public_Damaged_Count", "Year")], 1, dollarsToCount)
+  mydata$Vehicle_Public_Destroyed_Count <<- apply(mydata[c("Vehicle_Public_Destroyed_Dollars", "Vehicle_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
+  mydata$Vehicle_Private_Damaged_Count <<- apply(mydata[c("Vehicle_Private_Damaged_Dollars", "Vehicle_Private_Damaged_Count", "Year")], 1, dollarsToCount)
+  mydata$Vehicle_Private_Destroyed_Count <<- apply(mydata[c("Vehicle_Private_Destroyed_Dollars", "Vehicle_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
+  mydata$Buildings_Public_Damaged_Count <<- apply(mydata[c("Buildings_Public_Damaged_Dollars", "Buildings_Public_Damaged_Count", "Year")], 1, dollarsToCount)
+  mydata$Buildings_Public_Destroyed_Count <<- apply(mydata[c("Buildings_Public_Destroyed_Dollars", "Buildings_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
+  mydata$Buildings_Private_Damaged_Count <<- apply(mydata[c("Buildings_Private_Damaged_Dollars", "Buildings_Private_Damaged_Count", "Year")], 1, dollarsToCount)
+  mydata$Buildings_Private_Destroyed_Count <<- apply(mydata[c("Buildings_Private_Destroyed_Dollars", "Buildings_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
+  mydata$Buildings_Commercial_Damaged_Count <<- apply(mydata[c("Buildings_Commercial_Damaged_Dollars", "Buildings_Commercial_Damaged_Count", "Year")], 1, dollarsToCount)
+  mydata$Buildings_Commercial_Destroyed_Count <<- apply(mydata[c("Buildings_Commercial_Destroyed_Dollars", "Buildings_Commercial_Destroyed_Count", "Year")], 1, dollarsToCount)
+  mydata$Land_Public_Count <<- apply(mydata[c("Land_Public_Dollars", "Land_Public_Count", "Year")], 1, dollarsToCount)
+  mydata$Land_Private_Count <<- apply(mydata[c("Land_Private_Dollars", "Land_Private_Count", "Year")], 1, dollarsToCount)
+  mydata$Crops_Destroyed_Count <<- apply(mydata[c("Crops_Destroyed_Dollars", "Crops_Destroyed_Count", "Year")], 1, dollarsToCount)
+  mydata$Livestock_Destroyed_Count <<- apply(mydata[c("Livestock_Destroyed_Dollars", "Livestock_Destroyed_Count", "Year")], 1, dollarsToCount)
+  mydata$Environmental_Count <<- apply(mydata[c("Environmental_Dollars", "Environmental_Count", "Year")], 1, dollarsToCount)
+}
+
+# Multipliers
+dollarsToCount <- function(range) {
+  category <- names(range)[1]
+  dollars <- as.numeric(range[1])
+  count <- as.numeric(range[2])
+  year <- as.numeric(range[3])
+  multiplier <- switch(category,
+          Infrastructure_Public_Damaged_Dollars = 1750000,
+          Infrastructure_Public_Destroyed_Dollars = 1750000 * 2,
+          Infrastructure_Private_Damaged_Dollars = 1750000,
+          Infrastructure_Private_Destroyed_Dollars = 1750000 * 2,
+          Vehicle_Public_Damaged_Dollars = 43315,
+          Vehicle_Public_Destroyed_Dollars = 43315 * 2,
+          Vehicle_Private_Damaged_Dollars = 4716,
+          Vehicle_Private_Destroyed_Dollars = 4716 * 2,
+          Buildings_Public_Damaged_Dollars = 165000 / 2,
+          Buildings_Public_Destroyed_Dollars = 165000,
+          Buildings_Private_Damaged_Dollars = 165000 / 2,
+          Buildings_Private_Destroyed_Dollars = 165000,
+          Buildings_Commercial_Damaged_Dollars = 165000 / 2,
+          Buildings_Commercial_Destroyed_Dollars = 165000,
+          Land_Public_Dollars = 172,
+          Land_Private_Dollars = 172,
+          Crops_Destroyed_Dollars = 273  + 50,
+          Livestock_Destroyed_Dollars = 320,
+          Environmental_Dollars = 1
+  )
+  inflated_dollars = (indexCosts(cbind(year, dollars)))
+  if (is.na(count)) {
+    count = inflated_dollars / multiplier;
+  }
+  return (count)
+}
+apply(mydata[c("Infrastructure_Public_Damaged_Dollars", "Infrastructure_Public_Damaged_Count", "Year")], 1, dollarsToCount)
+
+
+convertSingleCountToDollars <- function(range) {
+  count <- as.numeric(range[1])
+  dollarValue <- as.numeric(range[2])
+  multiplier <- as.numeric(range[3])
+  if (is.na(dollarValue) & !is.na(count)) {
+    dollarValue <- multiplier * count
+  }
+  return (dollarValue)
+}
+
+
 # Write mydata back to a file
 writeData <- function() {
   write.table(mydata, file = "./output/data.csv", append = FALSE, quote = TRUE, sep = ",",
@@ -862,5 +968,6 @@ writeData <- function() {
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
 }
+
 
 
