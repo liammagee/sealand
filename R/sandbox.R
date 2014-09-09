@@ -35,3 +35,27 @@ function <- compareInsuredToTotalCosts() {
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
 }
+
+function doAllData() {
+  
+  initialise()
+  
+  # Repeats logic from totalCostForEvent(), getEvents()
+  mydata$Deaths <- as.numeric(mydata$Deaths)
+  mydata$Injuries <- as.numeric(mydata$Injuries)
+  mydata$Deaths.normalised <- as.numeric(mydata$Deaths.normalised)
+  mydata$Injuries.normalised <- as.numeric(mydata$Injuries.normalised)
+  # xsub <- mydata[,6:24] 
+  # xsub[is.na(xsub)] <- 0 
+  # mydata[,6:24]<-xsub
+  
+  mydata <- computedDirectCosts(mydata)
+  # mydata <- directCosts(mydata)
+  mydata <- indirectCosts(mydata)
+  mydata <- intangibleCosts(mydata)
+  mydata$total <- rowSums(subset(mydata, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
+  mydata$total.normalised <- rowSums(subset(mydata, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+  
+  
+}
+

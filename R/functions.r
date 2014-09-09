@@ -113,12 +113,21 @@ normalisedPopulation <- function(range) {
 ## Load data
 loadData <- function() {
   perl <- 'D:/strawberry/perl/bin/perl.exe'
-  mydata <<- read.xls("./data/database.xlsx", 2, perl = perl)
+  # mydata <<- read.xls("./data/database.xlsx", 2, perl = perl)
+  # # Hack to ignore any rows without a year value - such as rows added for computation
+  # mydata <<- mydata[!is.na(mydata$Year), ]
+  # cpi <<- read.xls("./data/cpi.xlsx", 2, perl = perl)
+  # pop <<- read.xls("./data/pop_consolidate.xlsx", 1, perl = perl)
+  # gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2, perl = perl)
+
+
+  # MAC VERSION
+  mydata <<- read.xls("./data/database.xlsx", 2)
   # Hack to ignore any rows without a year value - such as rows added for computation
   mydata <<- mydata[!is.na(mydata$Year), ]
-  cpi <<- read.xls("./data/cpi.xlsx", 2, perl = perl)
-  pop <<- read.xls("./data/pop_consolidate.xlsx", 1, perl = perl)
-  gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2, perl = perl)
+  cpi <<- read.xls("./data/cpi.xlsx", 2)
+  pop <<- read.xls("./data/pop_consolidate.xlsx", 1)
+  gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
 }
 
 ## Generate computed columns
@@ -821,23 +830,23 @@ swapInterpollatedForNormalCosts <- function() {
 
 ## Swaps interpollated costs
 swapNormalForInterpollatedCosts <- function() {
-  mydata$Insured.Costs.normalised <- mydata$Insured.Costs.normalised.ni
-  mydata$Insured.Costs.indexed <- mydata$Insured.Costs.indexed.ni
-  mydata$Evacuated <- mydata$Evacuated.ni
-  mydata$Homeless <- mydata$Homeless.ni
-  mydata$Calls.to.SES <- mydata$Calls.to.SES.ni
-  mydata$Estimated.clean.up.costs <- mydata$Estimated.clean.up.costs.ni
-  mydata$Buildings_Commercial_Destroyed_Count <- mydata$Buildings_Commercial_Destroyed_Count.ni
-  mydata$Buildings_Commercial_Damaged_Count <- mydata$Buildings_Commercial_Damaged_Count.ni
-  mydata$Buildings_Private_Destroyed_Count <- mydata$Buildings_Private_Destroyed_Count.ni
-  mydata$Buildings_Private_Damaged_Count <- mydata$Buildings_Private_Damaged_Count.ni
-  mydata$Public.buildings.destroyed <- mydata$Public.buildings.destroyed.ni
-  mydata$Public.buildings.damaged <- mydata$Public.buildings.damaged.ni
-  mydata$Land_Public_Count <- mydata$Land_Public_Count.ni
-  mydata$Land_Private_Count <- mydata$Land_Private_Count.ni
-  mydata$Crops_Destroyed_Count <- mydata$Crops_Destroyed_Count.ni
-  mydata$Livestock_Destroyed_Count <- mydata$Livestock_Destroyed_Count.ni
-  mydata$Environmental_Count <- mydata$Environmental_Count.ni
+  mydata$Insured.Costs.normalised <<- mydata$Insured.Costs.normalised.ni
+  mydata$Insured.Costs.indexed <<- mydata$Insured.Costs.indexed.ni
+  mydata$Evacuated <<- mydata$Evacuated.ni
+  mydata$Homeless <<- mydata$Homeless.ni
+  mydata$Calls.to.SES <<- mydata$Calls.to.SES.ni
+  mydata$Estimated.clean.up.costs <<- mydata$Estimated.clean.up.costs.ni
+  mydata$Buildings_Commercial_Destroyed_Count <<- mydata$Buildings_Commercial_Destroyed_Count.ni
+  mydata$Buildings_Commercial_Damaged_Count <<- mydata$Buildings_Commercial_Damaged_Count.ni
+  mydata$Buildings_Private_Destroyed_Count <<- mydata$Buildings_Private_Destroyed_Count.ni
+  mydata$Buildings_Private_Damaged_Count <<- mydata$Buildings_Private_Damaged_Count.ni
+  mydata$Public.buildings.destroyed <<- mydata$Public.buildings.destroyed.ni
+  mydata$Public.buildings.damaged <<- mydata$Public.buildings.damaged.ni
+  mydata$Land_Public_Count <<- mydata$Land_Public_Count.ni
+  mydata$Land_Private_Count <<- mydata$Land_Private_Count.ni
+  mydata$Crops_Destroyed_Count <<- mydata$Crops_Destroyed_Count.ni
+  mydata$Livestock_Destroyed_Count <<- mydata$Livestock_Destroyed_Count.ni
+  mydata$Environmental_Count <<- mydata$Environmental_Count.ni
 }
 
 ## Interpollate from insured costs
@@ -963,8 +972,27 @@ convertSingleCountToDollars <- function(range) {
 
 # Write mydata back to a file
 writeData <- function() {
+
+  # Repeats logic from totalCostForEvent(), getEvents()
+  mydata$Deaths <- as.numeric(mydata$Deaths)
+  mydata$Injuries <- as.numeric(mydata$Injuries)
+  mydata$Deaths.normalised <- as.numeric(mydata$Deaths.normalised)
+  mydata$Injuries.normalised <- as.numeric(mydata$Injuries.normalised)
+  # xsub <- mydata[,6:24] 
+  # xsub[is.na(xsub)] <- 0 
+  # mydata[,6:24]<-xsub
+
+  mydata <- computedDirectCosts(mydata)
+  # mydata <- directCosts(mydata)
+  mydata <- indirectCosts(mydata)
+  mydata <- intangibleCosts(mydata)
+  mydata$total <- rowSums(subset(mydata, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
+  mydata$total.normalised <- rowSums(subset(mydata, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+
+
+  swapNormalForInterpollatedCosts()
   write.table(mydata, file = "./output/data.csv", append = FALSE, quote = TRUE, sep = ",",
-              eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+              eol = "\n", na = "", dec = ".", row.names = FALSE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
 }
