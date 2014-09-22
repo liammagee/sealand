@@ -11,3 +11,4 @@
 # Leave out figs and output at this stage - these should be generated at any time
 figs/*
 output/*
+node_modules/*
