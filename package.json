@@ -1,0 +1,13 @@
+{
+  "name": "sealand",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "xlsx": "0.7.10",
+    "underscore": "*",
+    "jstat": "*"
+  }
+}
