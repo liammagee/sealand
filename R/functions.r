@@ -899,6 +899,31 @@ totalCostForEvent_BTEBasis <- function(resourceTypeParam = NULL) {
   return(events) 
 }
 
+
+## Total cost for event - Interpolated basis
+totalCostForEvent_Interpolated <- function(resourceTypeParam = NULL) {
+  
+  events <- getEvents(resourceTypeParam)
+  events <- directCosts(events)
+  events <- indirectCosts(events)
+  events <- intangibleCosts(events)
+  interpolatedTotals <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
+  interpolatedTotals.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+  
+  swapNormalForInterpollatedCosts()
+  events <- getEvents(resourceTypeParam)
+  events <- directCosts(events)
+  events <- indirectCosts(events)
+  events <- intangibleCosts(events)
+  events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
+  events$total.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+  events$interpolatedTotals <- interpolatedTotals
+  events$interpolatedTotals.normalised <- interpolatedTotals.normalised
+  swapInterpollatedForNormalCosts()
+  return(events) 
+}
+
+
 ## Provide a code for cost breaks
 codeCosts <- function(value) {
   if (value < 10) {

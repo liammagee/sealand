@@ -55,7 +55,6 @@ function doAllData() {
   mydata <- intangibleCosts(mydata)
   mydata$total <- rowSums(subset(mydata, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
   mydata$total.normalised <- rowSums(subset(mydata, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
-  
-  
+    
 }
 
