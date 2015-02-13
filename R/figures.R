@@ -432,8 +432,8 @@ disaster_costs_by_state_and_territory_compared_with_ndrra <- function() {
   data <- totalCostsByState[totalCostsByState$Group.1 > 2002,]
   
   # Convert to a table
-  install.packages('reshape')
-  library(reshape)
+  # install.packages('reshape')
+  # library(reshape)
   pivotted_data <- cast(data, Group.1 ~ Group.2)
   write.table(pivotted_data, file = "./output/pivottedStateDataForLast10Years.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = TRUE,
@@ -446,7 +446,7 @@ disaster_costs_by_state_and_territory_compared_with_ndrra <- function() {
   states <- totalCostsByState[,1]
   
   # Remove 'Other' column
-  totalCountsByState <- totalCountsByState[!(totalCountsByState$Group.1 %in% c('Other')),]
+  totalCountsByState <- totalCostsByState[!(totalCostsByState$Group.1 %in% c('Other')),]
   totalCostsByState
   ndrra
   
@@ -461,7 +461,7 @@ disaster_costs_by_state_and_territory_compared_with_ndrra <- function() {
   ## Graph the results
   
   # Plot a basic graph of costs
-  pdf(file=paste("./figs/", "fig3_10_fig3_10_disaster_costs_by_state_and_territory_compared_with_ndrra", ".pdf", sep=""))
+  pdf(file=paste("./figs/", "fig3_10_disaster_costs_by_state_and_territory_compared_with_ndrra", ".pdf", sep=""))
   
   # Set an upper y value based on the data passed in
   # Note: this will often be too little
@@ -469,8 +469,8 @@ disaster_costs_by_state_and_territory_compared_with_ndrra <- function() {
     y_range <- range(0, data)
   }
   totalCostsByState
-  data <- t(cbind(totalCostsByState[, 2], totalCostsByYear[, 3]))
-  colnames(data) <- totalCostsByYear[, 1]
+  data <- t(cbind(totalCostsByState[, 2], totalCostsByState[, 3]))
+  colnames(data) <- totalCostsByState[, 1]
   rownames(data) <- c("Calculated", "NDRRA")
   
   # Plot normalised data
