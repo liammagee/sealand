@@ -48,7 +48,7 @@ abbreviateState <- function(value) {
 }
 # Helper function - zero out NAs
 zeroNA <- function(data) {
-  data[is.na(data)] <- 0 
+  data[is.na(data)] <- 0
 }
 
 # Helper method - taken from http://www.ozforex.com.au/forex-tools/historical-rate-tools/yearly-average-rates
@@ -99,7 +99,7 @@ popRatio <- function(baseYear) {
     popRow <- 10 + (baseYear - 1967)
   }
   else {
-    popRow <- 24 + (baseYear - 1981) * 4  
+    popRow <- 24 + (baseYear - 1981) * 4
   }
   popTest <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[popRow])
   pop2013 <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[152])
@@ -169,36 +169,59 @@ loadData <- function() {
   gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
 }
 
+
+cleanData <- function() {
+
+  # ... for cleaned up costs
+  mydata$Costs.cleaned <<- apply(data.matrix(mydata$Insured.Cost), 1, parseCurrency)
+
+  # ... for cleaned up states
+  mydata$State.abbreviated <<- apply(data.matrix(mydata$State.1), 1, abbreviateState)
+
+  # ... for financial years
+  mydata$Year.financial <<- apply(mydata[c("Month", "Year")], 1, financialYear)
+
+}
+
+normaliseInsuredCost <- function() {
+  # ... for CPI-indexed insured costs
+  mydata$Insured.Cost.indexed <<- apply(mydata[c("Year.financial", "Costs.cleaned")], 1, indexCosts)
+  # ... for normalised insured costs
+  mydata$Insured.Cost.normalised <<- apply(mydata[c("Year.financial", "Costs.cleaned")], 1, normalisedCosts)
+}
+
+normaliseReportedCost <- function() {
+  # ... for CPI-indexed reported costs
+  mydata$Reported.cost.indexed <<- apply(mydata[c("Year.financial", "Reported.cost")], 1, indexCosts)
+  # ... for normalised insured costs
+  mydata$Reported.cost.normalised <<- apply(mydata[c("Year.financial", "Reported.cost")], 1, normalisedCosts)
+}
+
+normaliseDeathsAndInjuries <- function() {
+  # ... for population-inflated deaths and injuries
+  mydata$Deaths.normalised <<- apply(mydata[c("Year.financial", "Deaths")], 1, normalisedPopulation)
+  mydata$Injuries.normalised <<- apply(mydata[c("Year.financial", "Injuries")], 1, normalisedPopulation)
+
+}
+
 ## Generate computed columns
 computeColumns <- function() {
 
   # First convert dollars to a basic count
   adjustDollarsToCounts()
-  
-  # ... for cleaned up costs 
-  mydata$Costs.cleaned <<- apply(data.matrix(mydata$Insured.Cost), 1, parseCurrency)
-  
-  # ... for cleaned up states
-  mydata$State.abbreviated <<- apply(data.matrix(mydata$State.1), 1, abbreviateState)
-  
-  # ... for financial years
-  mydata$Year.financial <<- apply(mydata[c("Month", "Year")], 1, financialYear)
 
-  # ... for CPI-indexed insured costs
-  mydata$Insured.Costs.indexed <<- apply(mydata[c("Year.financial", "Costs.cleaned")], 1, indexCosts)
-  
-  # ... for normalised insured costs
-  mydata$Insured.Costs.normalised <<- apply(mydata[c("Year.financial", "Costs.cleaned")], 1, normalisedCosts)
-  
-  # ... for population-inflated deaths and injuries
-  mydata$Deaths.normalised <<- apply(mydata[c("Year.financial", "Deaths")], 1, normalisedPopulation)
-  mydata$Injuries.normalised <<- apply(mydata[c("Year.financial", "Injuries")], 1, normalisedPopulation)
+  # Clean data
+  cleanData()
 
+  # Index and normalise costs
+  normaliseInsuredCost()
+  normaliseReportedCost()
+  normaliseDeathsAndInjuries()
 
   # Do interpollation
   interpollateAllCosts()
-  
-  # (Optionally) copy the interpollated values 
+
+  # (Optionally) copy the interpollated values
   swapInterpollatedForNormalCosts()
 }
 
@@ -253,26 +276,31 @@ proportionOfHospitalisedInjury <- function() {
 
 ## Get raw events, without data cleaning
 getRawEvents <- function(resourceTypeParam = NULL) {
-  
+
   events <- mydata[c(
-    "Year.financial", 
-    "Year", 
-    "resourceType", 
-    "State.abbreviated", 
-    "State.1", 
-    "State.2..", 
+    "Year.financial",
+    "Year",
+    "title",
+    "resourceType",
+    "State.abbreviated",
+    "State.1",
+    "State.2..",
     "Evacuated",
     "Homeless",
-    "Calls.to.SES", 
-    "Deaths", 
-    "Deaths.normalised", 
-    "Injuries", 
+    "Calls.to.SES",
+    "Deaths",
+    "Deaths.normalised",
+    "Injuries",
     "Injuries.normalised",
-    "Minor", 
-    "Severe", 
-    "Insured.Costs.indexed", 
-    "Insured.Costs.normalised", 
-    "Assistance_dollars", 
+    "Minor",
+    "Severe",
+    "Insured.Cost",
+    "Insured.Cost.indexed",
+    "Insured.Cost.normalised",
+    "Reported.cost",
+    "Reported.cost.indexed",
+    "Reported.cost.normalised",
+    "Assistance_dollars",
     "Infrastructure_Public_Destroyed_Count",
     "Infrastructure_Public_Damaged_Count",
     "Infrastructure_Public_Destroyed_Count_Roads_Urban",
@@ -296,7 +324,9 @@ getRawEvents <- function(resourceTypeParam = NULL) {
     "Buildings_Private_Destroyed_Count",
     "Buildings_Private_Damaged_Count",
     "Buildings_Public_Destroyed_Count",
+    "Buildings_Public_Destroyed_Type",
     "Buildings_Public_Damaged_Count",
+    "Buildings_Public_Damaged_Type",
     "Vehicle_Public_Destroyed_Count",
     "Vehicle_Public_Destroyed_Count_Aircraft",
     "Vehicle_Public_Destroyed_Count_Train",
@@ -319,19 +349,19 @@ getRawEvents <- function(resourceTypeParam = NULL) {
     "Crops_Destroyed_Count",
     "Crops_Destroyed_Units",
     "Crops_Destroyed_Type",
-    "Livestock_Destroyed_Count", 
+    "Livestock_Destroyed_Count",
     "Livestock_Destroyed_Count_Cattle",
     "Livestock_Destroyed_Count_Sheep_Goats",
     "Livestock_Destroyed_Count_Poultry",
     "Livestock_Destroyed_Count_Pigs",
     "Livestock_Destroyed_Count_Other",
-    "Environmental_Count", 
-    "Fencing", 
+    "Environmental_Count",
+    "Fencing",
 
     "Evacuated.i",
     "Homeless.i",
-    "Calls.to.SES.i", 
-    "Assistance_dollars.i", 
+    "Calls.to.SES.i",
+    "Assistance_dollars.i",
     "Buildings_Commercial_Destroyed_Count.i",
     "Buildings_Commercial_Damaged_Count.i",
     "Buildings_Private_Destroyed_Count.i",
@@ -342,7 +372,7 @@ getRawEvents <- function(resourceTypeParam = NULL) {
     "Land_Private_Count.i",
     "Crops_Destroyed_Count.i",
     "Livestock_Destroyed_Count.i",
-    "Environmental_Count.i" 
+    "Environmental_Count.i"
     )
   ]
   if (! is.null(resourceTypeParam)) {
@@ -360,8 +390,8 @@ getEvents <- function(resourceTypeParam = NULL) {
   events$Injuries <- as.numeric(events$Injuries)
   events$Deaths.normalised <- as.numeric(events$Deaths.normalised)
   events$Injuries.normalised <- as.numeric(events$Injuries.normalised)
-  xsub <- events[,6:24] 
-  xsub[is.na(xsub)] <- 0 
+  xsub <- events[,6:24]
+  xsub[is.na(xsub)] <- 0
   events[,6:24]<-xsub
   return (events)
 }
@@ -375,15 +405,14 @@ costOfResidentialBuildingContents <- function(events) {
 
 # Calculate cost of housing
 costOfResidentialBuilding <- function(events) {
-  destroyed <- as.numeric(events$Buildings_Private_Destroyed_Count)
-  damaged <- as.numeric(events$Buildings_Private_Damaged_Count)
-  destroyed[is.na(destroyed)] <- 0
-  damaged[is.na(damaged)] <- 0
-  
-  destroyedCost = destroyed * 469536.015
-  damagedCost = damaged * destroyedCost * 0.5
-  contentsCosts <- costOfResidentialBuildingContents(events)
-  
+  destroyed <- numericise(events$Buildings_Private_Destroyed_Count)
+  damaged <- numericise(events$Buildings_Private_Damaged_Count)
+
+  destroyedCost <- destroyed * 469536.015
+  damagedCost <- damaged * 469536.015 * 0.5
+  contentsCosts <- destroyed * costOfResidentialBuildingContents(events) +
+                  damaged * costOfResidentialBuildingContents(events) * 0.5
+
   return (destroyedCost + damagedCost + contentsCosts)
 }
 
@@ -406,54 +435,59 @@ costOfCommercialBuildings <- function(events) {
 
   costOfStructures <- destroyedGeneral * 431232 + destroyedIndustrial * 498750 + destroyedHotels * indexCosts(c(2005, 3885000))
   costOfContents <- 0
-  
+
   return (costOfStructures + costOfContents)
 }
 
 
+# Determines the unit cost of a public building
+publicBuildingUnitCost <- function(buildingType) {
+  unitCost <- switch(buildingType,
+    "School" = indexCosts(c(2011, 14001152)),
+    "Church" = indexCosts(c(2010, 4082351)) + indexCosts(c(2013, 1500000)),
+    "Community centre" = indexCosts(c(2011, 17350000)),
+    "Hospital" = indexCosts(c(2014, 35743396))
+  )
+  if (is.null(unitCost)) {
+    unitCost <- 0
+  }
+  return (unitCost)
+}
+
 # Calculate cost of public buildings
 costOfPublicBuildings <- function(events) {
-  destroyed <- as.numeric(events$Buildings_Public_Destroyed_Count)
-  destroyedType <- as.numeric(events$Buildings_Public_Destroyed_Type)
-  damaged <- as.numeric(events$Buildings_Public_Damaged_Count)
-  damagedType <- as.numeric(events$Buildings_Public_Damaged_Type)
-  destroyed[is.na(destroyed)] <- 0
-  damaged[is.na(damaged)] <- 0
+  destroyed <- numericise(events$Buildings_Public_Destroyed_Count)
+  destroyedType <- events$Buildings_Public_Destroyed_Type
+  damaged <- numericise(events$Buildings_Public_Damaged_Count)
+  damagedType <- events$Buildings_Public_Damaged_Type
 
-  costOfStructures <- 0
-  costOfContents <- 0
-  
+  destroyedUnitCost <- apply(data.frame(destroyedType), 1, publicBuildingUnitCost)
+  damagedUnitCost <- apply(data.frame(damagedType), 1, publicBuildingUnitCost)
+
+  costOfStructures <- destroyed * destroyedUnitCost
+  costOfContents <- destroyed * damagedUnitCost
+
   return (costOfStructures + costOfContents)
 }
 
 
 # Calculate cost of infrastructure
 costOfInfrastructure <- function(events) {
-  destroyedRoadsUrban <- as.numeric(events$Infrastructure_Public_Destroyed_Count_Roads_Urban)
-  damagedRoadsUrban <- as.numeric(events$Infrastructure_Public_Damaged_Count_Roads_Urban)
-  destroyedRoadsUrban[is.na(destroyedRoadsUrban)] <- 0
-  damagedRoadsUrban[is.na(damagedRoadsUrban)] <- 0
-  destroyedRoadsRural <- as.numeric(events$Infrastructure_Public_Destroyed_Count_Roads_Rural)
-  damagedRoadsRural <- as.numeric(events$Infrastructure_Public_Damaged_Count_Roads_Rural)
-  destroyedRoadsRural[is.na(destroyedRoadsRural)] <- 0
-  damagedRoadsRural[is.na(damagedRoadsRural)] <- 0
-  destroyedBridges <- as.numeric(events$Infrastructure_Public_Destroyed_Count_Bridges)
-  damagedBridges <- as.numeric(events$Infrastructure_Public_Damaged_Count_Bridges)
-  destroyedBridges[is.na(destroyedBridges)] <- 0
-  damagedBridges[is.na(damagedBridges)] <- 0
-  destroyedRail <- as.numeric(events$Infrastructure_Public_Destroyed_Count_Rail)
-  damagedRail <- as.numeric(events$Infrastructure_Public_Damaged_Count_Rail)
-  destroyedRail[is.na(destroyedRail)] <- 0
-  damagedRail[is.na(damagedRail)] <- 0
-  destroyedPowerPoles <- as.numeric(events$Infrastructure_Public_Destroyed_Count_Power_Poles)
-  damagedPowerPoles <- as.numeric(events$Infrastructure_Public_Damaged_Count_Power_Poles)
-  destroyedPowerPoles[is.na(destroyedPowerPoles)] <- 0
-  damagedPowerPoles[is.na(damagedPowerPoles)] <- 0
+  destroyedRoadsUrban <- numericise(events$Infrastructure_Public_Destroyed_Count_Roads_Urban)
+  damagedRoadsUrban <- numericise(events$Infrastructure_Public_Damaged_Count_Roads_Urban)
+  destroyedRoadsRural <- numericise(events$Infrastructure_Public_Destroyed_Count_Roads_Rural)
+  damagedRoadsRural <- numericise(events$Infrastructure_Public_Damaged_Count_Roads_Rural)
+  destroyedBridges <- numericise(events$Infrastructure_Public_Destroyed_Count_Bridges)
+  damagedBridges <- numericise(events$Infrastructure_Public_Damaged_Count_Bridges)
+  destroyedRail <- numericise(events$Infrastructure_Public_Destroyed_Count_Rail)
+  damagedRail <- numericise(events$Infrastructure_Public_Damaged_Count_Rail)
+  destroyedPowerPoles <- numericise(events$Infrastructure_Public_Destroyed_Count_Power_Poles)
+  damagedPowerPoles <- numericise(events$Infrastructure_Public_Damaged_Count_Power_Poles)
 
   costs <-  destroyedRoadsUrban * indexCosts(c(2011, 2168975)) + damagedRoadsUrban * 0  +
             destroyedRoadsRural * indexCosts(c(2011, 666600)) + damagedRoadsRural * 0  +
-            destroyedBridges * indexCosts(c(2013, 28600000)) + damagedBridges * 0 + 
-            destroyedRail * indexCosts(c(2010, 42570000)) + damagedRail * 0 + 
+            destroyedBridges * indexCosts(c(2013, 28600000)) + damagedBridges * 0 +
+            destroyedRail * indexCosts(c(2010, 42570000)) + damagedRail * 0 +
             destroyedPowerPoles * indexCosts(c(2013, 9000)) + damagedPowerPoles * 0
 
   return (costs)
@@ -473,15 +507,15 @@ costOfVehicles <- function(events) {
   destroyedCaravans <- as.numeric(events$Vehicle_Private_Destroyed_Count_Caravans)
   damagedCaravans <- as.numeric(events$Vehicle_Private_Damaged_Count_Caravans)
 
-  publicVehicles <- destroyedAircraft * indexCosts(c(2015, 1650000)) + 
+  publicVehicles <- destroyedAircraft * indexCosts(c(2015, 1650000)) +
                     damagedAircraft * 0 +
-                    destroyedTrains  * indexCosts(c(2011, 15800000)) + 
+                    destroyedTrains  * indexCosts(c(2011, 15800000)) +
                     damagedTrains  * 0
-  privateVehicles <- destroyedBoats * indexCosts(c(2014, 742531)) + 
+  privateVehicles <- destroyedBoats * indexCosts(c(2014, 742531)) +
                     damagedBoats * 0 +
-                    destroyedCars * indexCosts(c(2010, 18000)) + 
+                    destroyedCars * indexCosts(c(2010, 18000)) +
                     damagedCars * indexCosts(c(2008, 3853)) +
-                    destroyedCaravans * indexCosts(c(2014, 30000)) + 
+                    destroyedCaravans * indexCosts(c(2014, 30000)) +
                     damagedCaravans * 0
 
   total <- publicVehicles + privateVehicles
@@ -492,7 +526,7 @@ costOfVehicles <- function(events) {
 
 # Get the cost of specific crop types
 costOfCropType <- function(cropType) {
-  cropTypeCost <- switch(cropType, 
+  cropTypeCost <- switch(cropType,
     "Cotton" = indexCosts(c(2011, 460)),
     "Wheat and Barley" = indexCosts(c(2013, 570.67)),
     "Cereal and fruit" = indexCosts(c(2013, 0)), # TBD
@@ -507,34 +541,40 @@ costOfCropType <- function(cropType) {
   return (cropTypeCost)
 }
 
+numericise <- function(data) {
+  data <- as.numeric(data)
+  data[is.na(data)] <- 0
+  return (data)
+}
+
 # Calculate cost of agriculture
 costOfAgriculture <- function(events) {
-  destroyedSheds <- as.numeric(events$Infrastructure_Private_Destroyed_Count)
-  damagedSheds <- as.numeric(events$Infrastructure_Private_Damaged_Count)
-  fencing <- as.numeric(events$Fencing)
-  land <- as.numeric(events$Land_Private_Count)
-  crops <- as.numeric(events$Crops_Destroyed_Count)
+  destroyedSheds <- numericise(events$Infrastructure_Private_Destroyed_Count)
+  damagedSheds <- numericise(events$Infrastructure_Private_Damaged_Count)
+  fencing <- numericise(events$Fencing)
+  land <- numericise(events$Land_Private_Count)
+  crops <- numericise(events$Crops_Destroyed_Count)
   cropType <- events$Crops_Destroyed_Type
   cropCosts <- crops * apply(data.matrix(events$Crops_Destroyed_Type), 1, costOfCropType)
 
-  livestock <- as.numeric(events$Livestock_Destroyed_Count)
-  cattle <- as.numeric(events$Livestock_Destroyed_Count_Cattle)
-  sheepGoats <- as.numeric(events$Livestock_Destroyed_Count_Sheep_Goats)
-  poultry <- as.numeric(events$Livestock_Destroyed_Count_Poultry)
-  pigs <- as.numeric(events$Livestock_Destroyed_Count_Pigs)
-  other <- as.numeric(events$Livestock_Destroyed_Count_Other)
-  livestockCosts <- cattle * indexCosts(c(2012, 788)) + 
-                    sheepGoats * indexCosts(c(2012, 87)) + 
-                    poultry * indexCosts(c(2009, 50)) + 
-                    pigs * indexCosts(c(2015, 200)) + 
+  livestock <- numericise(events$Livestock_Destroyed_Count)
+  cattle <- numericise(events$Livestock_Destroyed_Count_Cattle)
+  sheepGoats <- numericise(events$Livestock_Destroyed_Count_Sheep_Goats)
+  poultry <- numericise(events$Livestock_Destroyed_Count_Poultry)
+  pigs <- numericise(events$Livestock_Destroyed_Count_Pigs)
+  other <- numericise(events$Livestock_Destroyed_Count_Other)
+  livestockCosts <- cattle * indexCosts(c(2012, 788)) +
+                    sheepGoats * indexCosts(c(2012, 87)) +
+                    poultry * indexCosts(c(2009, 50)) +
+                    pigs * indexCosts(c(2015, 200)) +
                     other * indexCosts(c(2007, 771.50))
-  
-  total <- destroyedSheds * indexCosts(c(2015, 18750)) + 
-          damagedSheds * indexCosts(c(2015, 0)) + 
-          fencing * indexCosts(c(2014, 11600)) + 
+
+  total <- destroyedSheds * indexCosts(c(2015, 18750)) +
+          damagedSheds * indexCosts(c(2015, 0)) +
+          fencing * indexCosts(c(2014, 11600)) +
           land * indexCosts(c(2005, 2067))  + # USD
           cropCosts +
-          livestockCosts 
+          livestockCosts
 
   return (total)
 }
@@ -551,7 +591,7 @@ costOfTransport <- function(events) {
 # Calculate direct costs, via component-wise computation
 computedDirectCosts <- function(events) {
   computedDirectCosts <- 0
-  
+
   # Add various cost components
   computedDirectCosts <- computedDirectCosts + costOfResidentialBuilding(events)
   computedDirectCosts <- computedDirectCosts + costOfCommercialBuildings(events)
@@ -560,9 +600,9 @@ computedDirectCosts <- function(events) {
   computedDirectCosts <- computedDirectCosts + costOfVehicles(events)
   computedDirectCosts <- computedDirectCosts + costOfAgriculture(events)
   # computedDirectCosts <- computedDirectCosts + costOfTransport(events)
-  
+
   events$directCost <- computedDirectCosts
-  
+
   # Normalised values
   # THESE FIGURES ARE ALREADY NORMALISED
   # events$directCost.normalised <- apply(events[c("Year.financial", "directCost")], 1, normalisedCosts)
@@ -573,11 +613,10 @@ computedDirectCosts <- function(events) {
 
 # Calculate direct costs
 directCosts <- function(events) {
-  events$directCost <- with(events, Insured.Costs.indexed)
-  
+  events$directCost <- with(events, Insured.Cost.indexed)
 
   # Normalised values
-  events$directCost.normalised <- with(events, Insured.Costs.normalised)
+  events$directCost.normalised <- with(events, Insured.Cost.normalised)
 
   return (events)
 }
@@ -614,19 +653,19 @@ householdDisruptionCosts <- function(events) {
   # Get key fields
   destroyed <- as.numeric(events$Buildings_Private_Destroyed_Count)
   damaged <- as.numeric(events$Buildings_Private_Damaged_Count)
-  
+
   # NOTE: COST BASIS FOR DAMAGED & DESTROYED IS THE SAME, AS PER SANDRA'S / DELOITTE'S COMMENTS
-  cleanupCosts <- destroyed * indexCosts(c(2012, 5900)) + 
+  cleanupCosts <- destroyed * indexCosts(c(2012, 5900)) +
                   damaged * indexCosts(c(2012, 5900))
   # Old calculations
   # cleanup <- 330 * totalAffected
-  
+
   # Accom costs - NOTE THIS IS MUCH TOO CHEAP
   # alternativeAccomPerNight <- indexCosts(c(1999, 26))
   # evacuatedCosts = alternativeAccomPerNight * evacuated * 7
   # homelessCosts = alternativeAccomPerNight * homeless * 70
   # accom = evacuatedCosts + homelessCosts
-  
+
   total <- cleanupCosts
 
   # Return total
@@ -638,7 +677,7 @@ commercialDisruptionCosts <- function(events) {
   # Get key fields
   destroyed <- as.numeric(events$Buildings_Commercial_Destroyed_Count)
   damaged <- as.numeric(events$Buildings_Commercial_Damaged_Count)
-  
+
   # Substitute for zeros
   destroyed[is.na(destroyed)] <- 0
   damaged[is.na(damaged)] <- 0
@@ -651,40 +690,40 @@ commercialDisruptionCosts <- function(events) {
   damagedLoss <- damaged * indexCosts(c(2011, 3800))
 
   total <- lossOfProductionAndServices + destroyedLoss + damagedLoss
-  
+
 
   # industrialLoss = total * industrialProportionOfCommercial()
   # commercialLoss =  total - industrialLoss
-  
+
   # disruption = commercialLoss * 0.1 + industrialLoss * 0.65
-  
+
   return (total)
 }
 
 
 # Agricultural costs
 agriculturalDisruptionCosts <- function(events) {
-  
+
   # Just the case for FIRE?
   disruptionAgriculture <- costOfAgriculture(events) * 1.178
-  
+
   # Get variables
   livestock <- as.numeric(events$Livestock_Destroyed_Count)
   livestockSheep <- as.numeric(events$Livestock_Destroyed_Count_Sheep_Goats)
   livestockCattle <- as.numeric(events$Livestock_Destroyed_Count_Cattle)
   land <- as.numeric(events$Land_Private_Count)
-  
+
   livestock[is.na(livestock)] <- 0
   livestockSheep[is.na(livestockSheep)] <- 0
   livestockCattle[is.na(livestockCattle)] <- 0
   land[is.na(land)] <- 0
-  
-  
+
+
   # Costs for clean-up of:
   # Sheep: $6-10
   # Cows: $40-80
   # Averaged at $34
-  cleanupLivestock <-livestockSheep * indexCosts(c(2000, 10)) + 
+  cleanupLivestock <-livestockSheep * indexCosts(c(2000, 10)) +
                      livestockCattle * indexCosts(c(2000, 80))
 
   cleanupCrops <- 0
@@ -696,7 +735,7 @@ agriculturalDisruptionCosts <- function(events) {
   # $350 horticultural
   # ASSUMPTION: Taking low value of $15ha
   # cleanupLand <- land * 15
-  
+
   return (disruptionAgriculture + cleanupLivestock + cleanupCrops)
 }
 
@@ -707,18 +746,18 @@ publicServiceDisruptionCosts <- function(events) {
   destroyed <- as.numeric(events$Buildings_Public_Destroyed_Count)
   damaged <- as.numeric(events$Buildings_Public_Damaged_Count)
   land <- as.numeric(events$Land_Public_Count)
-  
+
   # Substitute for zeros
   destroyed[is.na(destroyed)] <- 0
   damaged[is.na(damaged)] <- 0
   land[is.na(land)] <- 0
-  
+
   destroyedLoss <- destroyed * indexCosts(c(2000, 15000))
   damagedLoss <- 0 * damaged * indexCosts(c(2000, 15000))
   landLoss <- 0 * land
 
   total <- destroyedLoss + damagedLoss + landLoss
-  
+
   return (total)
 }
 
@@ -731,7 +770,7 @@ roadTransportDelayCosts <- function(events) {
   #  - Business Cars: $31.67 per hour
   #  - Rigid Trucks: $39.80 per hour
   #  - Articuated Trucks: $44.58 per hour
-  # 
+  #
   # Consequently to calculate this properly we need types of vehicles
   # and hours delayed
 
@@ -759,14 +798,14 @@ networkCosts <- function(events) {
   # - Water vessels
 
 
-  # Need cost bases for 
+  # Need cost bases for
   return (networkCosts)
 }
 
 
 # Calculate indirect costs
 indirectCosts <- function(events) {
-  
+
   # Disruption costs
   emergencyResponse <- emergencyResponseCosts(events)
   household <- householdDisruptionCosts(events)
@@ -774,13 +813,13 @@ indirectCosts <- function(events) {
   publicService <- publicServiceDisruptionCosts(events)
   agricultural <- agriculturalDisruptionCosts(events)
   network <- networkCosts(events)
- 
+
   disruptionCosts <- emergencyResponse + household + commercial + agricultural + network
 
   # Add other indirect costs for water, energy, communications
   otherIndirects <- 0
 
-  total <- disruptionCosts + otherIndirects 
+  total <- disruptionCosts + otherIndirects
 
   events$indirectCost <- total
   # Normalised values - but figures already normalised?
@@ -801,14 +840,14 @@ deathCostsNormalised <- function(events) {
 
 # Calculate injury costs
 injuryCosts <- function(events) {
-  return (with(events, 
+  return (with(events,
                Injuries * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
                Injuries * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury()))
 }
 
 # Calculate normalised injury costs
 injuryCostsNormalised <- function(events) {
-  return (with(events, 
+  return (with(events,
               Injuries.normalised * proportionOfHospitalisedInjury() * costOfHospitalisedInjury() +
               Injuries.normalised * (1 - proportionOfHospitalisedInjury()) * costOfNonHospitalisedInjury()
       )
@@ -881,35 +920,32 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
   events <- intangibleCosts(events)
   events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
   events$total.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
-  return(events) 
+  return(events)
 }
 
 ## Total cost for event - BTE basis
-totalCostForEvent_BTEBasis <- function(resourceTypeParam = NULL) {
+totalCostForEvent_AllForms <- function(resourceTypeParam = NULL) {
   events <- totalCostForEvent(resourceTypeParam)
-  # events <- getEvents(resourceTypeParam)
-  # events <- directCosts(events)
-  # events <- indirectCosts(events)
-  # events <- intangibleCosts(events)
-  # events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
-  # events$total.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+
+  # Add insured and reported costs
   multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplier)
-  events$bteTotals <- events$directCost * multipliers
-  events$bteTotals.normalised <- apply(events[c("Year", "bteTotals")], 1, normalisedCosts)
-  return(events) 
+  events$Insured.Cost.multiplied <- events$Insured.Cost * multipliers
+  events$Insured.Cost.multiplied.normalised <- apply(events[c("Year", "Insured.Cost.multiplied")], 1, normalisedCosts)
+  events$Reported.cost.normalised <- apply(events[c("Year", "Reported.cost")], 1, normalisedCosts)
+  return(events)
 }
 
 
 ## Total cost for event - Interpolated basis
 totalCostForEvent_Interpolated <- function(resourceTypeParam = NULL) {
-  
+
   events <- getEvents(resourceTypeParam)
   events <- directCosts(events)
   events <- indirectCosts(events)
   events <- intangibleCosts(events)
   interpolatedTotals <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
   interpolatedTotals.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
-  
+
   swapNormalForInterpollatedCosts()
   events <- getEvents(resourceTypeParam)
   events <- directCosts(events)
@@ -920,7 +956,7 @@ totalCostForEvent_Interpolated <- function(resourceTypeParam = NULL) {
   events$interpolatedTotals <- interpolatedTotals
   events$interpolatedTotals.normalised <- interpolatedTotals.normalised
   swapInterpollatedForNormalCosts()
-  return(events) 
+  return(events)
 }
 
 
@@ -938,7 +974,7 @@ codeCosts <- function(value) {
     5
   } else {
     6
-  } 
+  }
 }
 
 ## Provide a code for cost breaks
@@ -952,7 +988,7 @@ eventTypeMultiplier <- function(eventType) {
   ## NOTE: This approach is derived from Table 2.2 of 1999 BTE report,
   ## which in turn is derived from Joy 1991, which states:
   ## "These estimates were provided by the ICA and are subjective impressions based on experience rather than analytical estimates… The estimates include the effects of underinsurance."
-  ## OTHER APPROACHES ARE POSSIBLE -- SEE 
+  ## OTHER APPROACHES ARE POSSIBLE -- SEE
   ## http://www.gao.gov/new.items/d02700r.pdf
   ## http://www.investigativeproject.org/documents/testimony/105.pdf
   if (eventType == "Bushfire") {
@@ -981,7 +1017,7 @@ eventTypeMultiplier <- function(eventType) {
   }
   else  {
     1.0
-  }  
+  }
 }
 
 # Count number of empty values
@@ -995,7 +1031,7 @@ countEmptyValues <- function(data) {
 countEmptyValuesInEvents <- function() {
   events <- getRawEvents()
 
-  xsub <- events[,7:28] 
+  xsub <- events[,7:28]
   events$emptyValues <- apply(xsub, 1, countEmptyValues)
 
   return (events)
@@ -1006,105 +1042,105 @@ countEmptyValuesInEvents <- function() {
 ## Interpollate all costs
 interpollateAllCosts <- function() {
   # Do costs
-  data <- mydata[c("Insured.Costs.normalised", "Reported.cost")]
-  mydata$Insured.Costs.normalised.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Insured.Costs.indexed", "Reported.cost")]
-  mydata$Insured.Costs.indexed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  
+  data <- mydata[c("Insured.Cost.normalised", "Reported.cost")]
+  mydata$Insured.Cost.normalised.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- mydata[c("Insured.Cost.indexed", "Reported.cost")]
+  mydata$Insured.Cost.indexed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+
   # Do other columns
-  data <- mydata[c("Evacuated", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Evacuated", "Insured.Cost.indexed.i")]
   mydata$Evacuated.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Homeless", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Homeless", "Insured.Cost.indexed.i")]
   mydata$Homeless.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Calls.to.SES", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Calls.to.SES", "Insured.Cost.indexed.i")]
   mydata$Calls.to.SES.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Assistance_dollars", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Assistance_dollars", "Insured.Cost.indexed.i")]
   mydata$Assistance_dollars.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Destroyed_Count", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Damaged_Count", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Roads_Urban", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Roads_Urban", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Destroyed_Count_Roads_Urban.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Roads_Urban", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Damaged_Count_Roads_Urban", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Damaged_Count_Roads_Urban.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Roads_Rural", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Roads_Rural", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Destroyed_Count_Roads_Rural.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Roads_Rural", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Damaged_Count_Roads_Rural", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Damaged_Count_Roads_Rural.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Bridges", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Bridges", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Destroyed_Count_Bridges.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Bridges", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Damaged_Count_Bridges", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Damaged_Count_Bridges.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Rail", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Rail", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Destroyed_Count_Rail.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Rail", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Damaged_Count_Rail", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Damaged_Count_Rail.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Power_Poles", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Power_Poles", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Destroyed_Count_Power_Poles.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Power_Poles", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Infrastructure_Public_Damaged_Count_Power_Poles", "Insured.Cost.indexed.i")]
   mydata$Infrastructure_Public_Damaged_Count_Power_Poles.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Destroyed_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Public_Destroyed_Count", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Damaged_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Public_Damaged_Count", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Destroyed_Count_Aircraft", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Public_Destroyed_Count_Aircraft", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Public_Destroyed_Count_Aircraft.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Damaged_Count_Aircraft", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Public_Damaged_Count_Aircraft", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Public_Damaged_Count_Aircraft.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Destroyed_Count_Train", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Public_Destroyed_Count_Train", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Public_Destroyed_Count_Train.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Damaged_Count_Train", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Public_Damaged_Count_Train", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Public_Damaged_Count_Train.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Destroyed_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Private_Destroyed_Count", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Private_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Damaged_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Private_Damaged_Count", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Private_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Destroyed_Count_Boats", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Private_Destroyed_Count_Boats", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Private_Destroyed_Count_Boats.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Damaged_Count_Boats", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Private_Damaged_Count_Boats", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Private_Damaged_Count_Boats.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Destroyed_Count_Cars", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Private_Destroyed_Count_Cars", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Private_Destroyed_Count_Cars.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Damaged_Count_Cars", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Private_Damaged_Count_Cars", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Private_Damaged_Count_Cars.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Destroyed_Count_Caravans", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Private_Destroyed_Count_Caravans", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Private_Destroyed_Count_Caravans.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Damaged_Count_Caravans", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Vehicle_Private_Damaged_Count_Caravans", "Insured.Cost.indexed.i")]
   mydata$Vehicle_Private_Damaged_Count_Caravans.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Commercial_Destroyed_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Buildings_Commercial_Destroyed_Count", "Insured.Cost.indexed.i")]
   mydata$Buildings_Commercial_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Commercial_Damaged_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Buildings_Commercial_Damaged_Count", "Insured.Cost.indexed.i")]
   mydata$Buildings_Commercial_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Private_Destroyed_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Buildings_Private_Destroyed_Count", "Insured.Cost.indexed.i")]
   mydata$Buildings_Private_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Private_Damaged_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Buildings_Private_Damaged_Count", "Insured.Cost.indexed.i")]
   mydata$Buildings_Private_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Public_Destroyed_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Buildings_Public_Destroyed_Count", "Insured.Cost.indexed.i")]
   mydata$Buildings_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Public_Damaged_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Buildings_Public_Damaged_Count", "Insured.Cost.indexed.i")]
   mydata$Buildings_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Land_Public_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Land_Public_Count", "Insured.Cost.indexed.i")]
   mydata$Land_Public_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Land_Private_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Land_Private_Count", "Insured.Cost.indexed.i")]
   mydata$Land_Private_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Crops_Destroyed_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Crops_Destroyed_Count", "Insured.Cost.indexed.i")]
   mydata$Crops_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Livestock_Destroyed_Count", "Insured.Cost.indexed.i")]
   mydata$Livestock_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Cattle", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Livestock_Destroyed_Count_Cattle", "Insured.Cost.indexed.i")]
   mydata$Livestock_Destroyed_Count_Cattle.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Sheep_Goats", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Livestock_Destroyed_Count_Sheep_Goats", "Insured.Cost.indexed.i")]
   mydata$Livestock_Destroyed_Count_Sheep_Goats.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Poultry", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Livestock_Destroyed_Count_Poultry", "Insured.Cost.indexed.i")]
   mydata$Livestock_Destroyed_Count_Poultry.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Pigs", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Livestock_Destroyed_Count_Pigs", "Insured.Cost.indexed.i")]
   mydata$Livestock_Destroyed_Count_Pigs.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Other", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Livestock_Destroyed_Count_Other", "Insured.Cost.indexed.i")]
   mydata$Livestock_Destroyed_Count_Other.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Environmental_Count", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Environmental_Count", "Insured.Cost.indexed.i")]
   mydata$Environmental_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Fencing", "Insured.Costs.indexed.i")]
+  data <- mydata[c("Fencing", "Insured.Cost.indexed.i")]
   mydata$Fencing.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
 
   return ()
@@ -1112,10 +1148,10 @@ interpollateAllCosts <- function() {
 
 ## Swaps interpollated costs
 swapInterpollatedForNormalCosts <- function() {
-  mydata$Insured.Costs.normalised.ni <<- mydata$Insured.Costs.normalised
-  mydata$Insured.Costs.normalised <<- mydata$Insured.Costs.normalised.i
-  mydata$Insured.Costs.indexed.ni <<- mydata$Insured.Costs.indexed
-  mydata$Insured.Costs.indexed <<- mydata$Insured.Costs.indexed.i
+  mydata$Insured.Cost.normalised.ni <<- mydata$Insured.Cost.normalised
+  mydata$Insured.Cost.normalised <<- mydata$Insured.Cost.normalised.i
+  mydata$Insured.Cost.indexed.ni <<- mydata$Insured.Cost.indexed
+  mydata$Insured.Cost.indexed <<- mydata$Insured.Cost.indexed.i
   mydata$Evacuated.ni <<- mydata$Evacuated
   mydata$Evacuated <<- mydata$Evacuated.i
   mydata$Homeless.ni <<- mydata$Homeless
@@ -1221,8 +1257,8 @@ swapInterpollatedForNormalCosts <- function() {
 
 ## Swaps interpollated costs
 swapNormalForInterpollatedCosts <- function() {
-  mydata$Insured.Costs.normalised <<- mydata$Insured.Costs.normalised.ni
-  mydata$Insured.Costs.indexed <<- mydata$Insured.Costs.indexed.ni
+  mydata$Insured.Cost.normalised <<- mydata$Insured.Cost.normalised.ni
+  mydata$Insured.Cost.indexed <<- mydata$Insured.Cost.indexed.ni
   mydata$Evacuated <<- mydata$Evacuated.ni
   mydata$Homeless <<- mydata$Homeless.ni
   mydata$Calls.to.SES <<- mydata$Calls.to.SES.ni
@@ -1244,10 +1280,10 @@ swapNormalForInterpollatedCosts <- function() {
 interpollate <- function(range) {
   a <- as.numeric(range[1])
   b <- as.numeric(range[2])
-  
+
   # Add in a further multiplier to dampen the impact
   correctionFactor <- 1.0 # 0.5
-  
+
   ratio <- as.numeric(range[3])
   if (is.na(a)) {
     a = b * ratio * correctionFactor
@@ -1389,17 +1425,17 @@ convertSingleCountToDollars <- function(range) {
 
 # Write mydata back to a file
 writeData <- function() {
-  
+
   swapInterpollatedForNormalCosts()
-  
-  
+
+
   # Repeats logic from totalCostForEvent(), getEvents()
   mydata$Deaths <<- as.numeric(mydata$Deaths)
   mydata$Injuries <<- as.numeric(mydata$Injuries)
   mydata$Deaths.normalised <<- as.numeric(mydata$Deaths.normalised)
   mydata$Injuries.normalised <<- as.numeric(mydata$Injuries.normalised)
-  # xsub <- mydata[,6:24] 
-  # xsub[is.na(xsub)] <- 0 
+  # xsub <- mydata[,6:24]
+  # xsub[is.na(xsub)] <- 0
   # mydata[,6:24]<-xsub
 
   mydata <<- computedDirectCosts(mydata)
@@ -1417,5 +1453,37 @@ writeData <- function() {
               fileEncoding = "")
 }
 
+
+# Write events back to a file
+writeEventData <- function() {
+  events <- totalCostForEvent_AllForms()
+
+  write.table(events, file = "./output/data_events.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "", dec = ".", row.names = FALSE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+}
+
+
+
+# Write events back to a file
+writeEventDataSummary <- function() {
+  events <- totalCostForEvent_AllForms()
+  summary <- events[c(
+    "Year.financial",
+    "Year",
+    "title",
+    "resourceType",
+    "Insured.Cost.multiplied.normalised",
+    "Reported.cost.normalised",
+    "total.normalised"
+    )
+  ]
+
+  write.table(summary, file = "./output/data_events_summary.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "", dec = ".", row.names = FALSE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+}
 
 
