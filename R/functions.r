@@ -142,6 +142,12 @@ normalisedCosts <- function(range) {
   # TODO: Add at least state-based equivalents
   return(cost * cpiRatio(baseYear) * popRatio(baseYear) * gdpRatio(baseYear))
 }
+## Normalise cost - TODO: this needs to be much more robust (cf. discussion on normalisation)
+normalisedCostsWithoutIndexation <- function(range) {
+  baseYear <- range[1]
+  cost <- range[2]
+  return(cost * popRatio(baseYear) * gdpRatio(baseYear))
+}
 ## Normalise population
 normalisedPopulation <- function(range) {
   baseYear <- as.numeric(range[1])
@@ -606,20 +612,11 @@ computedDirectCosts <- function(events) {
   # Normalised values
   # THESE FIGURES ARE ALREADY NORMALISED
   # events$directCost.normalised <- apply(events[c("Year.financial", "directCost")], 1, normalisedCosts)
-  events$directCost.normalised <- events$directCost
+  events$directCost.normalised <- apply(events[c("Year.financial", "directCost")], 1, normalisedCostsWithoutIndexation)
 
   return (events)
 }
 
-# Calculate direct costs
-directCosts <- function(events) {
-  events$directCost <- with(events, Insured.Cost.indexed)
-
-  # Normalised values
-  events$directCost.normalised <- with(events, Insured.Cost.normalised)
-
-  return (events)
-}
 
 
 # Generate a proportion of industrial to total commercial property
@@ -823,7 +820,7 @@ indirectCosts <- function(events) {
 
   events$indirectCost <- total
   # Normalised values - but figures already normalised?
-  events$indirectCost.normalised <- events$indirectCost
+  events$indirectCost.normalised <- apply(events[c("Year.financial", "indirectCost")], 1, normalisedCostsWithoutIndexation)
 
   return (events)
 }
@@ -902,38 +899,45 @@ intangibleCosts <- function(events) {
   culturalHeritageCosts <- culturalHeritageCosts(events)
   nonDeathAndInjuryIntangibles <- ecosystemCosts + healthImpactCosts + memorabiliaCosts + culturalHeritageCosts
 
-  events$intangibleCost = deathAndInjuryCosts + nonDeathAndInjuryIntangibles
+  events$deathAndInjuryCosts <- deathAndInjuryCosts
+  events$nonDeathAndInjuryIntangibles <- nonDeathAndInjuryIntangibles
+  events$intangibleCost <- deathAndInjuryCosts + nonDeathAndInjuryIntangibles
 
-  # TODO: Normalise this value
-  nonDeathAndInjuryIntangiblesNormalised <- nonDeathAndInjuryIntangibles
+  nonDeathAndInjuryIntangiblesNormalised <- apply(events[c("Year.financial", "nonDeathAndInjuryIntangibles")], 1, normalisedCostsWithoutIndexation)
+  events$deathAndInjuryCosts.normalised <- deathAndInjuryCostsNormalised
+  events$nonDeathAndInjuryIntangibles.normalised <- nonDeathAndInjuryIntangiblesNormalised
   events$intangibleCost.normalised = deathAndInjuryCostsNormalised + nonDeathAndInjuryIntangiblesNormalised
 
   return (events)
 }
 
 ## Total cost for event
-totalCostForEvent <- function(resourceTypeParam = NULL) {
+totalCostForEventSynthetic <- function(resourceTypeParam = NULL) {
   events <- getEvents(resourceTypeParam)
   events <- computedDirectCosts(events)
-  # events <- directCosts(events)
   events <- indirectCosts(events)
   events <- intangibleCosts(events)
-  events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
-  events$total.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+  events$Synthetic.cost <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
+  # Synthetic costs are implicitly indexed
+  events$Synthetic.cost.indexed <- events$Synthetic.cost
+  events$Synthetic.cost.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
   return(events)
 }
 
 ## Total cost for event - BTE basis
-totalCostForEvent_AllForms <- function(resourceTypeParam = NULL) {
-  events <- totalCostForEvent(resourceTypeParam)
+totalCostForEvent <- function(resourceTypeParam = NULL) {
+  events <- totalCostForEventSynthetic(resourceTypeParam)
 
   # Add insured and reported costs
   multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplier)
-  events$Insured.Cost.multiplied <- events$Insured.Cost * multipliers
-  events$Insured.Cost.multiplied.normalised <- apply(events[c("Year", "Insured.Cost.multiplied")], 1, normalisedCosts)
+  events$Insured.cost.multiplied <- events$Insured.Cost * multipliers
+  events$Insured.cost.multiplied.indexed <- apply(events[c("Year", "Insured.cost.multiplied")], 1, indexCosts)
+  events$Insured.cost.multiplied.normalised <- apply(events[c("Year", "Insured.cost.multiplied")], 1, normalisedCosts)
+  events$Reported.cost.indexed <- apply(events[c("Year", "Reported.cost")], 1, indexCosts)
   events$Reported.cost.normalised <- apply(events[c("Year", "Reported.cost")], 1, normalisedCosts)
   return(events)
 }
+
 
 
 ## Total cost for event - Interpolated basis
@@ -1456,7 +1460,7 @@ writeData <- function() {
 
 # Write events back to a file
 writeEventData <- function() {
-  events <- totalCostForEvent_AllForms()
+  events <- totalCostForEvent()
 
   write.table(events, file = "./output/data_events.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "", dec = ".", row.names = FALSE,
@@ -1468,15 +1472,21 @@ writeEventData <- function() {
 
 # Write events back to a file
 writeEventDataSummary <- function() {
-  events <- totalCostForEvent_AllForms()
+  events <- totalCostForEvent()
   summary <- events[c(
     "Year.financial",
     "Year",
     "title",
     "resourceType",
-    "Insured.Cost.multiplied.normalised",
+    "Reported.cost",
+    "Reported.cost.indexed",
     "Reported.cost.normalised",
-    "total.normalised"
+    "Insured.Cost",
+    "Insured.cost.multiplied",
+    "Insured.cost.multiplied.indexed",
+    "Insured.cost.multiplied.normalised",
+    "Synthetic.cost",
+    "Synthetic.cost.normalised"
     )
   ]
 

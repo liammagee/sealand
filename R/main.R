@@ -23,8 +23,8 @@ run <- function() {
 	initialise()
 
   # Write out the data for checking
-  writeEventData()
-  
+  writeEventDataSummary()
+
 	# Run the reports
 	annual_total_costs_of_disasters_in_australia_bte()
 	annual_total_costs_of_disasters_in_australia_interpolated()

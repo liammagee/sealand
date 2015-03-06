@@ -1,4 +1,16 @@
 
+# NOTE: We use 3 approaches to deriving costs:
+# 1. Reported costs
+# 2. Insured costs multiplied by factors based on event type (following Joy 1991)
+# 3. Synthetic costs, where specific direct, indirect and intangible components
+# are collected, missing values interpollated, indexed to June 2013 dollar values
+# and normalised to June 2013 wealth and population levels.
+# The graphs below can be modified for each of these approaches by
+# replacing the computed total variable names as follows:
+# 1. Reported.cost.normalised
+# 1. Insured.cost.multiplied.normalised
+# 3. Synthetic.cost.normalised
+
 # Sources
 source("R/functions.r", TRUE)
 
@@ -67,7 +79,7 @@ annual_total_costs_of_disasters_in_australia <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEvent()
   # Just for normalised data
-  totalCostsByYear <- with(totalCosts, aggregate(total.normalised, by=list(Year.financial), FUN=safeSum))
+  totalCostsByYear <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(Year.financial), FUN=safeSum))
 
   # Calculate range from 0 to max value of costs
   x_range <- range(totalCosts$Year.financial)
@@ -97,10 +109,10 @@ annual_total_costs_of_disasters_in_australia <- function() {
 ## Generates Figure 3.1 - FOR COMPARISON WITH BTE
 annual_total_costs_of_disasters_in_australia_bte <- function() {
   # Store the total costs by year
-  totalCosts <- totalCostForEvent_AllForms()
+  totalCosts <- totalCostForEvent()
 
   # For both normalised and denormalised data
-  totalCostsByYear <- with(totalCosts, aggregate(cbind(Insured.Cost.multiplied.normalised/ 1000000, total.normalised / 1000000), by=list(Year), FUN=safeSum))
+  totalCostsByYear <- with(totalCosts, aggregate(cbind(Insured.cost.multiplied.normalised/ 1000000, Reported.cost.normalised / 1000000), by=list(Year), FUN=safeSum))
 
 
   # Calculate range from 0 to max value of costs
@@ -219,7 +231,7 @@ annual_total_costs_of_disasters_in_australia_denormalised <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEvent()
   # For both normalised and denormalised data
-  totalCostsByYear <- with(totalCosts, aggregate(cbind(total.normalised / 1000000, total / 1000000), by=list(Year.financial), FUN=safeSum))
+  totalCostsByYear <- with(totalCosts, aggregate(cbind(Reported.cost.normalised / 1000000, total / 1000000), by=list(Year.financial), FUN=safeSum))
 
 
   # Checks total costs
@@ -284,13 +296,13 @@ annual_total_costs_of_disasters_in_australia_denormalised <- function() {
 australian_natural_disaster_costs_by_decade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent()
-	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
+	totalCosts$Reported.cost.normalised.millions <- totalCosts$Reported.cost.normalised / 1000000
 
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
 
   # Aggregate normalised costs by decade
-	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
+	totalCostsByDecade <- with(totalCosts, aggregate(Reported.cost.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
 
   # Multiply decades back up to years
 	totalCostsByDecade[,1] <- totalCostsByDecade[,1] * 10
@@ -313,7 +325,7 @@ australian_natural_disaster_costs_by_decade <- function() {
 average_cost_per_event <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent()
-	averageCostPerYear <- with(totalCosts, aggregate(total.normalised, by=list(Year.financial), FUN=safeMean))
+	averageCostPerYear <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(Year.financial), FUN=safeMean))
 
 	# Calculate range from 0 to max value of costs
 	y_range <- range(0, averageCostPerYear + 1000000000)
@@ -344,10 +356,10 @@ distribution_of_disasters <- function() {
 
 	# Filter by cost bracket
 	cost_brackets <- list(10000000, 50000000, 100000000, 150000000, 500000000)
-	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
+	totalCosts$Reported.cost.normalised.millions <- totalCosts$Reported.cost.normalised / 1000000
 
-	totalCosts$total.normalised.code <- apply(data.matrix(totalCosts$total.normalised.millions), 1, codeCosts)
-	totalCostDistribution <- with(totalCosts, aggregate(total.normalised, by=list(total.normalised.code), FUN=length))
+	totalCosts$Reported.cost.normalised.code <- apply(data.matrix(totalCosts$Reported.cost.normalised.millions), 1, codeCosts)
+	totalCostDistribution <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(Reported.cost.normalised.code), FUN=length))
 
 	# Calculate range from 0 to max value of costs
 	y_range <- range(0, totalCostDistribution[,2] + 10)
@@ -442,8 +454,8 @@ number_of_disasters_per_million_people <- function() {
 disaster_costs_by_state_and_territory <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent()
-	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
-	totalCostsByState <- with(totalCosts, aggregate(total.normalised.millions, by=list(State.abbreviated), FUN=safeSum))
+	totalCosts$Reported.cost.normalised.millions <- totalCosts$Reported.cost.normalised / 1000000
+	totalCostsByState <- with(totalCosts, aggregate(Reported.cost.normalised.millions, by=list(State.abbreviated), FUN=safeSum))
 	o <- order(totalCostsByState[,2], decreasing=TRUE)
 	totalCostsByState <- data.frame(cbind(totalCostsByState[,1][o], totalCostsByState[,2][o]))
 	states <- totalCostsByState[,1]
@@ -481,8 +493,8 @@ disaster_costs_by_state_and_territory_compared_with_ndrra <- function() {
 
   # Store the total costs by year
   totalCosts <- totalCostForEvent()
-  totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
-  totalCostsByState <- with(totalCosts, aggregate(total.normalised.millions, by=list(Year.financial, State.abbreviated), FUN=safeSum))
+  totalCosts$Reported.cost.normalised.millions <- totalCosts$Reported.cost.normalised / 1000000
+  totalCostsByState <- with(totalCosts, aggregate(Reported.cost.normalised.millions, by=list(Year.financial, State.abbreviated), FUN=safeSum))
 
   # Get the last 10 years of data
   data <- totalCostsByState[totalCostsByState$Group.1 > 2002,]
@@ -577,7 +589,7 @@ disaster_costs_by_state_and_territory_compared_with_ndrra <- function() {
 number_of_disaster_events_by_state_and_territory <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEvent()
-  totalCountsByState <- with(totalCosts, aggregate(total.normalised, by=list(State.abbreviated), FUN=length))
+  totalCountsByState <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(State.abbreviated), FUN=length))
 
   # Remove 'Other' column
   totalCountsByState <- totalCountsByState[!(totalCountsByState$Group.1 %in% c('Other')),]
@@ -615,7 +627,7 @@ costs_by_type_of_disaster_and_state_and_territory <- function() {
 total_and_insurance_costs_by_disaster_type <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEvent()
-  totalCostsByDisasterType <- with(totalCosts, aggregate(total.normalised, by=list(resourceType), FUN=safeSum))
+  totalCostsByDisasterType <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(resourceType), FUN=safeSum))
   o <- order(totalCostsByDisasterType[,2], decreasing=TRUE)
   totalCostsByDisasterType <- data.frame(cbind(totalCostsByDisasterType[,1][o], totalCostsByDisasterType[,2][o]))
   disasterTypes <- totalCostsByDisasterType[,1]
@@ -643,7 +655,7 @@ total_and_insurance_costs_by_disaster_type <- function() {
 number_of_events_by_disaster_type <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEvent()
-  totalCostsByDisasterType <- with(totalCosts, aggregate(total.normalised, by=list(resourceType), FUN=length))
+  totalCostsByDisasterType <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(resourceType), FUN=length))
   o <- order(totalCostsByDisasterType[,2], decreasing=TRUE)
   totalCostsByDisasterType <- data.frame(cbind(totalCostsByDisasterType[,1][o], totalCostsByDisasterType[,2][o]))
   disasterTypes <- totalCostsByDisasterType[,1]
@@ -672,7 +684,7 @@ number_of_events_by_disaster_type <- function() {
 annual_cost_of_floods_in_australia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent("Flood")
-	totalCostsByYear <- with(totalCosts, aggregate(total.normalised, by=list(Year.financial), FUN=safeSum))
+	totalCostsByYear <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(Year.financial), FUN=safeSum))
 
 	# Calculate range from 0 to max value of costs
 	x_range <- range(totalCosts$Year.financial)
@@ -704,11 +716,11 @@ annual_cost_of_floods_in_australia <- function() {
 total_cost_of_floods_by_decade <- function() {
 		# Store the total costs by year
 	totalCosts <- totalCostForEvent("Flood")
-	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
+	totalCosts$Reported.cost.normalised.millions <- totalCosts$Reported.cost.normalised / 1000000
 
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
-	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
+	totalCostsByDecade <- with(totalCosts, aggregate(Reported.cost.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
 
 	# Multiply decades back up to 000's
 	totalCostsByDecade[,1] <- totalCostsByDecade[,1] * 10
@@ -754,7 +766,7 @@ annual_number_of_floods_in_australia <- function() {
 annual_cost_of_severe_storms_by_decade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent("Severe Storm")
-	totalCostsByYear <- with(totalCosts, aggregate(total.normalised, by=list(Year.financial), FUN=safeSum))
+	totalCostsByYear <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(Year.financial), FUN=safeSum))
 
 	# Calculate range from 0 to max value of costs
 	x_range <- range(totalCosts$Year.financial)
@@ -786,11 +798,11 @@ annual_cost_of_severe_storms_by_decade <- function() {
 total_cost_of_severe_storms_by_decade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent("Severe Storm")
-	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
+	totalCosts$Reported.cost.normalised.millions <- totalCosts$Reported.cost.normalised / 1000000
 
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
-	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
+	totalCostsByDecade <- with(totalCosts, aggregate(Reported.cost.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
 
 	# Multiply decades back up to 000's
 	totalCostsByDecade[,1] <- totalCostsByDecade[,1] * 10
@@ -835,7 +847,7 @@ annual_number_of_severe_storms_in_australia <- function() {
 annual_cost_of_cyclones_in_australia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent("Cyclone")
-	totalCostsByYear <- with(totalCosts, aggregate(total.normalised, by=list(Year.financial), FUN=safeSum))
+	totalCostsByYear <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(Year.financial), FUN=safeSum))
 
 	# Calculate range from 0 to max value of costs
 	x_range <- range(totalCosts$Year.financial)
@@ -866,11 +878,11 @@ annual_cost_of_cyclones_in_australia <- function() {
 total_cost_of_cyclones_by_decade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent("Cyclone")
-	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
+	totalCosts$Reported.cost.normalised.millions <- totalCosts$Reported.cost.normalised / 1000000
 
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
-	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
+	totalCostsByDecade <- with(totalCosts, aggregate(Reported.cost.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
 
 	# Multiply decades back up to 000's
 	totalCostsByDecade[,1] <- totalCostsByDecade[,1] * 10
@@ -916,11 +928,11 @@ annual_number_of_cyclones_causing_more_than_10_million_damage_in_australia <- fu
 total_cost_of_earthquakes_by_decade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent("Earthquake")
-	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
+	totalCosts$Reported.cost.normalised.millions <- totalCosts$Reported.cost.normalised / 1000000
 
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
-	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
+	totalCostsByDecade <- with(totalCosts, aggregate(Reported.cost.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
 
 	# Multiply decades back up to 000's
 	totalCostsByDecade[,1] <- totalCostsByDecade[,1] * 10
@@ -943,7 +955,7 @@ total_cost_of_earthquakes_by_decade <- function() {
 annual_cost_of_bushfires_in_australia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent("Bushfire")
-	totalCostsByYear <- with(totalCosts, aggregate(total.normalised, by=list(Year.financial), FUN=safeSum))
+	totalCostsByYear <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(Year.financial), FUN=safeSum))
 
 	# Calculate range from 0 to max value of costs
 	x_range <- range(totalCosts$Year.financial)
@@ -974,11 +986,11 @@ annual_cost_of_bushfires_in_australia <- function() {
 total_cost_of_bushfires_by_decade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent("Bushfire")
-	totalCosts$total.normalised.millions <- totalCosts$total.normalised / 1000000
+	totalCosts$Reported.cost.normalised.millions <- totalCosts$Reported.cost.normalised / 1000000
 
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
-	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
+	totalCostsByDecade <- with(totalCosts, aggregate(Reported.cost.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
 
 	# Multiply decades back up to 000's
 	totalCostsByDecade[,1] <- totalCostsByDecade[,1] * 10
@@ -1151,7 +1163,7 @@ cost_of_deaths_and_injuries_by_decade <- function() {
 total_cost_of_natural_disasters <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEvent()
-	totalCostsByYear <- with(totalCosts, aggregate(total.normalised, by=list(Year.financial), FUN=safeSum))
+	totalCostsByYear <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(Year.financial), FUN=safeSum))
 
 	# Calculate range from 0 to max value of costs
 	x_range <- range(totalCosts$Year.financial)
@@ -1185,7 +1197,7 @@ total_cost_of_natural_disasters_by_decade <- function() {
 
 	# Filter by decade
 	decades <- unique(floor(totalCosts$Year.financial / 10)) * 10
-	totalCostsByDecade <- with(totalCosts, aggregate(total.normalised, by=list(floor(Year.financial / 10)), FUN=safeSum))
+	totalCostsByDecade <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(floor(Year.financial / 10)), FUN=safeSum))
 
 	# Multiply decades back up to 000's
 	totalCostsByDecade[,1] <- totalCostsByDecade[,1] * 10
