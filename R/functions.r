@@ -532,17 +532,20 @@ costOfVehicles <- function(events) {
 
 # Get the cost of specific crop types
 costOfCropType <- function(cropType) {
-  cropTypeCost <- switch(cropType,
-    "Cotton" = indexCosts(c(2011, 460)),
-    "Wheat and Barley" = indexCosts(c(2013, 570.67)),
-    "Cereal and fruit" = indexCosts(c(2013, 0)), # TBD
-    "Pasture and lumber" = indexCosts(c(2013, 0)), # TBD
-    "Pasture" = indexCosts(c(2013, 60)),
-    "Sugar cane" = indexCosts(c(2013, 40)),
-    "Fruit" = indexCosts(c(2013, 40000))
-  )
+  cropTypeCost <- 0
+  if (!is.null(cropType)) {
+    cropTypeCost <- switch(cropType,
+                           "Cotton" = indexCosts(c(2011, 460)),
+                           "Wheat and Barley" = indexCosts(c(2013, 570.67)),
+                           "Cereal and fruit" = indexCosts(c(2013, 0)), # TBD
+                           "Pasture and lumber" = indexCosts(c(2013, 0)), # TBD
+                           "Pasture" = indexCosts(c(2013, 60)),
+                           "Sugar cane" = indexCosts(c(2013, 40)),
+                           "Fruit" = indexCosts(c(2013, 40000))
+    )
+  }
   if (is.null(cropTypeCost)) {
-     cropTypeCost <- 0
+    cropTypeCost <- 0
   }
   return (cropTypeCost)
 }
