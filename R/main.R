@@ -4,6 +4,8 @@ library(gdata)
 
 # Sources
 source("R/figures.R", TRUE)
+source("R/functions.R", TRUE)
+
 
 
 # Functions

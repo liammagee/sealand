@@ -944,7 +944,7 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
 totalCostForEvent_Interpolated <- function(resourceTypeParam = NULL) {
 
   events <- getEvents(resourceTypeParam)
-  events <- directCosts(events)
+  events <- computedDirectCosts(events)
   events <- indirectCosts(events)
   events <- intangibleCosts(events)
   interpolatedTotals <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
@@ -952,7 +952,7 @@ totalCostForEvent_Interpolated <- function(resourceTypeParam = NULL) {
 
   swapNormalForInterpollatedCosts()
   events <- getEvents(resourceTypeParam)
-  events <- directCosts(events)
+  events <- computedDirectCosts(events)
   events <- indirectCosts(events)
   events <- intangibleCosts(events)
   events$total <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
