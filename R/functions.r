@@ -179,7 +179,7 @@ loadData <- function() {
 cleanData <- function() {
 
   # ... for cleaned up costs
-  mydata$Costs.cleaned <<- apply(data.matrix(mydata$Insured.Cost), 1, parseCurrency)
+  mydata$Insured.Cost.cleaned <<- apply(data.matrix(mydata$Insured.Cost), 1, parseCurrency)
 
   # ... for cleaned up states
   mydata$State.abbreviated <<- apply(data.matrix(mydata$State.1), 1, abbreviateState)
@@ -189,18 +189,32 @@ cleanData <- function() {
 
 }
 
+
+# Interpolate reported costs
+interpolateReportedCosts <- function() {
+  resourceTypes <- data.frame(resourceType = cbind(unique(unlist(mydata$resourceType))))
+  ag <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, mydata, sum)
+  ag <- merge(ag[,], resourceTypes, by="resourceType", all = TRUE)
+  ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost 
+  ag[is.na(ag$Event.Factor),] <- 1.0
+  data.Reported.Cost.na <- mydata[is.na(mydata$Reported.Cost),]
+  mydata <<- merge(mydata[, ], ag[,c("resourceType", "Event.Factor")], by="resourceType")
+  mydata$Reported.Cost.interpolated <<- mydata$Reported.Cost
+  mydata[is.na(mydata$Reported.Cost.interpolated), ]$Reported.Cost.interpolated <<- mydata[is.na(mydata$Reported.Cost.interpolated), ]$Insured.Cost * mydata[is.na(mydata$Reported.Cost.interpolated), ]$Event.Factor
+}
+
 normaliseInsuredCost <- function() {
   # ... for CPI-indexed insured costs
-  mydata$Insured.Cost.indexed <<- apply(mydata[c("Year.financial", "Costs.cleaned")], 1, indexCosts)
+  mydata$Insured.Cost.indexed <<- apply(mydata[c("Year.financial", "Insured.Cost.cleaned")], 1, indexCosts)
   # ... for normalised insured costs
-  mydata$Insured.Cost.normalised <<- apply(mydata[c("Year.financial", "Costs.cleaned")], 1, normalisedCosts)
+  mydata$Insured.Cost.normalised <<- apply(mydata[c("Year.financial", "Insured.Cost.cleaned")], 1, normalisedCosts)
 }
 
 normaliseReportedCost <- function() {
   # ... for CPI-indexed reported costs
-  mydata$Reported.cost.indexed <<- apply(mydata[c("Year.financial", "Reported.cost")], 1, indexCosts)
+  mydata$Reported.Cost.indexed <<- apply(mydata[c("Year.financial", "Reported.Cost.interpolated")], 1, indexCosts)
   # ... for normalised insured costs
-  mydata$Reported.cost.normalised <<- apply(mydata[c("Year.financial", "Reported.cost")], 1, normalisedCosts)
+  mydata$Reported.Cost.normalised <<- apply(mydata[c("Year.financial", "Reported.Cost.interpolated")], 1, normalisedCosts)
 }
 
 normaliseDeathsAndInjuries <- function() {
@@ -219,6 +233,9 @@ computeColumns <- function() {
   # Clean data
   cleanData()
 
+  # Interpolate reported costs
+  interpolateReportedCosts()
+  
   # Index and normalise costs
   normaliseInsuredCost()
   normaliseReportedCost()
@@ -303,9 +320,10 @@ getRawEvents <- function(resourceTypeParam = NULL) {
     "Insured.Cost",
     "Insured.Cost.indexed",
     "Insured.Cost.normalised",
-    "Reported.cost",
-    "Reported.cost.indexed",
-    "Reported.cost.normalised",
+    "Reported.Cost",
+    "Reported.Cost.interpolated",
+    "Reported.Cost.indexed",
+    "Reported.Cost.normalised",
     "Assistance_dollars",
     "Infrastructure_Public_Destroyed_Count",
     "Infrastructure_Public_Damaged_Count",
@@ -384,6 +402,7 @@ getRawEvents <- function(resourceTypeParam = NULL) {
   if (! is.null(resourceTypeParam)) {
     events <- subset(events, resourceType == resourceTypeParam)
   }
+  events <- events[events$Year.financial <= 2013,]
   return (events)
 }
 
@@ -920,10 +939,10 @@ totalCostForEventSynthetic <- function(resourceTypeParam = NULL) {
   events <- computedDirectCosts(events)
   events <- indirectCosts(events)
   events <- intangibleCosts(events)
-  events$Synthetic.cost <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
+  events$Synthetic.Cost <- rowSums(subset(events, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
   # Synthetic costs are implicitly indexed
-  events$Synthetic.cost.indexed <- events$Synthetic.cost
-  events$Synthetic.cost.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+  events$Synthetic.Cost.indexed <- events$Synthetic.Cost
+  events$Synthetic.Cost.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
   return(events)
 }
 
@@ -933,11 +952,11 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
 
   # Add insured and reported costs
   multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplier)
-  events$Insured.cost.multiplied <- events$Insured.Cost * multipliers
-  events$Insured.cost.multiplied.indexed <- apply(events[c("Year", "Insured.cost.multiplied")], 1, indexCosts)
-  events$Insured.cost.multiplied.normalised <- apply(events[c("Year", "Insured.cost.multiplied")], 1, normalisedCosts)
-  events$Reported.cost.indexed <- apply(events[c("Year", "Reported.cost")], 1, indexCosts)
-  events$Reported.cost.normalised <- apply(events[c("Year", "Reported.cost")], 1, normalisedCosts)
+  events$Insured.Cost.multiplied <- events$Insured.Cost * multipliers
+  events$Insured.Cost.multiplied.indexed <- apply(events[c("Year.financial", "Insured.Cost.multiplied")], 1, indexCosts)
+  events$Insured.Cost.multiplied.normalised <- apply(events[c("Year.financial", "Insured.Cost.multiplied")], 1, normalisedCosts)
+  events$Reported.Cost.indexed <- apply(events[c("Year.financial", "Reported.Cost.interpolated")], 1, indexCosts)
+  events$Reported.Cost.normalised <- apply(events[c("Year.financial", "Reported.Cost.interpolated")], 1, normalisedCosts)
   return(events)
 }
 
@@ -1049,9 +1068,9 @@ countEmptyValuesInEvents <- function() {
 ## Interpollate all costs
 interpollateAllCosts <- function() {
   # Do costs
-  data <- mydata[c("Insured.Cost.normalised", "Reported.cost")]
+  data <- mydata[c("Insured.Cost.normalised", "Reported.Cost")]
   mydata$Insured.Cost.normalised.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Insured.Cost.indexed", "Reported.cost")]
+  data <- mydata[c("Insured.Cost.indexed", "Reported.Cost")]
   mydata$Insured.Cost.indexed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
 
   # Do other columns
@@ -1430,6 +1449,7 @@ convertSingleCountToDollars <- function(range) {
 }
 
 
+
 # Write mydata back to a file
 writeData <- function() {
 
@@ -1481,18 +1501,30 @@ writeEventDataSummary <- function() {
     "Year",
     "title",
     "resourceType",
-    "Reported.cost",
-    "Reported.cost.indexed",
-    "Reported.cost.normalised",
+    "Reported.Cost",
+    "Reported.Cost.interpolated",
+    "Reported.Cost.indexed",
+    "Reported.Cost.normalised",
     "Insured.Cost",
-    "Insured.cost.multiplied",
-    "Insured.cost.multiplied.indexed",
-    "Insured.cost.multiplied.normalised",
-    "Synthetic.cost",
-    "Synthetic.cost.normalised"
+    "Insured.Cost.multiplied",
+    "Insured.Cost.multiplied.indexed",
+    "Insured.Cost.multiplied.normalised",
+    "Synthetic.Cost",
+    "Synthetic.Cost.normalised"
     )
   ]
-
+  
+  Reported.Cost.normalised.nonzero <- events$Reported.Cost.normalised[events$Reported.Cost.normalised != 0]
+  Reported.Cost.normalised.sum <- sum(Reported.Cost.normalised.nonzero, na.rm = TRUE)
+  Reported.Cost.normalised.average <- mean(Reported.Cost.normalised.nonzero, na.rm = TRUE)
+  Reported.Cost.normalised.stddev <- sd(Reported.Cost.normalised.nonzero, na.rm = TRUE)
+  Reported.Cost.normalised.nonzero.percentage <- ( Reported.Cost.normalised.nonzero * 100 ) / Reported.Cost.normalised.sum
+  Reported.Cost.normalised.nonzero.sorted <- sort(Reported.Cost.normalised.nonzero, TRUE)
+  
+  print(paste("Total costs: $",format(Reported.Cost.normalised.sum, big.mark=","), sep="" ))
+  print(paste("Average cost: $",format(Reported.Cost.normalised.average, big.mark=","), sep="" ))
+  print(paste("Standard deviation: $",format(Reported.Cost.normalised.stddev, big.mark=","), sep="" ))
+  
   write.table(summary, file = "./output/data_events_summary.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "", dec = ".", row.names = FALSE,
               col.names = TRUE, qmethod = c("escape", "double"),

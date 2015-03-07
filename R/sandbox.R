@@ -2,6 +2,66 @@
 # Miscellenous analysis and reporting functions
 # Anything here for a while should be moved somewhere else
 
+
+## Generates various forms of time series
+annual_total_costs_of_disasters_in_australia_time_series <- function() {
+  # Store the total costs by year
+  totalCosts <- totalCostForEvent()
+  # Just for normalised data
+  totalCostsByYear <- with(totalCosts, aggregate(Reported.cost.normalised, by=list(Year.financial), FUN=safeSum))
+  
+  # Taken from http://a-little-book-of-r-for-time-series.readthedocs.org/en/latest/src/timeseries.html
+  
+  costSeries <- ts(totalCostsByYear$x, c(1967))
+  plot.ts(costSeries)
+  lines(lowess(time(costSeries), costSeries), col="blue", lwd=2)
+  
+  library("TTR")
+  costSeriesSMA <- SMA(costSeries,n=8)
+  plot.ts(costSeriesSMA)
+
+  # Forecast from the first point forwards
+  forecastedCosts <- HoltWinters(costSeries, beta=FALSE, gamma=FALSE, l.start=18927975956)
+  #forecastedCosts <- HoltWinters(costSeries, beta=FALSE, gamma=FALSE)
+  forecastedCosts
+  plot(forecastedCosts)
+  forecastedCostsNoGamma <- HoltWinters(costSeries, gamma=FALSE, l.start=18927975956)
+  
+  # https://www.google.com.au/url?sa=t&rct=j&q=&esrc=s&source=web&cd=9&cad=rja&uact=8&ved=0CFMQFjAI&url=http%3A%2F%2Fwww.ghement.ca%2FMann-Kendall%2520Trend%2520Test%2520in%2520R.doc&ei=Un_6VOTOIobW8gXYzYGwBA&usg=AFQjCNEO0yK7QxSgQFIwzs0WsObjQMCDNg&sig2=niAp_DilG2nPWaaBa_MsXw
+  install.packages("Kendall")
+  require(Kendall) 
+  par(mfrow=c(2,1))
+  # Autocorrelation
+  acf(costSeries)
+  # Partial Autocorrelation
+  pacf(costSeries)
+  res <- MannKendall(costSeries)
+  print(res)
+  summary(res)
+  
+  # Also see: 
+  # http://pubs.usgs.gov/twri/twri4a3/pdf/chapter12.pdf
+  # https://www.otexts.org/fpp/4/8
+  
+  library("forecast")
+  forecastedCostsInFuture <- forecast.HoltWinters(forecastedCosts, h=50)
+  plot.forecast(forecastedCostsInFuture)
+  
+  # http://www.itl.nist.gov/div898/handbook/eda/section3/eda35d.htm
+  library(lawstat)
+  runs.test(totalCostsByYear$x,alternative="two.sided")
+  qnorm(.975)
+  
+  data <- data.frame(x = totalCostsByYear$Group.1, y = totalCostsByYear$x)
+  ggplot(data, aes(x = x, y = y)) + geom_point() +
+    stat_smooth(method = 'lm', aes(colour = 'linear'), se = FALSE) +
+    #stat_smooth(method = 'lm', formula = y ~ poly(x,2), aes(colour = 'polynomial'), se= FALSE) +
+    #stat_smooth(method = 'nls', formula = y ~ a * log(x) +b, aes(colour = 'logarithmic'), se = FALSE, start = list(a=1,b=1)) +
+    #stat_smooth(method = 'nls', formula = y ~ a*exp(b *x), aes(colour = 'Exponential'), se = FALSE, start = list(a=1,b=1)) +
+    theme_bw() +
+    scale_colour_brewer(name = 'Trendline', palette = 'Set2')
+}
+
 function <- compareInsuredToTotalCosts() {
   events <- totalCostForEvent()
   dd <- as.data.frame(events[c("Year.financial", "resourceType", "directCost.normalised", "indirectCost.normalised", "intangibleCost.normalised", "total.normalised", "Insured.Costs.normalised", "Insured.Costs.indexed")])
