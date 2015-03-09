@@ -93,17 +93,22 @@ financialYear <- function(range) {
   finYear <- if (is.element(month, firstMonths)) as.numeric(year) else as.numeric(year) + 1
   return(as.numeric(finYear))
 }
-## Generates a population ratio (based on June 2013)
-popRatio <- function(baseYear) {
-  baseYear <- as.numeric(baseYear)
-  if ((baseYear - 1967) < 14) {
-    popRow <- 10 + (baseYear - 1967)
+## Generates a population value for a given year
+popForYear <- function(year) {
+  year <- as.numeric(year)
+  if ((year - 1967) < 14) {
+    popRow <- 10 + (year - 1967)
   }
   else {
-    popRow <- 24 + (baseYear - 1981) * 4
+    popRow <- 24 + (year - 1981) * 4
   }
-  popTest <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[popRow])
-  pop2013 <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[152])
+  popValue <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[popRow])
+  return (popValue)
+}
+## Generates a population ratio (based on June 2013)
+popRatio <- function(baseYear) {
+  popTest <- popForYear(baseYear)
+  pop2013 <- popForYear(2013)
   return(pop2013 / popTest)
 }
 ## Generates a cpi ratio (based on June 2013)
@@ -228,7 +233,6 @@ normaliseDeathsAndInjuries <- function() {
   # ... for population-inflated deaths and injuries
   mydata$Deaths.normalised <<- apply(mydata[c("Year.financial", "Deaths")], 1, normalisedPopulation)
   mydata$Injuries.normalised <<- apply(mydata[c("Year.financial", "Injuries")], 1, normalisedPopulation)
-
 }
 
 ## Generate computed columns
@@ -976,6 +980,8 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
   events$Reported.Cost.indexed <- apply(events[c("Year.financial", "Reported.Cost.interpolated")], 1, indexCosts)
   events$Reported.Cost.normalised <- apply(events[c("Year.financial", "Reported.Cost.interpolated")], 1, normalisedCosts)
   events$Reported.Cost.normalised.millions <- events$Reported.Cost.normalised / 1000000
+  events$Reported.Cost.WithDeathsAndInjuries.normalised <- events$Reported.Cost.normalised +  events$deathAndInjuryCosts.normalised
+  events$Reported.Cost.WithDeathsAndInjuries.normalised.millions <- events$Reported.Cost.WithDeathsAndInjuries.normalised / 1000000
   return(events)
 }
 
@@ -1469,7 +1475,7 @@ convertSingleCountToDollars <- function(range) {
 
 # Conducts a basic non-parametric statistic test for the significance of a time series,
 # and outputs the results
-significanceTest <- function(data) {
+significanceTest_MannKendall <- function(data) {
   timeSeries <- ts(data$x)
   par(mfrow=c(2,1))
   # Autocorrelation
@@ -1479,6 +1485,13 @@ significanceTest <- function(data) {
   res <- MannKendall(timeSeries)
   return (res)
 }
+
+significanceTest_LinearRegression <- function(data) {
+  timeSeries <- ts(data$x)
+  res <- lm(x ~ Group.1, data)
+  return (res)
+}
+
 
 # Write mydata back to a file
 writeData <- function() {
