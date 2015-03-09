@@ -1,6 +1,7 @@
 
 # Imports
 library(gdata)
+library(Kendall)
 
 # Global options
 options(stringsAsFactors=F)
@@ -128,6 +129,10 @@ gdpRatio <- function(baseYear) {
   gdpGross <- gdpGross / popRatio(baseYear)
   return(gdpGross)
 }
+## Combined CPI, population and GDP ratio
+combinedRatio <- function(baseYear) {
+  return (cpiRatio(baseYear) * popRatio(baseYear) * gdpRatio(baseYear))
+}
 ## Generates an CPI indexed cost (based on June 2013)
 indexCosts <- function(range) {
   baseYear <- range[1]
@@ -170,6 +175,7 @@ loadData <- function() {
   mydata <<- read.xls("./data/database.xlsx", 2)
   # Hack to ignore any rows without a year value - such as rows added for computation
   mydata <<- mydata[!is.na(mydata$Year), ]
+  print(paste("Read in ", length(mydata$Year), " rows."))
   cpi <<- read.xls("./data/cpi.xlsx", 2)
   pop <<- read.xls("./data/pop_consolidate.xlsx", 1)
   gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
@@ -198,7 +204,7 @@ interpolateReportedCosts <- function() {
   ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost 
   ag[is.na(ag$Event.Factor),] <- 1.0
   data.Reported.Cost.na <- mydata[is.na(mydata$Reported.Cost),]
-  mydata <<- merge(mydata[, ], ag[,c("resourceType", "Event.Factor")], by="resourceType")
+  mydata <<- merge(mydata[, ], ag[,c("resourceType", "Event.Factor")], by="resourceType", all.x = TRUE)
   mydata$Reported.Cost.interpolated <<- mydata$Reported.Cost
   mydata[is.na(mydata$Reported.Cost.interpolated), ]$Reported.Cost.interpolated <<- mydata[is.na(mydata$Reported.Cost.interpolated), ]$Insured.Cost * mydata[is.na(mydata$Reported.Cost.interpolated), ]$Event.Factor
 }
@@ -208,6 +214,7 @@ normaliseInsuredCost <- function() {
   mydata$Insured.Cost.indexed <<- apply(mydata[c("Year.financial", "Insured.Cost.cleaned")], 1, indexCosts)
   # ... for normalised insured costs
   mydata$Insured.Cost.normalised <<- apply(mydata[c("Year.financial", "Insured.Cost.cleaned")], 1, normalisedCosts)
+  mydata$Insured.Cost.normalised.millions <<- mydata$Insured.Cost.normalised / 1000000
 }
 
 normaliseReportedCost <- function() {
@@ -320,6 +327,7 @@ getRawEvents <- function(resourceTypeParam = NULL) {
     "Insured.Cost",
     "Insured.Cost.indexed",
     "Insured.Cost.normalised",
+    "Insured.Cost.normalised.millions",
     "Reported.Cost",
     "Reported.Cost.interpolated",
     "Reported.Cost.indexed",
@@ -409,7 +417,7 @@ getRawEvents <- function(resourceTypeParam = NULL) {
 
 ## Get all events for the purpose of generating costs
 getEvents <- function(resourceTypeParam = NULL) {
-  events <- getRawEvents(resourceTypeParam = NULL)
+  events <- getRawEvents(resourceTypeParam)
 
   events$Deaths <- as.numeric(events$Deaths)
   events$Injuries <- as.numeric(events$Injuries)
@@ -907,12 +915,16 @@ culturalHeritageCosts <- function(events) {
 # Calculate intangible costs
 intangibleCosts <- function(events) {
   events$deathCosts <- deathCosts(events)
+  events$deathCosts.millions <- events$deathCosts / 1000000
   events$injuryCosts <- injuryCosts(events)
+  events$injuryCosts.millions <- events$injuryCosts / 1000000
   deathAndInjuryCosts <- rowSums(subset(events, select = c(deathCosts, injuryCosts)), na.rm = TRUE)
 
   # Normalised values
   events$deathCosts.normalised <- deathCostsNormalised(events)
+  events$deathCosts.normalised.millions <- events$deathCosts.normalised / 1000000
   events$injuryCosts.normalised <- injuryCostsNormalised(events)
+  events$injuryCosts.normalised.millions <- events$injuryCosts.normalised / 1000000
   deathAndInjuryCostsNormalised <- rowSums(subset(events, select = c(deathCosts.normalised, injuryCosts.normalised)), na.rm = TRUE)
 
   ecosystemCosts <- ecosystemCosts(events)
@@ -922,13 +934,17 @@ intangibleCosts <- function(events) {
   nonDeathAndInjuryIntangibles <- ecosystemCosts + healthImpactCosts + memorabiliaCosts + culturalHeritageCosts
 
   events$deathAndInjuryCosts <- deathAndInjuryCosts
+  events$deathAndInjuryCosts.millions <- deathAndInjuryCosts / 1000000
   events$nonDeathAndInjuryIntangibles <- nonDeathAndInjuryIntangibles
   events$intangibleCost <- deathAndInjuryCosts + nonDeathAndInjuryIntangibles
 
   nonDeathAndInjuryIntangiblesNormalised <- apply(events[c("Year.financial", "nonDeathAndInjuryIntangibles")], 1, normalisedCostsWithoutIndexation)
   events$deathAndInjuryCosts.normalised <- deathAndInjuryCostsNormalised
+  events$deathAndInjuryCosts.normalised.millions <- events$deathAndInjuryCosts.normalised / 1000000
   events$nonDeathAndInjuryIntangibles.normalised <- nonDeathAndInjuryIntangiblesNormalised
-  events$intangibleCost.normalised = deathAndInjuryCostsNormalised + nonDeathAndInjuryIntangiblesNormalised
+  events$nonDeathAndInjuryIntangibles.normalised.millions <- events$nonDeathAndInjuryIntangibles.normalised / 1000000
+  events$intangibleCost.normalised <- deathAndInjuryCostsNormalised + nonDeathAndInjuryIntangiblesNormalised
+  events$intangibleCost.normalised.millions <- events$intangibleCost.normalised / 1000000
 
   return (events)
 }
@@ -943,6 +959,7 @@ totalCostForEventSynthetic <- function(resourceTypeParam = NULL) {
   # Synthetic costs are implicitly indexed
   events$Synthetic.Cost.indexed <- events$Synthetic.Cost
   events$Synthetic.Cost.normalised <- rowSums(subset(events, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+  events$Synthetic.Cost.normalised.millions <- events$Synthetic.Cost.normalised / 1000000
   return(events)
 }
 
@@ -955,8 +972,10 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
   events$Insured.Cost.multiplied <- events$Insured.Cost * multipliers
   events$Insured.Cost.multiplied.indexed <- apply(events[c("Year.financial", "Insured.Cost.multiplied")], 1, indexCosts)
   events$Insured.Cost.multiplied.normalised <- apply(events[c("Year.financial", "Insured.Cost.multiplied")], 1, normalisedCosts)
+  events$Insured.Cost.multiplied.normalised.millions <- events$Insured.Cost.multiplied.normalised / 1000000
   events$Reported.Cost.indexed <- apply(events[c("Year.financial", "Reported.Cost.interpolated")], 1, indexCosts)
   events$Reported.Cost.normalised <- apply(events[c("Year.financial", "Reported.Cost.interpolated")], 1, normalisedCosts)
+  events$Reported.Cost.normalised.millions <- events$Reported.Cost.normalised / 1000000
   return(events)
 }
 
@@ -1448,7 +1467,18 @@ convertSingleCountToDollars <- function(range) {
   return (dollarValue)
 }
 
-
+# Conducts a basic non-parametric statistic test for the significance of a time series,
+# and outputs the results
+significanceTest <- function(data) {
+  timeSeries <- ts(data$x)
+  par(mfrow=c(2,1))
+  # Autocorrelation
+  acf(timeSeries)
+  # Partial Autocorrelation
+  pacf(timeSeries)
+  res <- MannKendall(timeSeries)
+  return (res)
+}
 
 # Write mydata back to a file
 writeData <- function() {
