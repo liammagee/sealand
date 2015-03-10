@@ -207,7 +207,7 @@ interpolateReportedCosts <- function() {
   ag <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, mydata, sum)
   ag <- merge(ag[,], resourceTypes, by="resourceType", all = TRUE)
   ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost 
-  ag[is.na(ag$Event.Factor),] <- 1.0
+  ag[is.na(ag$Event.Factor),"Event.Factor"] <- 1.0
   data.Reported.Cost.na <- mydata[is.na(mydata$Reported.Cost),]
   mydata <<- merge(mydata[, ], ag[,c("resourceType", "Event.Factor")], by="resourceType", all.x = TRUE)
   mydata$Reported.Cost.interpolated <<- mydata$Reported.Cost
@@ -967,7 +967,7 @@ totalCostForEventSynthetic <- function(resourceTypeParam = NULL) {
   return(events)
 }
 
-## Total cost for event - BTE basis
+## Total cost for event, including insured and reported costs
 totalCostForEvent <- function(resourceTypeParam = NULL) {
   events <- totalCostForEventSynthetic(resourceTypeParam)
 
@@ -982,9 +982,36 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
   events$Reported.Cost.normalised.millions <- events$Reported.Cost.normalised / 1000000
   events$Reported.Cost.WithDeathsAndInjuries.normalised <- events$Reported.Cost.normalised +  events$deathAndInjuryCosts.normalised
   events$Reported.Cost.WithDeathsAndInjuries.normalised.millions <- events$Reported.Cost.WithDeathsAndInjuries.normalised / 1000000
+
   return(events)
 }
 
+## Total cost for events without heatwaves
+totalCostForEventWithoutHeatwwave <- function(resourceTypeParam = NULL) {
+  events <- totalCostForEvent(resourceTypeParam)
+
+  # Remove heatwaves
+  events <- events[events$resourceType != 'Heatwave',]
+
+  return(events)
+}
+
+## Total cost for events filtered by resourceType, reported costs and no heatwaves
+totalCostForEventFiltered <- function(resourceTypeParam = NULL, reportedCostsOnly = TRUE, noHeatwaves = FALSE) {
+  events <- totalCostForEvent(resourceTypeParam)
+
+  # Remove heatwaves
+  if (reportedCostsOnly == TRUE) {
+    events <- events[events$Reported.Cost.normalised.millions > 0,]
+  }
+
+  # Remove heatwaves
+  if (noHeatwaves == TRUE) {
+    events <- events[events$resourceType != 'Heatwave',]
+  }
+
+  return(events)
+}
 
 
 ## Total cost for event - Interpolated basis
