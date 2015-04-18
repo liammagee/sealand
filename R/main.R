@@ -65,6 +65,11 @@ run <- function() {
 	cost_of_deaths_and_injuries_by_decade()
 	total_cost_of_natural_disasters()
 	total_cost_of_natural_disasters_by_decade()
+	total_cost_of_natural_disasters_synthetic()
+	total_cost_of_natural_disasters_by_decade_synthetic()
+	total_deaths_as_percentage_of_pop()
+	total_cost_as_percentage_of_gdp()
+	insured_cost_as_percentage_of_total_cost()
 	average_annual_cost_of_natural_disasters_by_state_and_territory()
 	deaths_and_injuries_by_hazard_type()
 }
