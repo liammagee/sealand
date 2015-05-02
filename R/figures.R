@@ -625,7 +625,48 @@ number_of_disaster_events_by_state_and_territory <- function() {
 
 ## Generate Figure 3.12
 costs_by_type_of_disaster_and_state_and_territory <- function() {
-	# Pie chart
+  # Store the total costs by year
+  totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
+  totalCosts$Reported.Cost.normalised.millions.state.1 <- totalCosts$Reported.Cost.normalised.millions * totalCosts$State.1.percent
+  totalCosts$Reported.Cost.normalised.millions.state.2 <- totalCosts$Reported.Cost.normalised.millions * totalCosts$State.2.percent
+  totalCostsByState1 <- with(totalCosts, aggregate(Reported.Cost.normalised.millions.state.1, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
+  totalCostsByState2 <- with(totalCosts, aggregate(Reported.Cost.normalised.millions.state.2, by=list(State.abbreviated.2, resourceType), FUN=safeSum))
+  totalCostsByStateAndDisasterType <- merge(totalCostsByState1, totalCostsByState2, by=c("Group.1", "Group.2"), all.x = TRUE )
+  totalCostsByStateAndDisasterType$x <- rowSums(cbind(totalCostsByStateAndDisasterType$x.x, totalCostsByStateAndDisasterType$x.y), na.rm = TRUE)
+  # totalCostsByStateAndDisasterType <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
+  totalCostsByStateAndDisasterType$x <- round(totalCostsByStateAndDisasterType$x)
+  state.totals <- aggregate(x ~ Group.1, data=totalCostsByStateAndDisasterType, sum, na.rm=TRUE)
+  names(state.totals)[2] = "Total"
+  totals.with.state.aggregates <- merge(totalCostsByStateAndDisasterType, state.totals, by = "Group.1", all.x = TRUE)
+  totals.with.state.aggregates$percentage <- totals.with.state.aggregates$x / totals.with.state.aggregates$Total
+  totals.with.state.aggregates <- totals.with.state.aggregates[order(-totals.with.state.aggregates$Total),]
+  
+  # For individual charts, if necessary
+  act <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'ACT',]
+  nsw <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'NSW',]
+  nt <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'NT',]
+  qld <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'QLD',]
+  sa <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'SA',]
+  tas <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'TAS',]
+  vic <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'VIC',]
+  wa <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'WA',]
+  
+  # Pie chart
+  #at <- nrow(data) - as.numeric(cumsum(sort(table(data)))-0.5*sort(table(data)))
+  #label = paste0(round(sort(table(data))/sum(table(data)),2) * 100,"%")
+  
+  totals.with.state.aggregates$total.neg = factor(-totals.with.state.aggregates$Total, labels = unique(totals.with.state.aggregates$Group.1))
+  
+  p = ggplot(data = totals.with.state.aggregates, aes(x = factor(1), y = percentage, fill = factor(Group.2)))
+  p = p + geom_bar(width = 1, stat = "identity") 
+  p = p + facet_wrap(~ total.neg, ncol=2)
+  p = p + coord_polar(theta="y") 
+  p = p + theme(axis.ticks = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank())
+  p = p + xlab('') + ylab('') + labs(fill = 'Disaster Type') 
+  #p = p + annotate(geom = "text", label = label)
+  p
+
+  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory", ".png", sep=""))  
 }
 
 
@@ -1633,32 +1674,19 @@ multipliers_joy_vs_derived <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   
-  eventTypes <- data.frame(eventTypes = unique(totalCosts$resourceType))
-  eventTypes$multipliers.Joy <- apply(eventTypes, 1, eventTypeMultiplier)
-  eventTypes$multipliers.Derived <- apply(eventTypes, 1, eventTypeMultiplierDerived)
+  event.types <- data.frame(eventTypes = unique(totalCosts$resourceType))
+  event.types$multipliers.Joy <- apply(data.frame(event.types$eventTypes), 1, eventTypeMultiplierJoy)
+  event.types$multipliers.Derived <- apply(data.frame(event.types$eventTypes), 1, eventTypeMultiplierDerived)
+
+  names(event.types)[1] <- "Hazard Type"
+  names(event.types)[2] <- "Joy's (1991) multiplier"
+  names(event.types)[3] <- "Derived (2015) multiplier"
   
-  totalNumberOfDeathsByResourceType <- with(totalCosts, aggregate(Deaths, by=list(resourceType), FUN=safeSum))
-  totalNumberOfDeathsByResourceType.n <- with(totalCosts, aggregate(Deaths.normalised, by=list(resourceType), FUN=safeSum))
-  totalNumberOfInjuriesByResourceType <- with(totalCosts, aggregate(Injuries, by=list(resourceType), FUN=safeSum))
-  totalNumberOfInjuriesByResourceType.n <- with(totalCosts, aggregate(Injuries.normalised, by=list(resourceType), FUN=safeSum))
-  totalCostsOfDeathsInjuriesByResourceType <- with(totalCosts, aggregate(deathAndInjuryCosts.normalised.millions, by=list(resourceType), FUN=safeSum))
-  totalCostsByDisasterType <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
-  totalCostsByDisasterType$incl.deaths <- totalCostsByDisasterType$x + totalCostsOfDeathsInjuriesByResourceType$x
-  totalCostsByDisasterType$percent.deaths <- totalCostsOfDeathsInjuriesByResourceType$x / totalCostsByDisasterType$incl.deaths
-  merged.data <- merge(totalNumberOfDeathsByResourceType, totalNumberOfDeathsByResourceType.n, by = "Group.1", all = TRUE, suffixes = c(".a", ".b"))
-  merged.data <- merge(merged.data, totalNumberOfInjuriesByResourceType, by = "Group.1", all = TRUE, suffixes = c(".b", ".c"))
-  merged.data <- merge(merged.data, totalNumberOfInjuriesByResourceType.n, by = "Group.1", all = TRUE, suffixes = c(".c", ".d"))
-  merged.data <- merge(merged.data, totalCostsOfDeathsInjuriesByResourceType, by = "Group.1", all = TRUE, suffixes = c(".d", ".e"))
-  merged.data <- merge(merged.data, totalCostsByDisasterType, by = "Group.1", all = TRUE, suffixes = c(".e", ".f", ".g", ".h"))
-  merged.data <- merged.data[order(-merged.data$x.e),]
-  merged.data[, seq(2, 9)] <- round(merged.data[, seq(2, 9)])
-  merged.data[, seq(2, 9)] <- format(merged.data[, seq(2, 9)], big.mark=",")
+  print("Event Type Multipliers")
+  print(event.types)
   
-  print("Percentages of deaths by disaster type")
-  print(totalCostsByDisasterType)
-  
-  write.table(merged.data, file = "./figs/table3_2_deaths_injuries_by_disaster_type.csv", append = FALSE, quote = TRUE, sep = ",",
-              eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+  write.table(event.types, file = "./figs/table3_3_multipliers_joy_vs_derived.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
 }
