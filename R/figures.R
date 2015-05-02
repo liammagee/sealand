@@ -1511,6 +1511,54 @@ insured_cost_as_percentage_of_total_cost <- function() {
                    "(Per Cent)", 
                    TRUE
   )
+  
+  print("Average percentage of insured costs")
+  print(mean(mergedCosts$x))
+}
+
+
+## Generate Figure 3.40
+total_costs_raw_indexed_normalised <- function() {
+  # Store the total costs by year
+  totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
+  totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
+  totalCostsByYearIndexed <- with(totalCosts, aggregate(Reported.Cost.WithDeathsAndInjuries.indexed.millions, by=list(Year.financial), FUN=safeSum))
+  totalCostsByYearRaw <- with(totalCosts, aggregate(Reported.Cost.WithDeathsAndInjuries.interpolated.millions, by=list(Year.financial), FUN=safeSum))
+  
+  mergedCosts <- merge(totalCostsByYear, totalCostsByYearIndexed, by="Group.1", all.x = TRUE)
+  mergedCosts <- merge(mergedCosts, totalCostsByYearRaw, by="Group.1", all.x = TRUE)
+  names(mergedCosts)[2] <- paste("Normalised Cost")
+  names(mergedCosts)[3] <- paste("Indexed Cost")
+  names(mergedCosts)[4] <- paste("Raw Cost")
+  
+  data <- melt(mergedCosts, id.vars="Group.1", value.name="x", variable.name="Cost.Type")
+  file_name <- "fig3_40_total_costs_raw_indexed_normalised"
+  title <- "FIGURE 3.40: TOTAL COSTS - RAW vs INDEXED vs NORMALISED, 1967-2013"
+  x_label <- "Years (financial)"
+  y_label <- "(2013 Dollars in $millions)"
+  useYears <- TRUE
+  
+  # Set colours
+  background <- '#F0F0F0'
+  foreground <- '#D08728'
+  textColor <- '#888888'
+  
+  # Calculate range from 0 to max value of costs
+  x_scale <- scale_x_continuous(name = x_label, breaks = yearBreaks(data$Group.1), labels = yearLabels(data$Group.1))
+  p <- ggplot(data=data, aes(x=Group.1, y = x, group = Cost.Type, colour=Cost.Type)) + 
+    geom_line() + 
+    ggtitle(title) + x_scale + scale_y_continuous(name=y_label, labels=comma) + 
+    theme(plot.title = element_text(colour = foreground, lineheight=.8, face="bold"),
+          panel.grid.minor.y=element_blank(), 
+          panel.grid.major.y=element_line(colour = foreground),
+          panel.grid.minor.x=element_blank(), 
+          panel.grid.major.x=element_blank(),
+          panel.background = element_rect(fill = background, colour = foreground),
+          axis.title=element_text(color=textColor),
+          axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0))
+  p
+  
+  ggsave(file=paste("./figs/", file_name, ".png", sep=""))  
 }
 
 
@@ -1553,7 +1601,42 @@ average_annual_cost_of_natural_disasters_by_state_and_territory <- function() {
 deaths_and_injuries_by_hazard_type <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
+  
+  totalNumberOfDeathsByResourceType <- with(totalCosts, aggregate(Deaths, by=list(resourceType), FUN=safeSum))
+  totalNumberOfDeathsByResourceType.n <- with(totalCosts, aggregate(Deaths.normalised, by=list(resourceType), FUN=safeSum))
+  totalNumberOfInjuriesByResourceType <- with(totalCosts, aggregate(Injuries, by=list(resourceType), FUN=safeSum))
+  totalNumberOfInjuriesByResourceType.n <- with(totalCosts, aggregate(Injuries.normalised, by=list(resourceType), FUN=safeSum))
+  totalCostsOfDeathsInjuriesByResourceType <- with(totalCosts, aggregate(deathAndInjuryCosts.normalised.millions, by=list(resourceType), FUN=safeSum))
+  totalCostsByDisasterType <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
+  totalCostsByDisasterType$incl.deaths <- totalCostsByDisasterType$x + totalCostsOfDeathsInjuriesByResourceType$x
+  totalCostsByDisasterType$percent.deaths <- totalCostsOfDeathsInjuriesByResourceType$x / totalCostsByDisasterType$incl.deaths
+  merged.data <- merge(totalNumberOfDeathsByResourceType, totalNumberOfDeathsByResourceType.n, by = "Group.1", all = TRUE, suffixes = c(".a", ".b"))
+  merged.data <- merge(merged.data, totalNumberOfInjuriesByResourceType, by = "Group.1", all = TRUE, suffixes = c(".b", ".c"))
+  merged.data <- merge(merged.data, totalNumberOfInjuriesByResourceType.n, by = "Group.1", all = TRUE, suffixes = c(".c", ".d"))
+  merged.data <- merge(merged.data, totalCostsOfDeathsInjuriesByResourceType, by = "Group.1", all = TRUE, suffixes = c(".d", ".e"))
+  merged.data <- merge(merged.data, totalCostsByDisasterType, by = "Group.1", all = TRUE, suffixes = c(".e", ".f", ".g", ".h"))
+  merged.data <- merged.data[order(-merged.data$x.e),]
+  merged.data[, seq(2, 9)] <- round(merged.data[, seq(2, 9)])
+  merged.data[, seq(2, 9)] <- format(merged.data[, seq(2, 9)], big.mark=",")
+  
+  print("Percentages of deaths by disaster type")
+  print(totalCostsByDisasterType)
+  
+  write.table(merged.data, file = "./figs/table3_2_deaths_injuries_by_disaster_type.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+}
 
+## Generate Table 3.3
+multipliers_joy_vs_derived <- function() {
+  # Store the total costs by year
+  totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
+  
+  eventTypes <- data.frame(eventTypes = unique(totalCosts$resourceType))
+  eventTypes$multipliers.Joy <- apply(eventTypes, 1, eventTypeMultiplier)
+  eventTypes$multipliers.Derived <- apply(eventTypes, 1, eventTypeMultiplierDerived)
+  
   totalNumberOfDeathsByResourceType <- with(totalCosts, aggregate(Deaths, by=list(resourceType), FUN=safeSum))
   totalNumberOfDeathsByResourceType.n <- with(totalCosts, aggregate(Deaths.normalised, by=list(resourceType), FUN=safeSum))
   totalNumberOfInjuriesByResourceType <- with(totalCosts, aggregate(Injuries, by=list(resourceType), FUN=safeSum))

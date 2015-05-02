@@ -70,7 +70,9 @@ run <- function() {
 	total_deaths_as_percentage_of_pop()
 	total_cost_as_percentage_of_gdp()
 	insured_cost_as_percentage_of_total_cost()
+	total_costs_raw_indexed_normalised()
 	average_annual_cost_of_natural_disasters_by_state_and_territory()
 	deaths_and_injuries_by_hazard_type()
+	multipliers_joy_vs_derived()
 }
 run()

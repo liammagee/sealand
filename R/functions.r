@@ -207,18 +207,13 @@ cleanData <- function() {
 }
 
 
-# Interpolate reported costs, based on:
-# 1. The relationship between Insured and Reported costs.
-# 2. Death and injuries
+# Interpolate reported costs, based on the relationship between Insured and Reported costs.
 interpolateReportedCosts <- function() {
-  resourceTypes <- data.frame(resourceType = cbind(unique(unlist(mydata$resourceType))))
-  ag <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, mydata, sum)
-  ag <- merge(ag[,], resourceTypes, by="resourceType", all = TRUE)
-  ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost 
-  ag[is.na(ag$Event.Factor),"Event.Factor"] <- 1.0
+  ag <- generateDerivedMultipliers()
   data.Reported.Cost.na <- mydata[is.na(mydata$Reported.Cost),]
   mydata <<- merge(mydata[, ], ag[,c("resourceType", "Event.Factor")], by="resourceType", all.x = TRUE)
   mydata$Reported.Cost.interpolated <<- mydata$Reported.Cost
+  # Interpolate reported cost based on event multiplier * insured cost
   mydata[is.na(mydata$Reported.Cost.interpolated), ]$Reported.Cost.interpolated <<- mydata[is.na(mydata$Reported.Cost.interpolated), ]$Insured.Cost * mydata[is.na(mydata$Reported.Cost.interpolated), ]$Event.Factor
 }
 
@@ -1058,11 +1053,18 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
   events <- totalCostForEventSynthetic(resourceTypeParam)
 
   # Add insured and reported costs
-  multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplier)
+  
+
+  # Use Derived multipliers
+  multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplierDerived)
+  # Use Joy's multipliers
+  # multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplierJoy)
+  
   events$Insured.Cost.multiplied <- events$Insured.Cost * multipliers
   events$Insured.Cost.multiplied.indexed <- apply(events[c("Year.financial", "Insured.Cost.multiplied")], 1, indexCosts)
   events$Insured.Cost.multiplied.normalised <- apply(events[c("Year.financial", "Insured.Cost.multiplied")], 1, normalisedCosts)
   events$Insured.Cost.multiplied.normalised.millions <- events$Insured.Cost.multiplied.normalised / 1000000
+  
   events$Reported.Cost.interpolated.millions <- events$Reported.Cost.interpolated / 1000000
   events$Reported.Cost.WithDeathsAndInjuries.interpolated <- events$Reported.Cost.interpolated +  events$deathAndInjuryCosts
   events$Reported.Cost.WithDeathsAndInjuries.interpolated.millions <- events$Reported.Cost.WithDeathsAndInjuries.interpolated / 1000000
@@ -1154,7 +1156,7 @@ codeCostLabels <- function() {
 
 
 ## Generate event-type multipliers, to estimate total direct costs from insured losses
-eventTypeMultiplier <- function(eventType) {
+eventTypeMultiplierJoy <- function(eventType) {
   ## NOTE: This approach is derived from Table 2.2 of 1999 BTE report,
   ## which in turn is derived from Joy 1991, which states:
   ## "These estimates were provided by the ICA and are subjective impressions based on experience rather than analytical estimates… The estimates include the effects of underinsurance."
@@ -1188,6 +1190,24 @@ eventTypeMultiplier <- function(eventType) {
   else  {
     1.0
   }
+}
+
+
+# Generates the multiplier from the "empirically based ratio"
+eventTypeMultiplierDerived <- function(eventType) {
+  ag <- generateDerivedMultipliers()
+  multiplier <- ag[ag$resourceType == eventType,]$Event.Factor
+  return (multiplier)
+}
+
+# Generates a list of derived multipliers
+generateDerivedMultipliers <- function() {
+  resourceTypes <- data.frame(resourceType = cbind(unique(unlist(mydata$resourceType))))
+  ag <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, mydata, sum)
+  ag <- merge(ag[,], resourceTypes, by="resourceType", all = TRUE)
+  ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost 
+  ag[is.na(ag$Event.Factor),"Event.Factor"] <- 1.0
+  return (ag)
 }
 
 # Count number of empty values
