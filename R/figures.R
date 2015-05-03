@@ -222,19 +222,6 @@ annual_total_costs_of_disasters_in_australia <- function() {
   totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
   totalCostsByYear <- includeAllYears(totalCostsByYear)
   
-  # Cache variables
-  data <- totalCostsByYear
-  title <- "FIGURE 3.1: ANNUAL TOTAL COST OF DISASTERS, 1967-2013"
-  x_label <- "Years (financial)"
-  y_label <- "(2013 Dollars in $millions)"
-  # Graph the results
-  standardBarChart(totalCostsByYear,
-                   "fig3_1_annual_total_costs_of_disasters_in_australia",
-                   title,
-                   x_label,
-                   y_label
-  )
-  
   print("Average annual cost of all disasters")
   print(mean(totalCostsByYear$x))
   
@@ -290,6 +277,22 @@ annual_total_costs_of_disasters_in_australia <- function() {
   print("Significance test (regression) for ratio of costs to GDP")
   print(resLR)
   summary(resLR)
+  
+  # PRINT GRAPHS
+  
+  # Cache variables
+  data <- totalCostsByYear
+  title <- "FIGURE 3.1: ANNUAL TOTAL COST OF DISASTERS, 1967-2013"
+  x_label <- "Years (financial)"
+  y_label <- "(2013 Dollars in $millions)"
+  
+  # Graph the results
+  standardBarChart(totalCostsByYear,
+                   "fig3_1_annual_total_costs_of_disasters_in_australia",
+                   title,
+                   x_label,
+                   y_label
+  )
 }
 
 
@@ -665,8 +668,24 @@ costs_by_type_of_disaster_and_state_and_territory <- function() {
   p = p + xlab('') + ylab('') + labs(fill = 'Disaster Type') 
   #p = p + annotate(geom = "text", label = label)
   p
-
+  
   ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory", ".png", sep=""))  
+  
+  # Stacked bar chart version
+  p = ggplot(data = totals.with.state.aggregates, aes(x = Group.1, y = x, fill = factor(Group.2)))
+  p = p + geom_bar(width = 0.5, stat = "identity") 
+  # p = p + facet_wrap(~ total.neg, ncol=2)
+  # p = p + coord_polar(theta="y") 
+  # p = p + theme(axis.ticks = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank())
+  p = p + xlab('States') + ylab('(2013 Dollars in $millions)') + labs(fill = 'Disaster Type') 
+  p
+  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked", ".png", sep=""))  
+  
+  p = ggplot(data = totals.with.state.aggregates, aes(x = Group.1, y = percentage, fill = factor(Group.2)))
+  p = p + geom_bar(width = 0.5, stat = "identity") 
+  p = p + xlab('States') + ylab('(2013 Dollars in $millions)') + labs(fill = 'Disaster Type') 
+  p
+  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked_percent", ".png", sep=""))  
 }
 
 

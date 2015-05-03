@@ -6,14 +6,15 @@ library(gdata)
 source("R/figures.R", TRUE)
 source("R/functions.R", TRUE)
 
-
-
 # Functions
 
 ## Ignores "NA" values for standard functions
-initialise <- function() {
+initialise <- function(database_file) {
+  # Hack to clear the console - http://stackoverflow.com/questions/14260340/function-to-clear-the-console-in-r
+  cat("\014")  
+  
 	# Load the data
-	loadData()
+  loadData(database_file)
 
 	# Generate computed columns
 	computeColumns()
@@ -22,7 +23,8 @@ initialise <- function() {
 # Generate
 run <- function() {
 	# Set up the data
-	initialise()
+  database_file = "./data/database_25042015.xlsx"
+  initialise(database_file)
 
   # Write out the data for checking
   writeEventDataSummary()

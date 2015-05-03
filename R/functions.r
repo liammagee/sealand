@@ -171,7 +171,12 @@ normalisedPopulation <- function(range) {
   return(pop * popRatio(baseYear))
 }
 ## Load data
-loadData <- function() {
+loadData <- function(database_file) {
+  # Clear the main data object
+  if (exists('mydata')) {
+    rm(mydata)
+  }
+  
   perl <- 'D:/strawberry/perl/bin/perl.exe'
   # mydata <<- read.xls("./data/database.xlsx", 2, perl = perl)
   # # Hack to ignore any rows without a year value - such as rows added for computation
@@ -182,7 +187,7 @@ loadData <- function() {
 
 
   # MAC VERSION
-  mydata <<- read.xls("./data/database.xlsx", 2)
+  mydata <<- read.xls(database_file, 2)
   # Hack to ignore any rows without a year value - such as rows added for computation
   mydata <<- mydata[!is.na(mydata$Year), ]
   print(paste("Read in ", length(mydata$Year), " rows."))
@@ -1604,8 +1609,6 @@ dollarsToCount <- function(range) {
   }
   return (count)
 }
-apply(mydata[c("Infrastructure_Public_Damaged_Dollars", "Infrastructure_Public_Damaged_Count", "Year")], 1, dollarsToCount)
-
 
 convertSingleCountToDollars <- function(range) {
   count <- as.numeric(range[1])
