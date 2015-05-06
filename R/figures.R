@@ -1696,7 +1696,7 @@ multipliers_joy_vs_derived <- function() {
   event.types <- data.frame(eventTypes = unique(totalCosts$resourceType))
   event.types$multipliers.Joy <- apply(data.frame(event.types$eventTypes), 1, eventTypeMultiplierJoy)
   event.types$multipliers.Derived <- apply(data.frame(event.types$eventTypes), 1, eventTypeMultiplierDerived)
-
+  
   names(event.types)[1] <- "Hazard Type"
   names(event.types)[2] <- "Joy's (1991) multiplier"
   names(event.types)[3] <- "Derived (2015) multiplier"
@@ -1706,6 +1706,31 @@ multipliers_joy_vs_derived <- function() {
   
   write.table(event.types, file = "./figs/table3_3_multipliers_joy_vs_derived.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+}
+
+## Generate Table 3.4
+costs_by_year_and_state <- function() {
+  # Store the total costs by year
+  totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
+  totalCosts$Reported.Cost.normalised.millions.state.1 <- totalCosts$Reported.Cost.normalised.millions * totalCosts$State.1.percent
+  totalCosts$Reported.Cost.normalised.millions.state.2 <- totalCosts$Reported.Cost.normalised.millions * totalCosts$State.2.percent
+  totalCostsByState1 <- with(totalCosts, aggregate(Reported.Cost.normalised.millions.state.1, by=list(State.abbreviated.1, Year.financial), FUN=safeSum))
+  totalCostsByState2 <- with(totalCosts, aggregate(Reported.Cost.normalised.millions.state.2, by=list(State.abbreviated.2, Year.financial), FUN=safeSum))
+  totalCostsByStateAndYear <- merge(totalCostsByState1, totalCostsByState2, by=c("Group.1", "Group.2"), all.x = TRUE )
+  totalCostsByStateAndYear$x <- rowSums(cbind(totalCostsByStateAndYear$x.x, totalCostsByStateAndYear$x.y), na.rm = TRUE)
+  state.year.totals <- totalCostsByStateAndYear[,c("Group.2", "Group.1", "x")]
+  names(state.year.totals)[1] = "Year (Financial)"
+  names(state.year.totals)[2] = "State"
+  names(state.year.totals)[3] = "Total"
+  
+  pivotted.data <- acast(state.year.totals, Year ~ State, fill = 0, value.var = "Total")
+
+  # state.year.totals <- state.year.totals[order(state.year.totals$Year, state.year.totals$State),]
+  
+  write.table(pivotted.data, file = "./figs/table3_4_costs_by_year_and_state.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = TRUE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
 }
@@ -1956,7 +1981,7 @@ disaster_costs_by_state_and_territory_compared_with_ndrra <- function() {
   ## Graph the results
 
   # Plot a basic graph of costs
-  pdf(file=paste("./figs/", "fig3_10_disaster_costs_by_state_and_territory_compared_with_ndrra", ".pdf", sep=""))
+  # pdf(file=paste("./figs/", "fig3_10_disaster_costs_by_state_and_territory_compared_with_ndrra", ".pdf", sep=""))
 
   # Set an upper y value based on the data passed in
   # Note: this will often be too little
@@ -2003,9 +2028,9 @@ disaster_costs_by_state_and_territory_compared_with_ndrra <- function() {
                    "FIGURE 3.10: DISASTER COSTS BY STATE AND TERRITORY",
                    "States",
                    "(2013 Dollars in $millions)",
-                   y_range,
                    FALSE
   )
+
   doAxis(1, at=totalCostsByState[,1], labels=states)
   doAxis(2)
   dev.off()

@@ -1,6 +1,7 @@
 
 # Imports
 library(gdata)
+library(reshape2)
 
 # Sources
 source("R/figures.R", TRUE)
@@ -76,5 +77,6 @@ run <- function() {
 	average_annual_cost_of_natural_disasters_by_state_and_territory()
 	deaths_and_injuries_by_hazard_type()
 	multipliers_joy_vs_derived()
+  costs_by_year_and_state()
 }
 run()
