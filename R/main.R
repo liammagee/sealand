@@ -78,5 +78,6 @@ run <- function() {
 	deaths_and_injuries_by_hazard_type()
 	multipliers_joy_vs_derived()
   costs_by_year_and_state()
+  cost_summary()
 }
 run()

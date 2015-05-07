@@ -1211,6 +1211,7 @@ generateDerivedMultipliers <- function() {
   ag <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, mydata, sum)
   ag <- merge(ag[,], resourceTypes, by="resourceType", all = TRUE)
   ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost 
+  # Don't convert N/As to 1.0
   ag[is.na(ag$Event.Factor),"Event.Factor"] <- 1.0
   return (ag)
 }
