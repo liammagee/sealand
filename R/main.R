@@ -1,19 +1,21 @@
 
 # Imports
 library(gdata)
+library(reshape2)
 
 # Sources
 source("R/figures.R", TRUE)
 source("R/functions.R", TRUE)
 
-
-
 # Functions
 
 ## Ignores "NA" values for standard functions
-initialise <- function() {
+initialise <- function(database_file) {
+  # Hack to clear the console - http://stackoverflow.com/questions/14260340/function-to-clear-the-console-in-r
+  cat("\014")  
+  
 	# Load the data
-	loadData()
+  loadData(database_file)
 
 	# Generate computed columns
 	computeColumns()
@@ -22,7 +24,8 @@ initialise <- function() {
 # Generate
 run <- function() {
 	# Set up the data
-	initialise()
+  database_file = "./data/database_25042015.xlsx"
+  initialise(database_file)
 
   # Write out the data for checking
   writeEventDataSummary()
@@ -70,7 +73,13 @@ run <- function() {
 	total_deaths_as_percentage_of_pop()
 	total_cost_as_percentage_of_gdp()
 	insured_cost_as_percentage_of_total_cost()
-	average_annual_cost_of_natural_disasters_by_state_and_territory()
+	total_costs_raw_indexed_normalised()
+  total_average_costs_nationally_and_by_state()
+  total_costs_qld_nsw_vic()
+  average_annual_cost_of_natural_disasters_by_state_and_territory()
 	deaths_and_injuries_by_hazard_type()
+	multipliers_joy_vs_derived()
+  costs_by_year_and_state()
+  cost_summary()
 }
 run()
