@@ -197,7 +197,7 @@ doAxis <- function(number, at=NULL, labels=NULL) {
 
 
 ## Generates a sheet with all the data and computed values
-generate_complete_data <- function() {
+generateCompleteData <- function() {
   write.table(mydata, file = "./output/database_computed.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = TRUE,
               col.names = TRUE, qmethod = c("escape", "double"),
@@ -207,7 +207,7 @@ generate_complete_data <- function() {
 
 
 ## Generates Figure 3.0
-total_costs_of_disasters_in_australia <- function() {
+totalCostsOfDisastersInAustralia <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   # Just for normalised data
@@ -240,7 +240,7 @@ total_costs_of_disasters_in_australia <- function() {
   )
 }
 
-cost_summary <- function() {
+costSummary <- function() {
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
   totalCostsByYear.incl.deaths.and.injuries <- with(totalCosts, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -260,7 +260,7 @@ cost_summary <- function() {
 }
 
 ## Generates Figure 3.1
-annual_total_costs_of_disasters_in_australia <- function() {
+annualTotalCostsOfDisastersInAustralia <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   # Just for normalised data
@@ -364,7 +364,7 @@ annual_total_costs_of_disasters_in_australia <- function() {
 
 
 ## Generates Figure 3.2
-australian_natural_disaster_costs_by_decade <- function() {
+australianNaturalDisasterCostsByDecade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
 
@@ -388,7 +388,7 @@ australian_natural_disaster_costs_by_decade <- function() {
 
 
 ## Generate Figure 3.3
-average_cost_per_event <- function() {
+averageCostPerEvent <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
 	averageCostPerYear <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeMean))
@@ -408,7 +408,7 @@ average_cost_per_event <- function() {
 }
 
 ## Generate Figure 3.4
-distribution_of_disasters <- function() {
+distributionOfDisasters <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
 
@@ -430,7 +430,7 @@ distribution_of_disasters <- function() {
 }
 
 ## Generate Figure 3.5
-annual_insurance_cost_of_disasters <- function() {
+annualInsuranceCostOfDisasters <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
 	insuranceCostsByYear <- with(totalCosts, aggregate(Insured.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -461,7 +461,7 @@ annual_insurance_cost_of_disasters <- function() {
 
 
 ## Generate Figure 3.6
-number_of_natural_disasters_in_australia <- function() {
+numberOfNaturalDisastersInAustralia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
 	numberByYear <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=length))
@@ -504,19 +504,19 @@ number_of_natural_disasters_in_australia <- function() {
 
 
 ## Generate Figure 3.7
-natural_disasters_between_10_and_75_million <- function() {
+naturalDisastersBetween10And75Million <- function() {
 	# Correlation test
 }
 
 
 ## Generate Figure 3.8
-natural_disasters_between_75_and_150_million <- function() {
+naturalDisastersBetween75And150Million <- function() {
 	# Correlation test
 }
 
 
 ## Generate Figure 3.9
-number_of_disasters_per_million_people <- function() {
+numberOfDisastersPerMillionPeople <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   numberByYear <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=length))
@@ -576,7 +576,7 @@ number_of_disasters_per_million_people <- function() {
 
 
 ## Generate Figure 3.10
-disaster_costs_by_state_and_territory <- function() {
+disasterCostsByStateAndTerritory <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
 	totalCosts$Reported.Cost.normalised.millions.state.1 <- totalCosts$Reported.Cost.normalised.millions * totalCosts$State.1.percent
@@ -665,7 +665,7 @@ disaster_costs_by_state_and_territory <- function() {
 
 
 ## Generate Figure 3.11
-number_of_disaster_events_by_state_and_territory <- function() {
+numberOfDisasterEventsByStateAndTerritory <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
 
@@ -700,7 +700,7 @@ number_of_disaster_events_by_state_and_territory <- function() {
 
 
 ## Generate Figure 3.12
-costs_by_type_of_disaster_and_state_and_territory <- function() {
+costsByTypeOfDisasterAndStateAndTerritory <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   totalCosts$Reported.Cost.normalised.millions.state.1 <- totalCosts$Reported.Cost.normalised.millions * totalCosts$State.1.percent
@@ -770,7 +770,7 @@ costs_by_type_of_disaster_and_state_and_territory <- function() {
 
 
 ## Generate Figure 3.13
-total_and_insurance_costs_by_disaster_type <- function() {
+totalAndInsuranceCostsByDisasterType <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   totalCostsByDisasterType <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
@@ -818,7 +818,7 @@ total_and_insurance_costs_by_disaster_type <- function() {
 
 
 ## Generate Figure 3.14
-number_of_events_by_disaster_type <- function() {
+numberOfEventsByDisasterType <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   # Exclude events without a reported cost
@@ -853,7 +853,7 @@ number_of_events_by_disaster_type <- function() {
 
 
 ## Generate Figure 3.15
-annual_cost_of_floods_in_australia <- function() {
+annualCostOfFloodsInAustralia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Flood", TRUE, FALSE)
 	totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -888,7 +888,7 @@ annual_cost_of_floods_in_australia <- function() {
 
 
 ## Generate Figure 3.16
-total_cost_of_floods_by_decade <- function() {
+totalCostOfFloodsByDecade <- function() {
 		# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Flood", TRUE, FALSE)
 
@@ -916,7 +916,7 @@ total_cost_of_floods_by_decade <- function() {
 
 
 ## Generate Figure 3.17
-annual_number_of_floods_in_australia <- function() {
+annualNumberOfFloodsInAustralia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Flood", TRUE, FALSE)
 	numberByYear <- with(totalCosts, aggregate(resourceType, by=list(Year.financial), FUN=length))
@@ -957,7 +957,7 @@ annual_number_of_floods_in_australia <- function() {
 
 
 ## Generate Figure 3.18
-annual_cost_of_severe_storms_by_decade <- function() {
+annualCostOfSevereStormsByDecade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Severe Storm", TRUE, FALSE)
 	totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -991,7 +991,7 @@ annual_cost_of_severe_storms_by_decade <- function() {
 
 
 ## Generate Figure 3.19
-total_cost_of_severe_storms_by_decade <- function() {
+totalCostOfSevereStormsByDecade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Severe Storm", TRUE, FALSE)
 	
@@ -1013,7 +1013,7 @@ total_cost_of_severe_storms_by_decade <- function() {
 
 
 ## Generate Figure 3.20
-annual_number_of_severe_storms_in_australia <- function() {
+annualNumberOfSevereStormsInAustralia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Severe Storm", TRUE, FALSE)
 	numberByYear <- with(totalCosts, aggregate(resourceType, by=list(Year.financial), FUN=length))
@@ -1048,7 +1048,7 @@ annual_number_of_severe_storms_in_australia <- function() {
 
 
 ## Generate Figure 3.21
-annual_cost_of_cyclones_in_australia <- function() {
+annualCostOfCyclonesInAustralia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Cyclone", TRUE, FALSE)
 	totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1089,7 +1089,7 @@ annual_cost_of_cyclones_in_australia <- function() {
 
 
 ## Generate Figure 3.22
-total_cost_of_cyclones_by_decade <- function() {
+totalCostOfCyclonesByDecade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Cyclone", TRUE, FALSE)
 
@@ -1111,7 +1111,7 @@ total_cost_of_cyclones_by_decade <- function() {
 
 
 ## Generate Figure 3.23
-annual_number_of_cyclones_causing_more_than_10_million_damage_in_australia <- function() {
+annualNumberOfCyclonesCausingMoreThan10MillionDamageInAustralia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Cyclone", TRUE, FALSE)
 	numberByYear <- with(totalCosts, aggregate(resourceType, by=list(Year.financial), FUN=length))
@@ -1137,7 +1137,7 @@ annual_number_of_cyclones_causing_more_than_10_million_damage_in_australia <- fu
 
 
 ## Generate Figure 3.24
-total_cost_of_earthquakes_by_decade <- function() {
+totalCostOfEarthquakesByDecade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Earthquake", TRUE, FALSE)
 
@@ -1172,7 +1172,7 @@ total_cost_of_earthquakes_by_decade <- function() {
 
 
 ## Generate Figure 3.25
-annual_cost_of_bushfires_in_australia <- function() {
+annualCostOfBushfiresInAustralia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Bushfire", TRUE, FALSE)
 	totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1201,7 +1201,7 @@ annual_cost_of_bushfires_in_australia <- function() {
 
 
 ## Generate Figure 3.26
-total_cost_of_bushfires_by_decade <- function() {
+totalCostOfBushfiresByDecade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Bushfire", TRUE, FALSE)
 	
@@ -1223,7 +1223,7 @@ total_cost_of_bushfires_by_decade <- function() {
 
 
 ## Generate Figure 3.27
-annual_number_of_bushfires_in_australia <- function() {
+annualNumberOfBushfiresInAustralia <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered("Bushfire", TRUE, FALSE)
 	numberByYear <- with(totalCosts, aggregate(resourceType, by=list(Year.financial), FUN=length))
@@ -1247,7 +1247,7 @@ annual_number_of_bushfires_in_australia <- function() {
 
 
 ## Generate Figure 3.28
-number_of_natural_disasters_deaths <- function() {
+numberOfNaturalDisastersDeaths <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
 	numberByYear <- with(totalCosts, aggregate(Deaths.normalised, by=list(Year.financial), FUN=sum))
@@ -1294,7 +1294,7 @@ number_of_natural_disasters_deaths <- function() {
 
 
 ## Generate Figure 3.29
-number_of_natural_disasters_injuries <- function() {
+numberOfNaturalDisastersInjuries <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
 	numberByYear <- with(totalCosts, aggregate(Injuries.normalised, by=list(Year.financial), FUN=sum))
@@ -1317,7 +1317,7 @@ number_of_natural_disasters_injuries <- function() {
 
 
 ## Generate Figure 3.30
-number_of_deaths_by_decade <- function() {
+numberOfDeathsByDecade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
 	
@@ -1363,7 +1363,7 @@ number_of_deaths_by_decade <- function() {
 
 
 ## Generate Figure 3.31
-cost_of_deaths_and_injuries <- function() {
+costOfDeathsAndInjuries <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
 	totalCostsByYear <- with(totalCosts, aggregate(deathAndInjuryCosts.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1392,7 +1392,7 @@ cost_of_deaths_and_injuries <- function() {
 
 
 ## Generate Figure 3.32
-cost_of_deaths_and_injuries_by_decade <- function() {
+costOfDeathsAndInjuriesByDecade <- function() {
 	# Store the total costs by year
 	totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
 
@@ -1414,7 +1414,7 @@ cost_of_deaths_and_injuries_by_decade <- function() {
 
 
 ## Generate Figure 3.33
-total_cost_of_natural_disasters <- function() {
+totalCostOfNaturalDisasters <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1482,7 +1482,7 @@ total_cost_of_natural_disasters <- function() {
 
 
 ## Generate Figure 3.34
-total_cost_of_natural_disasters_by_decade <- function() {
+totalCostOfNaturalDisastersByDecade <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   
@@ -1503,7 +1503,7 @@ total_cost_of_natural_disasters_by_decade <- function() {
 }
 
 ## Generate Figure 3.35 - SYNTHETIC
-total_cost_of_natural_disasters_synthetic <- function() {
+totalCostOfNaturalDisastersSynthetic <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   totalCostsByYear <- with(totalCosts, aggregate(Synthetic.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1570,7 +1570,7 @@ total_cost_of_natural_disasters_synthetic <- function() {
 
 
 ## Generate Figure 3.36 - SYNTHETIC
-total_cost_of_natural_disasters_by_decade_synthetic <- function() {
+totalCostOfNaturalDisastersByDecadeSynthetic <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   
@@ -1592,7 +1592,7 @@ total_cost_of_natural_disasters_by_decade_synthetic <- function() {
 
 
 ## Generate Figure 3.37
-total_deaths_as_percentage_of_pop <- function() {
+totalDeathsAsPercentageOfPop <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
 
@@ -1616,7 +1616,7 @@ total_deaths_as_percentage_of_pop <- function() {
 
 
 ## Generate Figure 3.38
-total_cost_as_percentage_of_gdp <- function() {
+totalCostAsPercentageOfGdp <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.interpolated.millions, by=list(Year.financial), FUN=safeSum))
@@ -1638,7 +1638,7 @@ total_cost_as_percentage_of_gdp <- function() {
 }
 
 ## Generate Figure 3.39
-insured_cost_as_percentage_of_total_cost <- function() {
+insuredCostAsPercentageOfTotalCost <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1664,7 +1664,7 @@ insured_cost_as_percentage_of_total_cost <- function() {
 
 
 ## Generate Figure 3.40
-total_costs_raw_indexed_normalised <- function() {
+totalCostsRawIndexedNormalised <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1711,7 +1711,7 @@ total_costs_raw_indexed_normalised <- function() {
 
 
 ## Generate Figure 3.41
-total_average_costs_nationally_and_by_state <- function() {
+totalAverageCostsNationallyAndByState <- function() {
 
   totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   # Just for normalised data
@@ -1735,7 +1735,7 @@ total_average_costs_nationally_and_by_state <- function() {
 
 
 ## Generate Figure 3.42
-total_costs_qld_nsw_vic <- function() {
+totalCostsQldNswVic <- function() {
   # Store the total costs by state
   totalCosts <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   totalCosts$Reported.Cost.normalised.millions.state.1 <- totalCosts$Reported.Cost.normalised.millions * totalCosts$State.1.percent
@@ -1784,7 +1784,7 @@ total_costs_qld_nsw_vic <- function() {
 # Tables
 
 ## Generate Table 3.1
-average_annual_cost_of_natural_disasters_by_state_and_territory <- function() {
+averageAnnualCostOfNaturalDisastersByStateAndTerritory <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   totalCosts$Reported.Cost.normalised.millions.state.1 <- totalCosts$Reported.Cost.normalised.millions * totalCosts$State.1.percent
@@ -1844,7 +1844,7 @@ average_annual_cost_of_natural_disasters_by_state_and_territory <- function() {
 }
 
 ## Generate Table 3.2
-deaths_and_injuries_by_hazard_type <- function() {
+deathsAndInjuriesByHazardType <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   
@@ -1875,7 +1875,7 @@ deaths_and_injuries_by_hazard_type <- function() {
 }
 
 ## Generate Table 3.3
-multipliers_joy_vs_derived <- function() {
+multipliersJoyVsDerived <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   
@@ -1897,7 +1897,7 @@ multipliers_joy_vs_derived <- function() {
 }
 
 ## Generate Table 3.4
-costs_by_year_and_state <- function() {
+costsByYearAndState <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
   totalCosts$Reported.Cost.normalised.millions.state.1 <- totalCosts$Reported.Cost.normalised.millions * totalCosts$State.1.percent
