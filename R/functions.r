@@ -193,24 +193,24 @@ normalisedPopulation <- function(range) {
 ## Load data
 loadData <- function(database.file) {
   # Clear the main data object
-  if (exists('mydata')) {
-    rm(mydata)
+  if (exists('ecnd.database')) {
+    rm(ecnd.database)
   }
   
   perl <- 'D:/strawberry/perl/bin/perl.exe'
-  # mydata <<- read.xls("./data/database.xlsx", 2, perl = perl)
+  # ecnd.database <<- read.xls("./data/database.xlsx", 2, perl = perl)
   # # Hack to ignore any rows without a year value - such as rows added for computation
-  # mydata <<- mydata[!is.na(mydata$Year), ]
+  # ecnd.database <<- ecnd.database[!is.na(ecnd.database$Year), ]
   # cpi <<- read.xls("./data/cpi.xlsx", 2, perl = perl)
   # pop.data <<- read.xls("./data/pop_consolidate.xlsx", 1, perl = perl)
   # gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2, perl = perl)
 
 
   # MAC VERSION
-  mydata <<- read.xls(database.file, 2)
+  ecnd.database <<- read.xls(database.file, 2)
   # Hack to ignore any rows without a year value - such as rows added for computation
-  mydata <<- mydata[!is.na(mydata$Year), ]
-  print(paste("Read in ", length(mydata$Year), " rows."))
+  ecnd.database <<- ecnd.database[!is.na(ecnd.database$Year), ]
+  print(paste("Read in ", length(ecnd.database$Year), " rows."))
   cpi.data <<- read.xls("./data/cpi.xlsx", 2)
   pop.data <<- read.xls("./data/pop_consolidate.xlsx", 1)
   gdp.data <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
@@ -221,46 +221,46 @@ loadData <- function(database.file) {
 cleanData <- function() {
 
   # ... for cleaned up costs
-  mydata$Insured.Cost.cleaned <<- apply(data.matrix(mydata$Insured.Cost), 1, parseCurrency)
+  ecnd.database$Insured.Cost.cleaned <<- apply(data.matrix(ecnd.database$Insured.Cost), 1, parseCurrency)
 
   # ... for cleaned up states
-  mydata$State.abbreviated.1 <<- apply(data.matrix(mydata$State.1), 1, abbreviateState)
-  mydata$State.abbreviated.2 <<- apply(data.matrix(mydata$State.2), 1, abbreviateState)
+  ecnd.database$State.abbreviated.1 <<- apply(data.matrix(ecnd.database$State.1), 1, abbreviateState)
+  ecnd.database$State.abbreviated.2 <<- apply(data.matrix(ecnd.database$State.2), 1, abbreviateState)
 
   # ... for financial years
-  mydata$Year.financial <<- apply(mydata[c("Month", "Year")], 1, financialYear)
+  ecnd.database$Year.financial <<- apply(ecnd.database[c("Month", "Year")], 1, financialYear)
 
 }
 
 # Interpolate reported costs, based on the relationship between Insured and Reported costs.
 interpolateReportedCosts <- function() {
   ag <- generateDerivedMultipliers()
-  data.Reported.Cost.na <- mydata[is.na(mydata$Reported.Cost),]
-  mydata <<- merge(mydata[, ], ag[,c("resourceType", "Event.Factor")], by="resourceType", all.x = TRUE)
-  mydata$Reported.Cost.interpolated <<- mydata$Reported.Cost
+  data.Reported.Cost.na <- ecnd.database[is.na(ecnd.database$Reported.Cost),]
+  ecnd.database <<- merge(ecnd.database[, ], ag[,c("resourceType", "Event.Factor")], by="resourceType", all.x = TRUE)
+  ecnd.database$Reported.Cost.interpolated <<- ecnd.database$Reported.Cost
   # Interpolate reported cost based on event multiplier * insured cost
-  mydata[is.na(mydata$Reported.Cost.interpolated), ]$Reported.Cost.interpolated <<- mydata[is.na(mydata$Reported.Cost.interpolated), ]$Insured.Cost * mydata[is.na(mydata$Reported.Cost.interpolated), ]$Event.Factor
+  ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Reported.Cost.interpolated <<- ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Insured.Cost * ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Event.Factor
 }
 
 normaliseInsuredCost <- function() {
   # ... for CPI-indexed insured costs
-  mydata$Insured.Cost.indexed <<- apply(mydata[c("Year.financial", "Insured.Cost.cleaned")], 1, indexCosts)
+  ecnd.database$Insured.Cost.indexed <<- apply(ecnd.database[c("Year.financial", "Insured.Cost.cleaned")], 1, indexCosts)
   # ... for normalised insured costs
-  mydata$Insured.Cost.normalised <<- apply(mydata[c("Year.financial", "Insured.Cost.cleaned")], 1, normalisedCosts)
-  mydata$Insured.Cost.normalised.millions <<- mydata$Insured.Cost.normalised / 1000000
+  ecnd.database$Insured.Cost.normalised <<- apply(ecnd.database[c("Year.financial", "Insured.Cost.cleaned")], 1, normalisedCosts)
+  ecnd.database$Insured.Cost.normalised.millions <<- ecnd.database$Insured.Cost.normalised / 1000000
 }
 
 normaliseReportedCost <- function() {
   # ... for CPI-indexed reported costs
-  mydata$Reported.Cost.indexed <<- apply(mydata[c("Year.financial", "Reported.Cost.interpolated")], 1, indexCosts)
+  ecnd.database$Reported.Cost.indexed <<- apply(ecnd.database[c("Year.financial", "Reported.Cost.interpolated")], 1, indexCosts)
   # ... for normalised insured costs
-  mydata$Reported.Cost.normalised <<- apply(mydata[c("Year.financial", "Reported.Cost.interpolated")], 1, normalisedCosts)
+  ecnd.database$Reported.Cost.normalised <<- apply(ecnd.database[c("Year.financial", "Reported.Cost.interpolated")], 1, normalisedCosts)
 }
 
 normaliseDeathsAndInjuries <- function() {
   # ... for population-inflated deaths and injuries
-  mydata$Deaths.normalised <<- apply(mydata[c("Year.financial", "Deaths")], 1, normalisedPopulation)
-  mydata$Injuries.normalised <<- apply(mydata[c("Year.financial", "Injuries")], 1, normalisedPopulation)
+  ecnd.database$Deaths.normalised <<- apply(ecnd.database[c("Year.financial", "Deaths")], 1, normalisedPopulation)
+  ecnd.database$Injuries.normalised <<- apply(ecnd.database[c("Year.financial", "Injuries")], 1, normalisedPopulation)
 }
 
 
@@ -269,7 +269,7 @@ normaliseDeathsAndInjuries <- function() {
 # 1. The relationship between Insured and Reported costs.
 # 2. Death and injuries
 interpolateNormalisedReportedCosts <- function() {
-  mydata[is.na(mydata$Reported.Cost.interpolated), ]$Reported.Cost.interpolated <<- mydata[is.na(mydata$Reported.Cost.interpolated), ]$Insured.Cost * mydata[is.na(mydata$Reported.Cost.interpolated), ]$Event.Factor
+  ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Reported.Cost.interpolated <<- ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Insured.Cost * ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Event.Factor
 }
 
 ## Generate computed columns
@@ -351,7 +351,7 @@ proportionOfHospitalisedInjury <- function() {
 ## Get raw events, without data cleaning
 getRawEvents <- function(resourceTypeParam = NULL) {
 
-  events <- mydata[c(
+  events <- ecnd.database[c(
     "Year.financial",
     "Year",
     "title",
@@ -1219,8 +1219,8 @@ eventTypeMultiplierDerived <- function(eventType) {
 
 # Generates a list of derived multipliers
 generateDerivedMultipliers <- function() {
-  resourceTypes <- data.frame(resourceType = cbind(unique(unlist(mydata$resourceType))))
-  ag <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, mydata, sum)
+  resourceTypes <- data.frame(resourceType = cbind(unique(unlist(ecnd.database$resourceType))))
+  ag <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, ecnd.database, sum)
   ag <- merge(ag[,], resourceTypes, by="resourceType", all = TRUE)
   ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost 
   # Don't convert N/As to 1.0
@@ -1250,243 +1250,243 @@ countEmptyValuesInEvents <- function() {
 ## Interpollate all costs
 interpollateSyntheticCosts <- function() {
   # Do costs
-  data <- mydata[c("Insured.Cost.normalised", "Reported.Cost")]
-  mydata$Insured.Cost.normalised.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Insured.Cost.indexed", "Reported.Cost")]
-  mydata$Insured.Cost.indexed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Insured.Cost.normalised", "Reported.Cost")]
+  ecnd.database$Insured.Cost.normalised.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Insured.Cost.indexed", "Reported.Cost")]
+  ecnd.database$Insured.Cost.indexed.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
 
   # Do other columns
-  data <- mydata[c("Evacuated", "Insured.Cost.indexed.i")]
-  mydata$Evacuated.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Homeless", "Insured.Cost.indexed.i")]
-  mydata$Homeless.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Calls.to.SES", "Insured.Cost.indexed.i")]
-  mydata$Calls.to.SES.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Assistance_numbers", "Insured.Cost.indexed.i")]
-  mydata$Assistance_numbers.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Assistance_dollars", "Insured.Cost.indexed.i")]
-  mydata$Assistance_dollars.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Roads_Urban", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Destroyed_Count_Roads_Urban.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Roads_Urban", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Damaged_Count_Roads_Urban.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Roads_Rural", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Destroyed_Count_Roads_Rural.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Roads_Rural", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Damaged_Count_Roads_Rural.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Bridges", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Destroyed_Count_Bridges.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Bridges", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Damaged_Count_Bridges.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Rail", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Destroyed_Count_Rail.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Rail", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Damaged_Count_Rail.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Destroyed_Count_Power_Poles", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Destroyed_Count_Power_Poles.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Infrastructure_Public_Damaged_Count_Power_Poles", "Insured.Cost.indexed.i")]
-  mydata$Infrastructure_Public_Damaged_Count_Power_Poles.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Destroyed_Count", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Damaged_Count", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Destroyed_Count_Aircraft", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Public_Destroyed_Count_Aircraft.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Damaged_Count_Aircraft", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Public_Damaged_Count_Aircraft.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Destroyed_Count_Train", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Public_Destroyed_Count_Train.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Public_Damaged_Count_Train", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Public_Damaged_Count_Train.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Destroyed_Count", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Private_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Damaged_Count", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Private_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Destroyed_Count_Boats", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Private_Destroyed_Count_Boats.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Damaged_Count_Boats", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Private_Damaged_Count_Boats.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Destroyed_Count_Cars", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Private_Destroyed_Count_Cars.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Damaged_Count_Cars", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Private_Damaged_Count_Cars.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Destroyed_Count_Caravans", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Private_Destroyed_Count_Caravans.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Vehicle_Private_Damaged_Count_Caravans", "Insured.Cost.indexed.i")]
-  mydata$Vehicle_Private_Damaged_Count_Caravans.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Commercial_Destroyed_Count", "Insured.Cost.indexed.i")]
-  mydata$Buildings_Commercial_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Commercial_Damaged_Count", "Insured.Cost.indexed.i")]
-  mydata$Buildings_Commercial_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Private_Destroyed_Count", "Insured.Cost.indexed.i")]
-  mydata$Buildings_Private_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Private_Damaged_Count", "Insured.Cost.indexed.i")]
-  mydata$Buildings_Private_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Public_Destroyed_Count", "Insured.Cost.indexed.i")]
-  mydata$Buildings_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Buildings_Public_Damaged_Count", "Insured.Cost.indexed.i")]
-  mydata$Buildings_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Land_Public_Count", "Insured.Cost.indexed.i")]
-  mydata$Land_Public_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Land_Private_Count", "Insured.Cost.indexed.i")]
-  mydata$Land_Private_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Crops_Destroyed_Count", "Insured.Cost.indexed.i")]
-  mydata$Crops_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count", "Insured.Cost.indexed.i")]
-  mydata$Livestock_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Cattle", "Insured.Cost.indexed.i")]
-  mydata$Livestock_Destroyed_Count_Cattle.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Sheep_Goats", "Insured.Cost.indexed.i")]
-  mydata$Livestock_Destroyed_Count_Sheep_Goats.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Poultry", "Insured.Cost.indexed.i")]
-  mydata$Livestock_Destroyed_Count_Poultry.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Pigs", "Insured.Cost.indexed.i")]
-  mydata$Livestock_Destroyed_Count_Pigs.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Livestock_Destroyed_Count_Other", "Insured.Cost.indexed.i")]
-  mydata$Livestock_Destroyed_Count_Other.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Environmental_Count", "Insured.Cost.indexed.i")]
-  mydata$Environmental_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
-  data <- mydata[c("Fencing", "Insured.Cost.indexed.i")]
-  mydata$Fencing.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Evacuated", "Insured.Cost.indexed.i")]
+  ecnd.database$Evacuated.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Homeless", "Insured.Cost.indexed.i")]
+  ecnd.database$Homeless.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Calls.to.SES", "Insured.Cost.indexed.i")]
+  ecnd.database$Calls.to.SES.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Assistance_numbers", "Insured.Cost.indexed.i")]
+  ecnd.database$Assistance_numbers.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Assistance_dollars", "Insured.Cost.indexed.i")]
+  ecnd.database$Assistance_dollars.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Destroyed_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Damaged_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Destroyed_Count_Roads_Urban", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Urban.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Damaged_Count_Roads_Urban", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Urban.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Destroyed_Count_Roads_Rural", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Rural.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Damaged_Count_Roads_Rural", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Rural.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Destroyed_Count_Bridges", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Bridges.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Damaged_Count_Bridges", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Damaged_Count_Bridges.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Destroyed_Count_Rail", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Rail.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Damaged_Count_Rail", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Damaged_Count_Rail.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Destroyed_Count_Power_Poles", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Power_Poles.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Infrastructure_Public_Damaged_Count_Power_Poles", "Insured.Cost.indexed.i")]
+  ecnd.database$Infrastructure_Public_Damaged_Count_Power_Poles.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Public_Destroyed_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Public_Damaged_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Public_Destroyed_Count_Aircraft", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Public_Destroyed_Count_Aircraft.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Public_Damaged_Count_Aircraft", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Public_Damaged_Count_Aircraft.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Public_Destroyed_Count_Train", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Public_Destroyed_Count_Train.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Public_Damaged_Count_Train", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Public_Damaged_Count_Train.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Private_Destroyed_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Private_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Private_Damaged_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Private_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Private_Destroyed_Count_Boats", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Private_Destroyed_Count_Boats.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Private_Damaged_Count_Boats", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Private_Damaged_Count_Boats.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Private_Destroyed_Count_Cars", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Private_Destroyed_Count_Cars.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Private_Damaged_Count_Cars", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Private_Damaged_Count_Cars.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Private_Destroyed_Count_Caravans", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Private_Destroyed_Count_Caravans.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Vehicle_Private_Damaged_Count_Caravans", "Insured.Cost.indexed.i")]
+  ecnd.database$Vehicle_Private_Damaged_Count_Caravans.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Buildings_Commercial_Destroyed_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Buildings_Commercial_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Buildings_Commercial_Damaged_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Buildings_Commercial_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Buildings_Private_Destroyed_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Buildings_Private_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Buildings_Private_Damaged_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Buildings_Private_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Buildings_Public_Destroyed_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Buildings_Public_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Buildings_Public_Damaged_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Buildings_Public_Damaged_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Land_Public_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Land_Public_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Land_Private_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Land_Private_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Crops_Destroyed_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Crops_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Livestock_Destroyed_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Livestock_Destroyed_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Livestock_Destroyed_Count_Cattle", "Insured.Cost.indexed.i")]
+  ecnd.database$Livestock_Destroyed_Count_Cattle.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Livestock_Destroyed_Count_Sheep_Goats", "Insured.Cost.indexed.i")]
+  ecnd.database$Livestock_Destroyed_Count_Sheep_Goats.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Livestock_Destroyed_Count_Poultry", "Insured.Cost.indexed.i")]
+  ecnd.database$Livestock_Destroyed_Count_Poultry.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Livestock_Destroyed_Count_Pigs", "Insured.Cost.indexed.i")]
+  ecnd.database$Livestock_Destroyed_Count_Pigs.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Livestock_Destroyed_Count_Other", "Insured.Cost.indexed.i")]
+  ecnd.database$Livestock_Destroyed_Count_Other.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Environmental_Count", "Insured.Cost.indexed.i")]
+  ecnd.database$Environmental_Count.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
+  data <- ecnd.database[c("Fencing", "Insured.Cost.indexed.i")]
+  ecnd.database$Fencing.i <<- apply(cbind(data, ratio=ratio(data)), 1, interpollate)
 
   return ()
 }
 
 ## Swaps interpollated costs
 swapInterpollatedForNormalCosts <- function() {
-  mydata$Insured.Cost.normalised.ni <<- mydata$Insured.Cost.normalised
-  mydata$Insured.Cost.normalised <<- mydata$Insured.Cost.normalised.i
-  mydata$Insured.Cost.indexed.ni <<- mydata$Insured.Cost.indexed
-  mydata$Insured.Cost.indexed <<- mydata$Insured.Cost.indexed.i
-  mydata$Evacuated.ni <<- mydata$Evacuated
-  mydata$Evacuated <<- mydata$Evacuated.i
-  mydata$Homeless.ni <<- mydata$Homeless
-  mydata$Homeless <<- mydata$Homeless.i
-  mydata$Calls.to.SES.ni <<- mydata$Calls.to.SES
-  mydata$Calls.to.SES <<- mydata$Calls.to.SES.i
-  mydata$Assistance_numbers.ni <<- mydata$Assistance_numbers
-  mydata$Assistance_numbers <<- mydata$Assistance_numbers.i
-  mydata$Assistance_dollars.ni <<- mydata$Assistance_dollars
-  mydata$Assistance_dollars <<- mydata$Assistance_dollars.i
-  mydata$Infrastructure_Public_Damaged_Count.ni <<- mydata$Infrastructure_Public_Damaged_Count
-  mydata$Infrastructure_Public_Damaged_Count <<- mydata$Infrastructure_Public_Damaged_Count.i
-  mydata$Infrastructure_Public_Destroyed_Count.ni <<- mydata$Infrastructure_Public_Destroyed_Count
-  mydata$Infrastructure_Public_Destroyed_Count <<- mydata$Infrastructure_Public_Destroyed_Count.i
-  mydata$Infrastructure_Public_Damaged_Count_Roads_Urban.ni <<- mydata$Infrastructure_Public_Damaged_Count_Roads_Urban
-  mydata$Infrastructure_Public_Damaged_Count_Roads_Urban <<- mydata$Infrastructure_Public_Damaged_Count_Roads_Urban.i
-  mydata$Infrastructure_Public_Destroyed_Count_Roads_Urban.ni <<- mydata$Infrastructure_Public_Destroyed_Count_Roads_Urban
-  mydata$Infrastructure_Public_Destroyed_Count_Roads_Urban <<- mydata$Infrastructure_Public_Destroyed_Count_Roads_Urban.i
-  mydata$Infrastructure_Public_Damaged_Count_Roads_Rural.ni <<- mydata$Infrastructure_Public_Damaged_Count_Roads_Rural
-  mydata$Infrastructure_Public_Damaged_Count_Roads_Rural <<- mydata$Infrastructure_Public_Damaged_Count_Roads_Rural.i
-  mydata$Infrastructure_Public_Destroyed_Count_Roads_Rural.ni <<- mydata$Infrastructure_Public_Destroyed_Count_Roads_Rural
-  mydata$Infrastructure_Public_Destroyed_Count_Roads_Rural <<- mydata$Infrastructure_Public_Destroyed_Count_Roads_Rural.i
-  mydata$Infrastructure_Public_Damaged_Count_Bridges.ni <<- mydata$Infrastructure_Public_Damaged_Count_Bridges
-  mydata$Infrastructure_Public_Damaged_Count_Bridges <<- mydata$Infrastructure_Public_Damaged_Count_Bridges.i
-  mydata$Infrastructure_Public_Destroyed_Count_Bridges.ni <<- mydata$Infrastructure_Public_Destroyed_Count_Bridges
-  mydata$Infrastructure_Public_Destroyed_Count_Bridges <<- mydata$Infrastructure_Public_Destroyed_Count_Bridges.i
-  mydata$Infrastructure_Public_Damaged_Count_Rail.ni <<- mydata$Infrastructure_Public_Damaged_Count_Rail
-  mydata$Infrastructure_Public_Damaged_Count_Rail <<- mydata$Infrastructure_Public_Damaged_Count_Rail.i
-  mydata$Infrastructure_Public_Destroyed_Count_Rail.ni <<- mydata$Infrastructure_Public_Destroyed_Count_Rail
-  mydata$Infrastructure_Public_Destroyed_Count_Rail <<- mydata$Infrastructure_Public_Destroyed_Count_Rail.i
-  mydata$Infrastructure_Public_Damaged_Count_Power_Poles.ni <<- mydata$Infrastructure_Public_Damaged_Count_Power_Poles
-  mydata$Infrastructure_Public_Damaged_Count_Power_Poles <<- mydata$Infrastructure_Public_Damaged_Count_Power_Poles.i
-  mydata$Infrastructure_Public_Destroyed_Count_Power_Poles.ni <<- mydata$Infrastructure_Public_Destroyed_Count_Power_Poles
-  mydata$Infrastructure_Public_Destroyed_Count_Power_Poles <<- mydata$Infrastructure_Public_Destroyed_Count_Power_Poles.i
-  mydata$Buildings_Commercial_Destroyed_Count.ni <<- mydata$Buildings_Commercial_Destroyed_Count
-  mydata$Buildings_Commercial_Destroyed_Count <<- mydata$Buildings_Commercial_Destroyed_Count.i
-  mydata$Buildings_Commercial_Destroyed_General_Count.ni <<- mydata$Buildings_Commercial_Destroyed_General_Count
-  mydata$Buildings_Commercial_Destroyed_General_Count <<- mydata$Buildings_Commercial_Destroyed_General_Count.i
-  mydata$Buildings_Commercial_Destroyed_Industrial_Count.ni <<- mydata$Buildings_Commercial_Destroyed_Industrial_Count
-  mydata$Buildings_Commercial_Destroyed_Industrial_Count <<- mydata$Buildings_Commercial_Destroyed_Industrial_Count.i
-  mydata$Buildings_Commercial_Destroyed_Hotels_Count.ni <<- mydata$Buildings_Commercial_Destroyed_Hotels_Count
-  mydata$Buildings_Commercial_Destroyed_Hotels_Count <<- mydata$Buildings_Commercial_Destroyed_Hotels_Count.i
-  mydata$Buildings_Commercial_Damaged_Count.ni <<- mydata$Buildings_Commercial_Damaged_Count
-  mydata$Buildings_Commercial_Damaged_Count <<- mydata$Buildings_Commercial_Damaged_Count.i
-  mydata$Buildings_Commercial_Damaged_General_Count.ni <<- mydata$Buildings_Commercial_Damaged_General_Count
-  mydata$Buildings_Commercial_Damaged_General_Count <<- mydata$Buildings_Commercial_Damaged_General_Count.i
-  mydata$Buildings_Commercial_Damaged_Industrial_Count.ni <<- mydata$Buildings_Commercial_Damaged_Industrial_Count
-  mydata$Buildings_Commercial_Damaged_Industrial_Count <<- mydata$Buildings_Commercial_Damaged_Industrial_Count.i
-  mydata$Buildings_Commercial_Damaged_Hotels_Count.ni <<- mydata$Buildings_Commercial_Damaged_Hotels_Count
-  mydata$Buildings_Commercial_Damaged_Hotels_Count <<- mydata$Buildings_Commercial_Damaged_Hotels_Count.i
-  mydata$Buildings_Private_Destroyed_Count.ni <<- mydata$Buildings_Private_Destroyed_Count
-  mydata$Buildings_Private_Destroyed_Count <<- mydata$Buildings_Private_Destroyed_Count.i
-  mydata$Buildings_Private_Damaged_Count.ni <<- mydata$Buildings_Private_Damaged_Count
-  mydata$Buildings_Private_Damaged_Count <<- mydata$Buildings_Private_Damaged_Count.i
-  mydata$Buildings_Private_Destroyed_Count.ni <<- mydata$Buildings_Private_Destroyed_Count
-  mydata$Buildings_Private_Destroyed_Count <<- mydata$Buildings_Private_Destroyed_Count.i
-  mydata$Buildings_Private_Damaged_Count.ni <<- mydata$Buildings_Private_Damaged_Count
-  mydata$Buildings_Private_Damaged_Count <<- mydata$Buildings_Private_Damaged_Count.i
+  ecnd.database$Insured.Cost.normalised.ni <<- ecnd.database$Insured.Cost.normalised
+  ecnd.database$Insured.Cost.normalised <<- ecnd.database$Insured.Cost.normalised.i
+  ecnd.database$Insured.Cost.indexed.ni <<- ecnd.database$Insured.Cost.indexed
+  ecnd.database$Insured.Cost.indexed <<- ecnd.database$Insured.Cost.indexed.i
+  ecnd.database$Evacuated.ni <<- ecnd.database$Evacuated
+  ecnd.database$Evacuated <<- ecnd.database$Evacuated.i
+  ecnd.database$Homeless.ni <<- ecnd.database$Homeless
+  ecnd.database$Homeless <<- ecnd.database$Homeless.i
+  ecnd.database$Calls.to.SES.ni <<- ecnd.database$Calls.to.SES
+  ecnd.database$Calls.to.SES <<- ecnd.database$Calls.to.SES.i
+  ecnd.database$Assistance_numbers.ni <<- ecnd.database$Assistance_numbers
+  ecnd.database$Assistance_numbers <<- ecnd.database$Assistance_numbers.i
+  ecnd.database$Assistance_dollars.ni <<- ecnd.database$Assistance_dollars
+  ecnd.database$Assistance_dollars <<- ecnd.database$Assistance_dollars.i
+  ecnd.database$Infrastructure_Public_Damaged_Count.ni <<- ecnd.database$Infrastructure_Public_Damaged_Count
+  ecnd.database$Infrastructure_Public_Damaged_Count <<- ecnd.database$Infrastructure_Public_Damaged_Count.i
+  ecnd.database$Infrastructure_Public_Destroyed_Count.ni <<- ecnd.database$Infrastructure_Public_Destroyed_Count
+  ecnd.database$Infrastructure_Public_Destroyed_Count <<- ecnd.database$Infrastructure_Public_Destroyed_Count.i
+  ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Urban.ni <<- ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Urban
+  ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Urban <<- ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Urban.i
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Urban.ni <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Urban
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Urban <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Urban.i
+  ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Rural.ni <<- ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Rural
+  ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Rural <<- ecnd.database$Infrastructure_Public_Damaged_Count_Roads_Rural.i
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Rural.ni <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Rural
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Rural <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Roads_Rural.i
+  ecnd.database$Infrastructure_Public_Damaged_Count_Bridges.ni <<- ecnd.database$Infrastructure_Public_Damaged_Count_Bridges
+  ecnd.database$Infrastructure_Public_Damaged_Count_Bridges <<- ecnd.database$Infrastructure_Public_Damaged_Count_Bridges.i
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Bridges.ni <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Bridges
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Bridges <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Bridges.i
+  ecnd.database$Infrastructure_Public_Damaged_Count_Rail.ni <<- ecnd.database$Infrastructure_Public_Damaged_Count_Rail
+  ecnd.database$Infrastructure_Public_Damaged_Count_Rail <<- ecnd.database$Infrastructure_Public_Damaged_Count_Rail.i
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Rail.ni <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Rail
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Rail <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Rail.i
+  ecnd.database$Infrastructure_Public_Damaged_Count_Power_Poles.ni <<- ecnd.database$Infrastructure_Public_Damaged_Count_Power_Poles
+  ecnd.database$Infrastructure_Public_Damaged_Count_Power_Poles <<- ecnd.database$Infrastructure_Public_Damaged_Count_Power_Poles.i
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Power_Poles.ni <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Power_Poles
+  ecnd.database$Infrastructure_Public_Destroyed_Count_Power_Poles <<- ecnd.database$Infrastructure_Public_Destroyed_Count_Power_Poles.i
+  ecnd.database$Buildings_Commercial_Destroyed_Count.ni <<- ecnd.database$Buildings_Commercial_Destroyed_Count
+  ecnd.database$Buildings_Commercial_Destroyed_Count <<- ecnd.database$Buildings_Commercial_Destroyed_Count.i
+  ecnd.database$Buildings_Commercial_Destroyed_General_Count.ni <<- ecnd.database$Buildings_Commercial_Destroyed_General_Count
+  ecnd.database$Buildings_Commercial_Destroyed_General_Count <<- ecnd.database$Buildings_Commercial_Destroyed_General_Count.i
+  ecnd.database$Buildings_Commercial_Destroyed_Industrial_Count.ni <<- ecnd.database$Buildings_Commercial_Destroyed_Industrial_Count
+  ecnd.database$Buildings_Commercial_Destroyed_Industrial_Count <<- ecnd.database$Buildings_Commercial_Destroyed_Industrial_Count.i
+  ecnd.database$Buildings_Commercial_Destroyed_Hotels_Count.ni <<- ecnd.database$Buildings_Commercial_Destroyed_Hotels_Count
+  ecnd.database$Buildings_Commercial_Destroyed_Hotels_Count <<- ecnd.database$Buildings_Commercial_Destroyed_Hotels_Count.i
+  ecnd.database$Buildings_Commercial_Damaged_Count.ni <<- ecnd.database$Buildings_Commercial_Damaged_Count
+  ecnd.database$Buildings_Commercial_Damaged_Count <<- ecnd.database$Buildings_Commercial_Damaged_Count.i
+  ecnd.database$Buildings_Commercial_Damaged_General_Count.ni <<- ecnd.database$Buildings_Commercial_Damaged_General_Count
+  ecnd.database$Buildings_Commercial_Damaged_General_Count <<- ecnd.database$Buildings_Commercial_Damaged_General_Count.i
+  ecnd.database$Buildings_Commercial_Damaged_Industrial_Count.ni <<- ecnd.database$Buildings_Commercial_Damaged_Industrial_Count
+  ecnd.database$Buildings_Commercial_Damaged_Industrial_Count <<- ecnd.database$Buildings_Commercial_Damaged_Industrial_Count.i
+  ecnd.database$Buildings_Commercial_Damaged_Hotels_Count.ni <<- ecnd.database$Buildings_Commercial_Damaged_Hotels_Count
+  ecnd.database$Buildings_Commercial_Damaged_Hotels_Count <<- ecnd.database$Buildings_Commercial_Damaged_Hotels_Count.i
+  ecnd.database$Buildings_Private_Destroyed_Count.ni <<- ecnd.database$Buildings_Private_Destroyed_Count
+  ecnd.database$Buildings_Private_Destroyed_Count <<- ecnd.database$Buildings_Private_Destroyed_Count.i
+  ecnd.database$Buildings_Private_Damaged_Count.ni <<- ecnd.database$Buildings_Private_Damaged_Count
+  ecnd.database$Buildings_Private_Damaged_Count <<- ecnd.database$Buildings_Private_Damaged_Count.i
+  ecnd.database$Buildings_Private_Destroyed_Count.ni <<- ecnd.database$Buildings_Private_Destroyed_Count
+  ecnd.database$Buildings_Private_Destroyed_Count <<- ecnd.database$Buildings_Private_Destroyed_Count.i
+  ecnd.database$Buildings_Private_Damaged_Count.ni <<- ecnd.database$Buildings_Private_Damaged_Count
+  ecnd.database$Buildings_Private_Damaged_Count <<- ecnd.database$Buildings_Private_Damaged_Count.i
 
-  mydata$Vehicle_Public_Damaged_Count.ni <<- mydata$Vehicle_Public_Damaged_Count
-  mydata$Vehicle_Public_Damaged_Count <<- mydata$Vehicle_Public_Damaged_Count.i
-  mydata$Vehicle_Public_Damaged_Count_Aircraft.ni <<- mydata$Vehicle_Public_Damaged_Count_Aircraft
-  mydata$Vehicle_Public_Damaged_Count_Aircraft <<- mydata$Vehicle_Public_Damaged_Count_Aircraft.i
-  mydata$Vehicle_Public_Damaged_Count_Train.ni <<- mydata$Vehicle_Public_Damaged_Count_Train
-  mydata$Vehicle_Public_Damaged_Count_Train <<- mydata$Vehicle_Public_Damaged_Count_Train.i
-  mydata$Vehicle_Public_Destroyed_Count.ni <<- mydata$Vehicle_Public_Destroyed_Count
-  mydata$Vehicle_Public_Destroyed_Count <<- mydata$Vehicle_Public_Destroyed_Count.i
-  mydata$Vehicle_Public_Destroyed_Count_Aircraft.ni <<- mydata$Vehicle_Public_Destroyed_Count_Aircraft
-  mydata$Vehicle_Public_Destroyed_Count_Aircraft <<- mydata$Vehicle_Public_Destroyed_Count_Aircraft.i
-  mydata$Vehicle_Public_Destroyed_Count_Train.ni <<- mydata$Vehicle_Public_Destroyed_Count_Train
-  mydata$Vehicle_Public_Destroyed_Count_Train <<- mydata$Vehicle_Public_Destroyed_Count_Train.i
+  ecnd.database$Vehicle_Public_Damaged_Count.ni <<- ecnd.database$Vehicle_Public_Damaged_Count
+  ecnd.database$Vehicle_Public_Damaged_Count <<- ecnd.database$Vehicle_Public_Damaged_Count.i
+  ecnd.database$Vehicle_Public_Damaged_Count_Aircraft.ni <<- ecnd.database$Vehicle_Public_Damaged_Count_Aircraft
+  ecnd.database$Vehicle_Public_Damaged_Count_Aircraft <<- ecnd.database$Vehicle_Public_Damaged_Count_Aircraft.i
+  ecnd.database$Vehicle_Public_Damaged_Count_Train.ni <<- ecnd.database$Vehicle_Public_Damaged_Count_Train
+  ecnd.database$Vehicle_Public_Damaged_Count_Train <<- ecnd.database$Vehicle_Public_Damaged_Count_Train.i
+  ecnd.database$Vehicle_Public_Destroyed_Count.ni <<- ecnd.database$Vehicle_Public_Destroyed_Count
+  ecnd.database$Vehicle_Public_Destroyed_Count <<- ecnd.database$Vehicle_Public_Destroyed_Count.i
+  ecnd.database$Vehicle_Public_Destroyed_Count_Aircraft.ni <<- ecnd.database$Vehicle_Public_Destroyed_Count_Aircraft
+  ecnd.database$Vehicle_Public_Destroyed_Count_Aircraft <<- ecnd.database$Vehicle_Public_Destroyed_Count_Aircraft.i
+  ecnd.database$Vehicle_Public_Destroyed_Count_Train.ni <<- ecnd.database$Vehicle_Public_Destroyed_Count_Train
+  ecnd.database$Vehicle_Public_Destroyed_Count_Train <<- ecnd.database$Vehicle_Public_Destroyed_Count_Train.i
 
-  mydata$Vehicle_Private_Damaged_Count.ni <<- mydata$Vehicle_Private_Damaged_Count
-  mydata$Vehicle_Private_Damaged_Count <<- mydata$Vehicle_Private_Damaged_Count.i
-  mydata$Vehicle_Private_Damaged_Count_Boats.ni <<- mydata$Vehicle_Private_Damaged_Count_Boats
-  mydata$Vehicle_Private_Damaged_Count_Boats <<- mydata$Vehicle_Private_Damaged_Count_Boats.i
-  mydata$Vehicle_Private_Damaged_Count_Cars.ni <<- mydata$Vehicle_Private_Damaged_Count_Cars
-  mydata$Vehicle_Private_Damaged_Count_Cars <<- mydata$Vehicle_Private_Damaged_Count_Cars.i
-  mydata$Vehicle_Private_Damaged_Count_Caravans.ni <<- mydata$Vehicle_Private_Damaged_Count_Caravans
-  mydata$Vehicle_Private_Damaged_Count_Caravans <<- mydata$Vehicle_Private_Damaged_Count_Caravans.i
-  mydata$Vehicle_Private_Destroyed_Count.ni <<- mydata$Vehicle_Private_Destroyed_Count
-  mydata$Vehicle_Private_Destroyed_Count <<- mydata$Vehicle_Private_Destroyed_Count.i
-  mydata$Vehicle_Private_Destroyed_Count_Boats.ni <<- mydata$Vehicle_Private_Destroyed_Count_Boats
-  mydata$Vehicle_Private_Destroyed_Count_Boats <<- mydata$Vehicle_Private_Destroyed_Count_Boats.i
-  mydata$Vehicle_Private_Destroyed_Count_Cars.ni <<- mydata$Vehicle_Private_Destroyed_Count_Cars
-  mydata$Vehicle_Private_Destroyed_Count_Cars <<- mydata$Vehicle_Private_Destroyed_Count_Cars.i
-  mydata$Vehicle_Private_Destroyed_Count_Caravans.ni <<- mydata$Vehicle_Private_Destroyed_Count_Caravans
-  mydata$Vehicle_Private_Destroyed_Count_Caravans <<- mydata$Vehicle_Private_Destroyed_Count_Caravans.i
+  ecnd.database$Vehicle_Private_Damaged_Count.ni <<- ecnd.database$Vehicle_Private_Damaged_Count
+  ecnd.database$Vehicle_Private_Damaged_Count <<- ecnd.database$Vehicle_Private_Damaged_Count.i
+  ecnd.database$Vehicle_Private_Damaged_Count_Boats.ni <<- ecnd.database$Vehicle_Private_Damaged_Count_Boats
+  ecnd.database$Vehicle_Private_Damaged_Count_Boats <<- ecnd.database$Vehicle_Private_Damaged_Count_Boats.i
+  ecnd.database$Vehicle_Private_Damaged_Count_Cars.ni <<- ecnd.database$Vehicle_Private_Damaged_Count_Cars
+  ecnd.database$Vehicle_Private_Damaged_Count_Cars <<- ecnd.database$Vehicle_Private_Damaged_Count_Cars.i
+  ecnd.database$Vehicle_Private_Damaged_Count_Caravans.ni <<- ecnd.database$Vehicle_Private_Damaged_Count_Caravans
+  ecnd.database$Vehicle_Private_Damaged_Count_Caravans <<- ecnd.database$Vehicle_Private_Damaged_Count_Caravans.i
+  ecnd.database$Vehicle_Private_Destroyed_Count.ni <<- ecnd.database$Vehicle_Private_Destroyed_Count
+  ecnd.database$Vehicle_Private_Destroyed_Count <<- ecnd.database$Vehicle_Private_Destroyed_Count.i
+  ecnd.database$Vehicle_Private_Destroyed_Count_Boats.ni <<- ecnd.database$Vehicle_Private_Destroyed_Count_Boats
+  ecnd.database$Vehicle_Private_Destroyed_Count_Boats <<- ecnd.database$Vehicle_Private_Destroyed_Count_Boats.i
+  ecnd.database$Vehicle_Private_Destroyed_Count_Cars.ni <<- ecnd.database$Vehicle_Private_Destroyed_Count_Cars
+  ecnd.database$Vehicle_Private_Destroyed_Count_Cars <<- ecnd.database$Vehicle_Private_Destroyed_Count_Cars.i
+  ecnd.database$Vehicle_Private_Destroyed_Count_Caravans.ni <<- ecnd.database$Vehicle_Private_Destroyed_Count_Caravans
+  ecnd.database$Vehicle_Private_Destroyed_Count_Caravans <<- ecnd.database$Vehicle_Private_Destroyed_Count_Caravans.i
 
-  mydata$Public.buildings.destroyed.ni <<- mydata$Public.buildings.destroyed
-  mydata$Public.buildings.destroyed <<- mydata$Public.buildings.destroyed.i
-  mydata$Public.buildings.damaged.ni <<- mydata$Public.buildings.damaged
-  mydata$Public.buildings.damaged <<- mydata$Public.buildings.damaged.i
-  mydata$Land_Public_Count.ni <<- mydata$Land_Public_Count
-  mydata$Land_Public_Count <<- mydata$Land_Public_Count.i
-  mydata$Land_Private_Count.ni <<- mydata$Land_Private_Count
-  mydata$Land_Private_Count <<- mydata$Land_Private_Count.i
-  mydata$Crops_Destroyed_Count.ni <<- mydata$Crops_Destroyed_Count
-  mydata$Crops_Destroyed_Count <<- mydata$Crops_Destroyed_Count.i
-  mydata$Livestock_Destroyed_Count.ni <<- mydata$Livestock_Destroyed_Count
-  mydata$Livestock_Destroyed_Count <<- mydata$Livestock_Destroyed_Count.i
-  mydata$Environmental_Count.ni <<- mydata$Environmental_Count
-  mydata$Environmental_Count <<- mydata$Environmental_Count.i
+  ecnd.database$Public.buildings.destroyed.ni <<- ecnd.database$Public.buildings.destroyed
+  ecnd.database$Public.buildings.destroyed <<- ecnd.database$Public.buildings.destroyed.i
+  ecnd.database$Public.buildings.damaged.ni <<- ecnd.database$Public.buildings.damaged
+  ecnd.database$Public.buildings.damaged <<- ecnd.database$Public.buildings.damaged.i
+  ecnd.database$Land_Public_Count.ni <<- ecnd.database$Land_Public_Count
+  ecnd.database$Land_Public_Count <<- ecnd.database$Land_Public_Count.i
+  ecnd.database$Land_Private_Count.ni <<- ecnd.database$Land_Private_Count
+  ecnd.database$Land_Private_Count <<- ecnd.database$Land_Private_Count.i
+  ecnd.database$Crops_Destroyed_Count.ni <<- ecnd.database$Crops_Destroyed_Count
+  ecnd.database$Crops_Destroyed_Count <<- ecnd.database$Crops_Destroyed_Count.i
+  ecnd.database$Livestock_Destroyed_Count.ni <<- ecnd.database$Livestock_Destroyed_Count
+  ecnd.database$Livestock_Destroyed_Count <<- ecnd.database$Livestock_Destroyed_Count.i
+  ecnd.database$Environmental_Count.ni <<- ecnd.database$Environmental_Count
+  ecnd.database$Environmental_Count <<- ecnd.database$Environmental_Count.i
 }
 
 ## Swaps interpollated costs
 swapNormalForInterpollatedCosts <- function() {
-  mydata$Insured.Cost.normalised <<- mydata$Insured.Cost.normalised.ni
-  mydata$Insured.Cost.indexed <<- mydata$Insured.Cost.indexed.ni
-  mydata$Evacuated <<- mydata$Evacuated.ni
-  mydata$Homeless <<- mydata$Homeless.ni
-  mydata$Calls.to.SES <<- mydata$Calls.to.SES.ni
-  mydata$Assistance_numbers <<- mydata$Assistance_numbers.ni
-  mydata$Assistance_dollars <<- mydata$Assistance_dollars.ni
-  mydata$Buildings_Commercial_Destroyed_Count <<- mydata$Buildings_Commercial_Destroyed_Count.ni
-  mydata$Buildings_Commercial_Damaged_Count <<- mydata$Buildings_Commercial_Damaged_Count.ni
-  mydata$Buildings_Private_Destroyed_Count <<- mydata$Buildings_Private_Destroyed_Count.ni
-  mydata$Buildings_Private_Damaged_Count <<- mydata$Buildings_Private_Damaged_Count.ni
-  mydata$Public.buildings.destroyed <<- mydata$Public.buildings.destroyed.ni
-  mydata$Public.buildings.damaged <<- mydata$Public.buildings.damaged.ni
-  mydata$Land_Public_Count <<- mydata$Land_Public_Count.ni
-  mydata$Land_Private_Count <<- mydata$Land_Private_Count.ni
-  mydata$Crops_Destroyed_Count <<- mydata$Crops_Destroyed_Count.ni
-  mydata$Livestock_Destroyed_Count <<- mydata$Livestock_Destroyed_Count.ni
-  mydata$Environmental_Count <<- mydata$Environmental_Count.ni
+  ecnd.database$Insured.Cost.normalised <<- ecnd.database$Insured.Cost.normalised.ni
+  ecnd.database$Insured.Cost.indexed <<- ecnd.database$Insured.Cost.indexed.ni
+  ecnd.database$Evacuated <<- ecnd.database$Evacuated.ni
+  ecnd.database$Homeless <<- ecnd.database$Homeless.ni
+  ecnd.database$Calls.to.SES <<- ecnd.database$Calls.to.SES.ni
+  ecnd.database$Assistance_numbers <<- ecnd.database$Assistance_numbers.ni
+  ecnd.database$Assistance_dollars <<- ecnd.database$Assistance_dollars.ni
+  ecnd.database$Buildings_Commercial_Destroyed_Count <<- ecnd.database$Buildings_Commercial_Destroyed_Count.ni
+  ecnd.database$Buildings_Commercial_Damaged_Count <<- ecnd.database$Buildings_Commercial_Damaged_Count.ni
+  ecnd.database$Buildings_Private_Destroyed_Count <<- ecnd.database$Buildings_Private_Destroyed_Count.ni
+  ecnd.database$Buildings_Private_Damaged_Count <<- ecnd.database$Buildings_Private_Damaged_Count.ni
+  ecnd.database$Public.buildings.destroyed <<- ecnd.database$Public.buildings.destroyed.ni
+  ecnd.database$Public.buildings.damaged <<- ecnd.database$Public.buildings.damaged.ni
+  ecnd.database$Land_Public_Count <<- ecnd.database$Land_Public_Count.ni
+  ecnd.database$Land_Private_Count <<- ecnd.database$Land_Private_Count.ni
+  ecnd.database$Crops_Destroyed_Count <<- ecnd.database$Crops_Destroyed_Count.ni
+  ecnd.database$Livestock_Destroyed_Count <<- ecnd.database$Livestock_Destroyed_Count.ni
+  ecnd.database$Environmental_Count <<- ecnd.database$Environmental_Count.ni
 }
 
 ## Interpollate from insured costs
@@ -1509,7 +1509,7 @@ interpollate <- function(range) {
 ratio <- function(range) {
   a <- as.numeric(range[,1])
   b <- as.numeric(range[,2])
-  newdata <- subset(mydata, !is.na(a) & !is.na(b))
+  newdata <- subset(ecnd.database, !is.na(a) & !is.na(b))
   a <- newdata[colnames(range)[1]]
   b <- newdata[colnames(range)[2]]
   ratio <- mean(as.numeric(as.data.frame(a)[,1])) / mean(as.numeric(as.data.frame(b)[,1]))
@@ -1524,61 +1524,61 @@ ratio <- function(range) {
 # Cost Conversion functions
 
 convertCountsToDollars <- function() {
-  mydata$Infrastructure_Public_Damaged_Dollars <- apply(cbind(mydata[c("Infrastructure_Public_Damaged_Count", "Infrastructure_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Infrastructure_Public_Destroyed_Dollars <- apply(cbind(mydata[c("Infrastructure_Public_Destroyed_Count", "Infrastructure_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Vehicle_Public_Damaged_Dollars <- apply(cbind(mydata[c("Vehicle_Public_Damaged_Count", "Vehicle_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Vehicle_Public_Destroyed_Dollars <- apply(cbind(mydata[c("Vehicle_Public_Destroyed_Count", "Vehicle_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Vehicle_Private_Damaged_Dollars <- apply(cbind(mydata[c("Vehicle_Private_Damaged_Count", "Vehicle_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Vehicle_Private_Destroyed_Dollars <- apply(cbind(mydata[c("Vehicle_Private_Destroyed_Count", "Vehicle_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Buildings_Public_Damaged_Dollars <- apply(cbind(mydata[c("Buildings_Public_Damaged_Count", "Buildings_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Buildings_Public_Destroyed_Dollars <- apply(cbind(mydata[c("Buildings_Public_Destroyed_Count", "Buildings_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Buildings_Private_Damaged_Dollars <- apply(cbind(mydata[c("Buildings_Private_Damaged_Count", "Buildings_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Buildings_Private_Destroyed_Dollars <- apply(cbind(mydata[c("Buildings_Private_Destroyed_Count", "Buildings_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Buildings_Commercial_Damaged_Dollars <- apply(cbind(mydata[c("Buildings_Commercial_Damaged_Count", "Buildings_Commercial_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Buildings_Commercial_Destroyed_Dollars <- apply(cbind(mydata[c("Buildings_Commercial_Destroyed_Count", "Buildings_Commercial_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Infrastructure_Public_Damaged_Dollars <- apply(cbind(mydata[c("Infrastructure_Public_Damaged_Count", "Infrastructure_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Infrastructure_Public_Destroyed_Dollars <- apply(cbind(mydata[c("Infrastructure_Public_Destroyed_Count", "Infrastructure_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Infrastructure_Private_Damaged_Dollars <- apply(cbind(mydata[c("Infrastructure_Private_Damaged_Count", "Infrastructure_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Infrastructure_Private_Destroyed_Dollars <- apply(cbind(mydata[c("Infrastructure_Private_Destroyed_Count", "Infrastructure_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Vehicle_Public_Damaged_Dollars <- apply(cbind(mydata[c("Vehicle_Public_Damaged_Count", "Vehicle_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Vehicle_Public_Destroyed_Dollars <- apply(cbind(mydata[c("Vehicle_Public_Destroyed_Count", "Vehicle_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Vehicle_Private_Damaged_Dollars <- apply(cbind(mydata[c("Vehicle_Private_Damaged_Count", "Vehicle_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Vehicle_Private_Destroyed_Dollars <- apply(cbind(mydata[c("Vehicle_Private_Destroyed_Count", "Vehicle_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Land_Public_Dollars <- apply(cbind(mydata[c("Land_Public_Count", "Land_Public_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Land_Private_Dollars <- apply(cbind(mydata[c("Land_Private_Count", "Land_Private_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Crops_Destroyed_Dollars <- apply(cbind(mydata[c("Crops_Destroyed_Count", "Crops_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Livestock_Destroyed_Dollars <- apply(cbind(mydata[c("Livestock_Destroyed_Count", "Livestock_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
-  mydata$Environmental_Dollars <- apply(cbind(mydata[c("Environmental_Count", "Environmental_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Infrastructure_Public_Damaged_Dollars <- apply(cbind(ecnd.database[c("Infrastructure_Public_Damaged_Count", "Infrastructure_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Infrastructure_Public_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Infrastructure_Public_Destroyed_Count", "Infrastructure_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Vehicle_Public_Damaged_Dollars <- apply(cbind(ecnd.database[c("Vehicle_Public_Damaged_Count", "Vehicle_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Vehicle_Public_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Vehicle_Public_Destroyed_Count", "Vehicle_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Vehicle_Private_Damaged_Dollars <- apply(cbind(ecnd.database[c("Vehicle_Private_Damaged_Count", "Vehicle_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Vehicle_Private_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Vehicle_Private_Destroyed_Count", "Vehicle_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Buildings_Public_Damaged_Dollars <- apply(cbind(ecnd.database[c("Buildings_Public_Damaged_Count", "Buildings_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Buildings_Public_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Buildings_Public_Destroyed_Count", "Buildings_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Buildings_Private_Damaged_Dollars <- apply(cbind(ecnd.database[c("Buildings_Private_Damaged_Count", "Buildings_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Buildings_Private_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Buildings_Private_Destroyed_Count", "Buildings_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Buildings_Commercial_Damaged_Dollars <- apply(cbind(ecnd.database[c("Buildings_Commercial_Damaged_Count", "Buildings_Commercial_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Buildings_Commercial_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Buildings_Commercial_Destroyed_Count", "Buildings_Commercial_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Infrastructure_Public_Damaged_Dollars <- apply(cbind(ecnd.database[c("Infrastructure_Public_Damaged_Count", "Infrastructure_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Infrastructure_Public_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Infrastructure_Public_Destroyed_Count", "Infrastructure_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Infrastructure_Private_Damaged_Dollars <- apply(cbind(ecnd.database[c("Infrastructure_Private_Damaged_Count", "Infrastructure_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Infrastructure_Private_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Infrastructure_Private_Destroyed_Count", "Infrastructure_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Vehicle_Public_Damaged_Dollars <- apply(cbind(ecnd.database[c("Vehicle_Public_Damaged_Count", "Vehicle_Public_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Vehicle_Public_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Vehicle_Public_Destroyed_Count", "Vehicle_Public_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Vehicle_Private_Damaged_Dollars <- apply(cbind(ecnd.database[c("Vehicle_Private_Damaged_Count", "Vehicle_Private_Damaged_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Vehicle_Private_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Vehicle_Private_Destroyed_Count", "Vehicle_Private_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Land_Public_Dollars <- apply(cbind(ecnd.database[c("Land_Public_Count", "Land_Public_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Land_Private_Dollars <- apply(cbind(ecnd.database[c("Land_Private_Count", "Land_Private_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Crops_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Crops_Destroyed_Count", "Crops_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Livestock_Destroyed_Dollars <- apply(cbind(ecnd.database[c("Livestock_Destroyed_Count", "Livestock_Destroyed_Dollars")], 1), 1, convertSingleCountToDollars)
+  ecnd.database$Environmental_Dollars <- apply(cbind(ecnd.database[c("Environmental_Count", "Environmental_Dollars")], 1), 1, convertSingleCountToDollars)
 }
 
 adjustDollarsToCounts <- function() {
-  mydata$Infrastructure_Public_Damaged_Count <<- apply(mydata[c("Infrastructure_Public_Damaged_Dollars", "Infrastructure_Public_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Infrastructure_Public_Destroyed_Count <<- apply(mydata[c("Infrastructure_Public_Destroyed_Dollars", "Infrastructure_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Infrastructure_Private_Damaged_Count <<- apply(mydata[c("Infrastructure_Private_Damaged_Dollars", "Infrastructure_Private_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Infrastructure_Private_Destroyed_Count <<- apply(mydata[c("Infrastructure_Private_Destroyed_Dollars", "Infrastructure_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Vehicle_Public_Damaged_Count <<- apply(mydata[c("Vehicle_Public_Damaged_Dollars", "Vehicle_Public_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Vehicle_Public_Destroyed_Count <<- apply(mydata[c("Vehicle_Public_Destroyed_Dollars", "Vehicle_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Vehicle_Private_Damaged_Count <<- apply(mydata[c("Vehicle_Private_Damaged_Dollars", "Vehicle_Private_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Vehicle_Private_Destroyed_Count <<- apply(mydata[c("Vehicle_Private_Destroyed_Dollars", "Vehicle_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Buildings_Public_Damaged_Count <<- apply(mydata[c("Buildings_Public_Damaged_Dollars", "Buildings_Public_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Buildings_Public_Destroyed_Count <<- apply(mydata[c("Buildings_Public_Destroyed_Dollars", "Buildings_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Buildings_Private_Damaged_Count <<- apply(mydata[c("Buildings_Private_Damaged_Dollars", "Buildings_Private_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Buildings_Private_Destroyed_Count <<- apply(mydata[c("Buildings_Private_Destroyed_Dollars", "Buildings_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Buildings_Commercial_Damaged_Count <<- apply(mydata[c("Buildings_Commercial_Damaged_Dollars", "Buildings_Commercial_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Buildings_Commercial_Destroyed_Count <<- apply(mydata[c("Buildings_Commercial_Destroyed_Dollars", "Buildings_Commercial_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Infrastructure_Public_Damaged_Count <<- apply(mydata[c("Infrastructure_Public_Damaged_Dollars", "Infrastructure_Public_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Infrastructure_Public_Destroyed_Count <<- apply(mydata[c("Infrastructure_Public_Destroyed_Dollars", "Infrastructure_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Infrastructure_Private_Damaged_Count <<- apply(mydata[c("Infrastructure_Private_Damaged_Dollars", "Infrastructure_Private_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Infrastructure_Private_Destroyed_Count <<- apply(mydata[c("Infrastructure_Private_Destroyed_Dollars", "Infrastructure_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Vehicle_Public_Damaged_Count <<- apply(mydata[c("Vehicle_Public_Damaged_Dollars", "Vehicle_Public_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Vehicle_Public_Destroyed_Count <<- apply(mydata[c("Vehicle_Public_Destroyed_Dollars", "Vehicle_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Vehicle_Private_Damaged_Count <<- apply(mydata[c("Vehicle_Private_Damaged_Dollars", "Vehicle_Private_Damaged_Count", "Year")], 1, dollarsToCount)
-  mydata$Vehicle_Private_Destroyed_Count <<- apply(mydata[c("Vehicle_Private_Destroyed_Dollars", "Vehicle_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Land_Public_Count <<- apply(mydata[c("Land_Public_Dollars", "Land_Public_Count", "Year")], 1, dollarsToCount)
-  mydata$Land_Private_Count <<- apply(mydata[c("Land_Private_Dollars", "Land_Private_Count", "Year")], 1, dollarsToCount)
-  mydata$Crops_Destroyed_Count <<- apply(mydata[c("Crops_Destroyed_Dollars", "Crops_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Livestock_Destroyed_Count <<- apply(mydata[c("Livestock_Destroyed_Dollars", "Livestock_Destroyed_Count", "Year")], 1, dollarsToCount)
-  mydata$Environmental_Count <<- apply(mydata[c("Environmental_Dollars", "Environmental_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Infrastructure_Public_Damaged_Count <<- apply(ecnd.database[c("Infrastructure_Public_Damaged_Dollars", "Infrastructure_Public_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Infrastructure_Public_Destroyed_Count <<- apply(ecnd.database[c("Infrastructure_Public_Destroyed_Dollars", "Infrastructure_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Infrastructure_Private_Damaged_Count <<- apply(ecnd.database[c("Infrastructure_Private_Damaged_Dollars", "Infrastructure_Private_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Infrastructure_Private_Destroyed_Count <<- apply(ecnd.database[c("Infrastructure_Private_Destroyed_Dollars", "Infrastructure_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Vehicle_Public_Damaged_Count <<- apply(ecnd.database[c("Vehicle_Public_Damaged_Dollars", "Vehicle_Public_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Vehicle_Public_Destroyed_Count <<- apply(ecnd.database[c("Vehicle_Public_Destroyed_Dollars", "Vehicle_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Vehicle_Private_Damaged_Count <<- apply(ecnd.database[c("Vehicle_Private_Damaged_Dollars", "Vehicle_Private_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Vehicle_Private_Destroyed_Count <<- apply(ecnd.database[c("Vehicle_Private_Destroyed_Dollars", "Vehicle_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Buildings_Public_Damaged_Count <<- apply(ecnd.database[c("Buildings_Public_Damaged_Dollars", "Buildings_Public_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Buildings_Public_Destroyed_Count <<- apply(ecnd.database[c("Buildings_Public_Destroyed_Dollars", "Buildings_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Buildings_Private_Damaged_Count <<- apply(ecnd.database[c("Buildings_Private_Damaged_Dollars", "Buildings_Private_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Buildings_Private_Destroyed_Count <<- apply(ecnd.database[c("Buildings_Private_Destroyed_Dollars", "Buildings_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Buildings_Commercial_Damaged_Count <<- apply(ecnd.database[c("Buildings_Commercial_Damaged_Dollars", "Buildings_Commercial_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Buildings_Commercial_Destroyed_Count <<- apply(ecnd.database[c("Buildings_Commercial_Destroyed_Dollars", "Buildings_Commercial_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Infrastructure_Public_Damaged_Count <<- apply(ecnd.database[c("Infrastructure_Public_Damaged_Dollars", "Infrastructure_Public_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Infrastructure_Public_Destroyed_Count <<- apply(ecnd.database[c("Infrastructure_Public_Destroyed_Dollars", "Infrastructure_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Infrastructure_Private_Damaged_Count <<- apply(ecnd.database[c("Infrastructure_Private_Damaged_Dollars", "Infrastructure_Private_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Infrastructure_Private_Destroyed_Count <<- apply(ecnd.database[c("Infrastructure_Private_Destroyed_Dollars", "Infrastructure_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Vehicle_Public_Damaged_Count <<- apply(ecnd.database[c("Vehicle_Public_Damaged_Dollars", "Vehicle_Public_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Vehicle_Public_Destroyed_Count <<- apply(ecnd.database[c("Vehicle_Public_Destroyed_Dollars", "Vehicle_Public_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Vehicle_Private_Damaged_Count <<- apply(ecnd.database[c("Vehicle_Private_Damaged_Dollars", "Vehicle_Private_Damaged_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Vehicle_Private_Destroyed_Count <<- apply(ecnd.database[c("Vehicle_Private_Destroyed_Dollars", "Vehicle_Private_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Land_Public_Count <<- apply(ecnd.database[c("Land_Public_Dollars", "Land_Public_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Land_Private_Count <<- apply(ecnd.database[c("Land_Private_Dollars", "Land_Private_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Crops_Destroyed_Count <<- apply(ecnd.database[c("Crops_Destroyed_Dollars", "Crops_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Livestock_Destroyed_Count <<- apply(ecnd.database[c("Livestock_Destroyed_Dollars", "Livestock_Destroyed_Count", "Year")], 1, dollarsToCount)
+  ecnd.database$Environmental_Count <<- apply(ecnd.database[c("Environmental_Dollars", "Environmental_Count", "Year")], 1, dollarsToCount)
 }
 
 # Multipliers
@@ -1653,31 +1653,31 @@ significanceTest_LinearRegression <- function(data) {
 }
 
 
-# Write mydata back to a file
+# Write ecnd.database back to a file
 writeData <- function() {
 
   swapInterpollatedForNormalCosts()
 
 
   # Repeats logic from totalCostForEvent(), getEvents()
-  mydata$Deaths <<- as.numeric(mydata$Deaths)
-  mydata$Injuries <<- as.numeric(mydata$Injuries)
-  mydata$Deaths.normalised <<- as.numeric(mydata$Deaths.normalised)
-  mydata$Injuries.normalised <<- as.numeric(mydata$Injuries.normalised)
-  # xsub <- mydata[,6:24]
+  ecnd.database$Deaths <<- as.numeric(ecnd.database$Deaths)
+  ecnd.database$Injuries <<- as.numeric(ecnd.database$Injuries)
+  ecnd.database$Deaths.normalised <<- as.numeric(ecnd.database$Deaths.normalised)
+  ecnd.database$Injuries.normalised <<- as.numeric(ecnd.database$Injuries.normalised)
+  # xsub <- ecnd.database[,6:24]
   # xsub[is.na(xsub)] <- 0
-  # mydata[,6:24]<-xsub
+  # ecnd.database[,6:24]<-xsub
 
-  mydata <<- computedDirectCosts(mydata)
-  # mydata <- directCosts(mydata)
-  mydata <<- indirectCosts(mydata)
-  mydata <<- intangibleCosts(mydata)
-  mydata$total <<- rowSums(subset(mydata, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
-  mydata$total.normalised <<- rowSums(subset(mydata, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
+  ecnd.database <<- computedDirectCosts(ecnd.database)
+  # ecnd.database <- directCosts(ecnd.database)
+  ecnd.database <<- indirectCosts(ecnd.database)
+  ecnd.database <<- intangibleCosts(ecnd.database)
+  ecnd.database$total <<- rowSums(subset(ecnd.database, select = c(directCost, indirectCost, intangibleCost)), na.rm = TRUE)
+  ecnd.database$total.normalised <<- rowSums(subset(ecnd.database, select = c(directCost.normalised, indirectCost.normalised, intangibleCost.normalised)), na.rm = TRUE)
 
 
   swapNormalForInterpollatedCosts()
-  write.table(mydata, file = "./output/data.csv", append = FALSE, quote = TRUE, sep = ",",
+  write.table(ecnd.database, file = "./output/data.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "", dec = ".", row.names = FALSE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
