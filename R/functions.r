@@ -85,6 +85,7 @@ financialYear <- function(range) {
   finYear <- if (is.element(month, firstMonths)) as.numeric(year) else as.numeric(year) + 1
   return(as.numeric(finYear))
 }
+
 ## Generates a population value for a given year
 popForYear <- function(year, state = NULL) {
   year <- as.numeric(year)
@@ -96,12 +97,14 @@ popForYear <- function(year, state = NULL) {
   popValue <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[popRow])
   return (popValue)
 }
+
 ## Generates a population ratio (based on June 2013)
 popRatio <- function(baseYear, state = NULL) {
   popTest <- popForYear(baseYear, state)
   pop2013 <- popForYear(2013, state)
   return(pop2013 / popTest)
 }
+
 ## Generates a cpi ratio (based on June 2013)
 cpiRatio <- function(baseYear, state = NULL) {
   cpiRow <- 85 + (baseYear - 1967) * 4
@@ -112,6 +115,7 @@ cpiRatio <- function(baseYear, state = NULL) {
   }
   return(cpi2013 / cpiTest)
 }
+
 ## Generates a gdp ratio based on chain volume measures (based on June 2013)
 gdpRatio <- function(baseYear, state = NULL) {
   gdpRow <- 41 + (baseYear - 1967) * 4
@@ -125,6 +129,7 @@ gdpRatio <- function(baseYear, state = NULL) {
   gdpGross <- gdpGross / popRatio(baseYear)
   return(gdpGross)
 }
+
 ## Generates a gdp ratio based on chain volume measures (based on June 2013)
 gdpNominalRatio <- function(baseYear, state = NULL) {
   gdp.national.row <- 17 + (baseYear - 1967) * 1
@@ -136,26 +141,31 @@ gdpNominalRatio <- function(baseYear, state = NULL) {
   gdp.gross <- ( gdp.national.2013 / gdp.national.test )
   return( gdp.gross )
 }
+
 gdpValues <- function(baseYear, state = NULL) {
   gdpRow <- 41 + (baseYear - 1967) * 4
   gdpValue <- as.numeric(gdp$Gross.domestic.product..Chain.volume.measures..[gdpRow])
   return(gdpValue)
 }
+
 gdpNominalValues <- function(baseYear, state = NULL) {
   gdp.national.row <- 17 + (baseYear - 1967) * 1
   gdp.national.value <- as.numeric(gdp.national$GROSS.DOMESTIC.PRODUCT..Current.prices..[gdp.national.row])
   return(gdp.national.value)
 }
+
 ## Combined CPI, population and GDP ratio
 combinedRatio <- function(baseYear, state = NULL) {
   return (cpiRatio(baseYear, state) * popRatio(baseYear, state) * gdpRatio(baseYear, state))
 }
+
 ## Generates an CPI indexed cost (based on June 2013)
 indexCosts <- function(range) {
   baseYear <- range[1]
   insuredCost <- range[2]
   return(insuredCost * cpiRatio(baseYear))
 }
+
 ## Normalise cost - TODO: this needs to be much more robust (cf. discussion on normalisation)
 normalisedCosts <- function(range) {
   baseYear <- range[1]
@@ -164,12 +174,14 @@ normalisedCosts <- function(range) {
   # TODO: Add at least state-based equivalents
   return(cost * cpiRatio(baseYear) * popRatio(baseYear) * gdpRatio(baseYear))
 }
+
 ## Normalise cost - TODO: this needs to be much more robust (cf. discussion on normalisation)
 normalisedCostsWithoutIndexation <- function(range) {
   baseYear <- range[1]
   cost <- range[2]
   return(cost * popRatio(baseYear) * gdpRatio(baseYear))
 }
+
 ## Normalise population
 normalisedPopulation <- function(range) {
   baseYear <- as.numeric(range[1])
@@ -177,6 +189,7 @@ normalisedPopulation <- function(range) {
   # Normalise for inflation
   return(pop * popRatio(baseYear))
 }
+
 ## Load data
 loadData <- function(database_file) {
   # Clear the main data object
@@ -218,7 +231,6 @@ cleanData <- function() {
   mydata$Year.financial <<- apply(mydata[c("Month", "Year")], 1, financialYear)
 
 }
-
 
 # Interpolate reported costs, based on the relationship between Insured and Reported costs.
 interpolateReportedCosts <- function() {
