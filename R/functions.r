@@ -21,29 +21,21 @@ parseCurrency <- function(value) as.numeric(gsub(",", "", sub("\\$","", value)))
 abbreviateState <- function(value) {
   if (value == "Victoria") {
     "VIC"
-  }
-  else if (value == "New South Wales") {
+  } else if (value == "New South Wales") {
     "NSW"
-  }
-  else if (value == "Tasmania") {
+  } else if (value == "Tasmania") {
     "TAS"
-  }
-  else if (value == "Western Australia") {
+  } else if (value == "Western Australia") {
     "WA"
-  }
-  else if (value == "Queensland") {
+  } else if (value == "Queensland") {
     "QLD"
-  }
-  else if (value == "Australian Capital Territory") {
+  } else if (value == "Australian Capital Territory") {
     "ACT"
-  }
-  else if (value == "Northern Territory") {
+  } else if (value == "Northern Territory") {
     "NT"
-  }
-  else if (value == "South Australia") {
+  } else if (value == "South Australia") {
     "SA"
-  }
-  else  {
+  } else  {
     "Other"
   }
 }
@@ -98,8 +90,7 @@ popForYear <- function(year, state = NULL) {
   year <- as.numeric(year)
   if ((year - 1967) < 14) {
     popRow <- 10 + (year - 1967)
-  }
-  else {
+  } else {
     popRow <- 24 + (year - 1981) * 4
   }
   popValue <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[popRow])
@@ -1187,29 +1178,21 @@ eventTypeMultiplierJoy <- function(eventType) {
   ## http://www.investigativeproject.org/documents/testimony/105.pdf
   if (eventType == "Bushfire") {
     3.0
-  }
-  else if (eventType == "Cyclone") {
+  } else if (eventType == "Cyclone") {
     5.0
-  }
-  else if (eventType == "Flood") {
+  } else if (eventType == "Flood") {
     10.0
-  }
-  else if (eventType == "Severe Storm") {
+  } else if (eventType == "Severe Storm") {
     3.0
-  }
-  else if (eventType == "Earthquake") {
+  } else if (eventType == "Earthquake") {
     4.0
-  }
-  else if (eventType == "Heatwave") {
+  } else if (eventType == "Heatwave") {
     1.0
-  }
-  else if (eventType == "Landslide") {
+  } else if (eventType == "Landslide") {
     1.0
-  }
-  else if (eventType == "Storm") {
+  } else if (eventType == "Storm") {
     1.0
-  }
-  else  {
+  } else  {
     1.0
   }
 }

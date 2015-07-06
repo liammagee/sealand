@@ -21,8 +21,8 @@ library(reshape2)
 source("R/functions.r", TRUE)
 
 # Global variables
-title_size <- 0.8
-character_size <- 0.6
+title.size <- 0.8
+character.size <- 0.6
 
 # Functions for generating figures
 
@@ -166,19 +166,19 @@ standardBarChart_Plot <- function(data, file_name, title, x_label, y_label, y_ra
   
   # Calculate range from 0 to max value of costs
   plot(data, type="h", col="blue", ylim=y_range, axes=axes, ann=FALSE,
-       cex=character_size,
-       cex.lab=character_size,
-       cex.axis=character_size,
-       cex.main=character_size,
-       cex.sub=character_size)
+       cex=character.size,
+       cex.lab=character.size,
+       cex.axis=character.size,
+       cex.main=character.size,
+       cex.sub=character.size)
   
   # Add title
   title(title, col.main = "blue",
-        cex=title_size,
-        cex.lab=title_size,
-        cex.axis=title_size,
-        cex.main=title_size,
-        cex.sub=title_size)
+        cex=title.size,
+        cex.lab=title.size,
+        cex.axis=title.size,
+        cex.main=title.size,
+        cex.sub=title.size)
   
   # Label the x and y axes with dark green text
   title(xlab=x_label, col.lab=rgb(0,0.5,0))
@@ -188,11 +188,11 @@ standardBarChart_Plot <- function(data, file_name, title, x_label, y_label, y_ra
 ## Generates an axis with character widths
 doAxis <- function(number, at=NULL, labels=NULL) {
   # axis(number, at=at, labels=labels,
-  #      cex=character_size,
-  #      cex.lab=character_size,
-  #      cex.axis=character_size,
-  #      cex.main=character_size,
-  #      cex.sub=character_size)
+  #      cex=character.size,
+  #      cex.lab=character.size,
+  #      cex.axis=character.size,
+  #      cex.main=character.size,
+  #      cex.sub=character.size)
 }
 
 
