@@ -163,31 +163,35 @@ combinedRatio <- function(baseYear, state = NULL) {
 indexCosts <- function(range) {
   baseYear <- range[1]
   insuredCost <- range[2]
-  return(insuredCost * cpiRatio(baseYear))
+  state <- range[3]
+  return(insuredCost * cpiRatio(baseYear, state))
 }
 
 ## Normalise cost - TODO: this needs to be much more robust (cf. discussion on normalisation)
 normalisedCosts <- function(range) {
   baseYear <- range[1]
   cost <- range[2]
+  state <- range[3]
   # Normalise for [1] inflation; [2] population growth; [3] wealth increase (GDP as a temporary proxy)
   # TODO: Add at least state-based equivalents
-  return(cost * cpiRatio(baseYear) * popRatio(baseYear) * gdpRatio(baseYear))
+  return(cost * cpiRatio(baseYear, state) * popRatio(baseYear, state) * gdpRatio(baseYear, state))
 }
 
 ## Normalise cost - TODO: this needs to be much more robust (cf. discussion on normalisation)
 normalisedCostsWithoutIndexation <- function(range) {
   baseYear <- range[1]
   cost <- range[2]
-  return(cost * popRatio(baseYear) * gdpRatio(baseYear))
+  state <- range[3]
+  return(cost * popRatio(baseYear, state) * gdpRatio(baseYear, state))
 }
 
 ## Normalise population
 normalisedPopulation <- function(range) {
   baseYear <- as.numeric(range[1])
   pop <- as.numeric(range[2])
+  state <- range[3]
   # Normalise for inflation
-  return(pop * popRatio(baseYear))
+  return(pop * popRatio(baseYear, state))
 }
 
 ## Load data
