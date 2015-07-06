@@ -1619,11 +1619,11 @@ total_deaths_as_percentage_of_pop <- function() {
 total_cost_as_percentage_of_gdp <- function() {
   # Store the total costs by year
   totalCosts <- totalCostForEventFiltered(NULL, FALSE, FALSE)
-  totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.WithDeathsAndInjuries.interpolated.millions, by=list(Year.financial), FUN=safeSum))
+  totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.interpolated.millions, by=list(Year.financial), FUN=safeSum))
   
-  totalCostsByYear$Reported.Cost.WithDeathsAndInjuries.interpolated.millions <- totalCostsByYear$x
-  totalCostsByYear$gdp <- apply(cbind(totalCostsByYear$Group.1), 1, gdpValues)
-  totalCostsByYear$percentOfGDP <- 100 * totalCostsByYear$Reported.Cost.WithDeathsAndInjuries.interpolated.millions / totalCostsByYear$gdp
+  totalCostsByYear$Reported.Cost.interpolated.millions <- totalCostsByYear$x
+  totalCostsByYear$gdp <- apply(cbind(totalCostsByYear$Group.1), 1, gdpNominalValues)
+  totalCostsByYear$percentOfGDP <- 100 * totalCostsByYear$Reported.Cost.interpolated.millions / totalCostsByYear$gdp
   # For graphing purposes
   totalCostsByYear$x <- totalCostsByYear$percentOfGDP
   
