@@ -94,7 +94,23 @@ popForYear <- function(year, state = NULL) {
   } else {
     popRow <- 24 + (year - 1981) * 4
   }
-  popValue <- as.numeric(pop.data$Estimated.Resident.Population....Persons....Australia..[popRow])
+
+  # Obtain column reference
+  state.col.ref <- switch(state, 
+    "New South Wales" = 20,
+    "Victoria" = 21,
+    "Queensland" = 22,
+    "South Australia" = 23,
+    "Western Australia" = 24,
+    "Tasmania" = 25,
+    "Northern Territory" = 26,
+    "Australian Capital Territory" = 27
+  )
+  if (is.na(state)) {
+    state.col.ref <- 28
+  }
+
+  popValue <- as.numeric(pop.data[popRow, state.col.ref])
   return (popValue)
 }
 
