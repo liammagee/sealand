@@ -94,7 +94,7 @@ popForYear <- function(year, state = NULL) {
   } else {
     popRow <- 24 + (year - 1981) * 4
   }
-  popValue <- as.numeric(pop$Estimated.Resident.Population....Persons....Australia..[popRow])
+  popValue <- as.numeric(pop.data$Estimated.Resident.Population....Persons....Australia..[popRow])
   return (popValue)
 }
 
@@ -108,8 +108,8 @@ popRatio <- function(baseYear, state = NULL) {
 ## Generates a cpi ratio (based on June 2013)
 cpiRatio <- function(baseYear, state = NULL) {
   cpiRow <- 85 + (baseYear - 1967) * 4
-  cpiTest <- as.numeric(cpi$Index.Numbers....All.groups.CPI....Australia[cpiRow])
-  cpi2013 <- as.numeric(cpi$Index.Numbers....All.groups.CPI....Australia[269])
+  cpiTest <- as.numeric(cpi.data$Index.Numbers....All.groups.CPI....Australia[cpiRow])
+  cpi2013 <- as.numeric(cpi.data$Index.Numbers....All.groups.CPI....Australia[269])
   if ( is.na( cpiTest ) )   {
     cpiTest <- cpi2013
   }
@@ -119,8 +119,8 @@ cpiRatio <- function(baseYear, state = NULL) {
 ## Generates a gdp ratio based on chain volume measures (based on June 2013)
 gdpRatio <- function(baseYear, state = NULL) {
   gdpRow <- 41 + (baseYear - 1967) * 4
-  gdpTest <- as.numeric(gdp$Gross.domestic.product..Chain.volume.measures..[gdpRow])
-  gdp2013 <- as.numeric(gdp$Gross.domestic.product..Chain.volume.measures..[225])
+  gdpTest <- as.numeric(gdp.data$Gross.domestic.product..Chain.volume.measures..[gdpRow])
+  gdp2013 <- as.numeric(gdp.data$Gross.domestic.product..Chain.volume.measures..[225])
   if ( is.na( gdpTest ) )   {
     gdpTest <- gdp2013
   }
@@ -144,13 +144,13 @@ gdpNominalRatio <- function(baseYear, state = NULL) {
 
 gdpValues <- function(baseYear, state = NULL) {
   gdpRow <- 41 + (baseYear - 1967) * 4
-  gdpValue <- as.numeric(gdp$Gross.domestic.product..Chain.volume.measures..[gdpRow])
+  gdpValue <- as.numeric(gdp.data$Gross.domestic.product..Chain.volume.measures..[gdpRow])
   return(gdpValue)
 }
 
 gdpNominalValues <- function(baseYear, state = NULL) {
   gdp.national.row <- 17 + (baseYear - 1967) * 1
-  gdp.national.value <- as.numeric(gdp.national$GROSS.DOMESTIC.PRODUCT..Current.prices..[gdp.national.row])
+  gdp.national.value <- as.numeric(gdp.national.data$GROSS.DOMESTIC.PRODUCT..Current.prices..[gdp.national.row])
   return(gdp.national.value)
 }
 
@@ -202,7 +202,7 @@ loadData <- function(database.file) {
   # # Hack to ignore any rows without a year value - such as rows added for computation
   # mydata <<- mydata[!is.na(mydata$Year), ]
   # cpi <<- read.xls("./data/cpi.xlsx", 2, perl = perl)
-  # pop <<- read.xls("./data/pop_consolidate.xlsx", 1, perl = perl)
+  # pop.data <<- read.xls("./data/pop_consolidate.xlsx", 1, perl = perl)
   # gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2, perl = perl)
 
 
@@ -211,10 +211,10 @@ loadData <- function(database.file) {
   # Hack to ignore any rows without a year value - such as rows added for computation
   mydata <<- mydata[!is.na(mydata$Year), ]
   print(paste("Read in ", length(mydata$Year), " rows."))
-  cpi <<- read.xls("./data/cpi.xlsx", 2)
-  pop <<- read.xls("./data/pop_consolidate.xlsx", 1)
-  gdp <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
-  gdp.national <<- read.xls("./data/5204001_key_national_aggregates.xlsx", 2)
+  cpi.data <<- read.xls("./data/cpi.xlsx", 2)
+  pop.data <<- read.xls("./data/pop_consolidate.xlsx", 1)
+  gdp.data <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
+  gdp.national.data <<- read.xls("./data/5204001_key_national_aggregates.xlsx", 2)
 }
 
 

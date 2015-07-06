@@ -23,7 +23,7 @@ initialise <- function(database.file) {
 # Generate
 run <- function() {
     # Set up the data
-  database.file = "./data/database25042015.xlsx"
+  database.file = "./data/database_25042015.xlsx"
   initialise(database.file)
 
   # Write out the data for checking
