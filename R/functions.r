@@ -114,18 +114,45 @@ popForYear <- function(year, state = NULL) {
   return (popValue)
 }
 
-## Generates a population ratio (based on June 2013)
+## Provides a population ratio (based on June 2013)
 popRatio <- function(baseYear, state = NULL) {
   popTest <- popForYear(baseYear, state)
   pop2013 <- popForYear(2013, state)
   return(pop2013 / popTest)
 }
 
+## Provides a CPI value for a given year
+cpiForYear <- function(year, state = NULL) {
+  year <- as.numeric(year)
+  cpiRow <- 85 + (year - 1967) * 4
+
+  # Obtain column reference
+  state.col.ref <- switch(state, 
+    "New South Wales" = 2,
+    "Victoria" = 3,
+    "Queensland" = 4,
+    "South Australia" = 5,
+    "Western Australia" = 6,
+    "Tasmania" = 7,
+    "Northern Territory" = 8,
+    "Australian Capital Territory" = 9
+  )
+  if (is.na(state)) {
+    state.col.ref <- 10
+  }
+
+  cpiValue <- as.numeric(pop.data[cpiRow, state.col.ref])
+  return (cpiValue)
+}
+
 ## Generates a cpi ratio (based on June 2013)
 cpiRatio <- function(baseYear, state = NULL) {
+
   cpiRow <- 85 + (baseYear - 1967) * 4
-  cpiTest <- as.numeric(cpi.data$Index.Numbers....All.groups.CPI....Australia[cpiRow])
-  cpi2013 <- as.numeric(cpi.data$Index.Numbers....All.groups.CPI....Australia[269])
+  cpiTest <- cpiForYear(baseYear, state)
+  cpi2013 <- cpiForYear(2013, state)
+  # cpiTest <- as.numeric(cpi.data$Index.Numbers....All.groups.CPI....Australia[cpiRow])
+  # cpi2013 <- as.numeric(cpi.data$Index.Numbers....All.groups.CPI....Australia[269])
   if ( is.na( cpiTest ) )   {
     cpiTest <- cpi2013
   }
