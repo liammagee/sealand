@@ -34,6 +34,10 @@ Command for running *pandoc* over *doc/costing.md*:
     pandoc doc/costing.md -S -s --mathjax=http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML -o output/costing.html
 
 
-## Preparing the database
+## Code style
 
-When the database
+Code is being migrated to commonly used conventions, e.g.:
+
+ - <https://google-styleguide.googlecode.com/svn/trunk/Rguide.xml>
+ - <http://adv-r.had.co.nz/Style.html>
+ - <https://docs.google.com/document/d/1esDVxyWvH8AsX-VJa-8oqWaHLs4stGlIbk8kLc5VlII/edit>
