@@ -191,7 +191,7 @@ normalisedPopulation <- function(range) {
 }
 
 ## Load data
-loadData <- function(database_file) {
+loadData <- function(database.file) {
   # Clear the main data object
   if (exists('mydata')) {
     rm(mydata)
@@ -207,7 +207,7 @@ loadData <- function(database_file) {
 
 
   # MAC VERSION
-  mydata <<- read.xls(database_file, 2)
+  mydata <<- read.xls(database.file, 2)
   # Hack to ignore any rows without a year value - such as rows added for computation
   mydata <<- mydata[!is.na(mydata$Year), ]
   print(paste("Read in ", length(mydata$Year), " rows."))
