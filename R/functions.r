@@ -10,6 +10,15 @@ options(scipen=999)
 
 # Functions
 
+## Global Settings
+useStateNormalisations <-function(value)  state.normalisations <<- value
+
+normaliseByState <- function() {
+  if (!exists('state.normalisations'))
+    state.normalisations <- FALSE
+  return(state.normalisations)
+}
+
 ## Ignores "NA" values for standard functions
 safeSum <- function(value) sum(value, na.rm = TRUE)
 safeMean <- function(value) mean(value, na.rm = TRUE)
@@ -96,7 +105,7 @@ popForYear <- function(year, state = NA) {
   }
 
   # Obtain column reference
-  if (!is.na(state)) {
+  if (!is.na(state) && normaliseByState()) {
   state.col.ref <- switch(state, 
     "New South Wales" = 20,
     "Victoria" = 21,
@@ -128,7 +137,7 @@ cpiForYear <- function(year, state = NA) {
   cpiRow <- 85 + (year - 1967) * 4
 
   # Obtain column reference
-  if (!is.na(state)) {
+  if (!is.na(state) && normaliseByState()) {
     state.col.ref <- switch(state, 
       "New South Wales" = 2,
       "Victoria" = 3,
@@ -149,7 +158,6 @@ cpiForYear <- function(year, state = NA) {
 
 ## Generates a cpi ratio (based on June 2013)
 cpiRatio <- function(baseYear, state = NA) {
-
   cpiRow <- 85 + (baseYear - 1967) * 4
   cpiTest <- cpiForYear(baseYear, state)
   cpi2013 <- cpiForYear(2013, state)
@@ -206,19 +214,19 @@ combinedRatio <- function(baseYear, state = NA) {
 
 ## Generates an CPI indexed cost (based on June 2013)
 indexCosts <- function(range) {
-  baseYear <- range[1]
-  insuredCost <- range[2]
+  baseYear <- as.numeric(range[1])
+  cost <- as.numeric(range[2])
   state <- NA
   if (length(range) > 2) {
     state <- range[3]
   }
-  return(insuredCost * cpiRatio(baseYear, state))
+  return(cost * cpiRatio(baseYear, state))
 }
 
 ## Normalise cost - TODO: this needs to be much more robust (cf. discussion on normalisation)
 normalisedCosts <- function(range) {
-  baseYear <- range[1]
-  cost <- range[2]
+  baseYear <- as.numeric(range[1])
+  cost <- as.numeric(range[2])
   state <- NA
   if (length(range) > 2) {
     state <- range[3]
@@ -230,9 +238,12 @@ normalisedCosts <- function(range) {
 
 ## Normalise cost - TODO: this needs to be much more robust (cf. discussion on normalisation)
 normalisedCostsWithoutIndexation <- function(range) {
-  baseYear <- range[1]
-  cost <- range[2]
-  state <- range[3]
+  baseYear <- as.numeric(range[1])
+  cost <- as.numeric(range[2])
+  state <- NA
+  if (length(range) > 2) {
+    state <- range[3]
+  }
   return(cost * popRatio(baseYear, state) * gdpRatio(baseYear, state))
 }
 
@@ -240,7 +251,10 @@ normalisedCostsWithoutIndexation <- function(range) {
 normalisedPopulation <- function(range) {
   baseYear <- as.numeric(range[1])
   pop <- as.numeric(range[2])
-  state <- range[3]
+  state <- NA
+  if (length(range) > 2) {
+    state <- range[3]
+  }
   # Normalise for inflation
   return(pop * popRatio(baseYear, state))
 }
@@ -296,23 +310,23 @@ interpolateReportedCosts <- function() {
 
 normaliseInsuredCost <- function() {
   # ... for CPI-indexed insured costs
-  ecnd.database$Insured.Cost.indexed <<- apply(ecnd.database[c("Year.financial", "Insured.Cost.cleaned")], 1, indexCosts)
+  ecnd.database$Insured.Cost.indexed <<- apply(ecnd.database[c("Year.financial", "Insured.Cost.cleaned", "State.1")], 1, indexCosts)
   # ... for normalised insured costs
-  ecnd.database$Insured.Cost.normalised <<- apply(ecnd.database[c("Year.financial", "Insured.Cost.cleaned")], 1, normalisedCosts)
+  ecnd.database$Insured.Cost.normalised <<- apply(ecnd.database[c("Year.financial", "Insured.Cost.cleaned", "State.1")], 1, normalisedCosts)
   ecnd.database$Insured.Cost.normalised.millions <<- ecnd.database$Insured.Cost.normalised / 1000000
 }
 
 normaliseReportedCost <- function() {
   # ... for CPI-indexed reported costs
-  ecnd.database$Reported.Cost.indexed <<- apply(ecnd.database[c("Year.financial", "Reported.Cost.interpolated")], 1, indexCosts)
+  ecnd.database$Reported.Cost.indexed <<- apply(ecnd.database[c("Year.financial", "Reported.Cost.interpolated", "State.1")], 1, indexCosts)
   # ... for normalised insured costs
-  ecnd.database$Reported.Cost.normalised <<- apply(ecnd.database[c("Year.financial", "Reported.Cost.interpolated")], 1, normalisedCosts)
+  ecnd.database$Reported.Cost.normalised <<- apply(ecnd.database[c("Year.financial", "Reported.Cost.interpolated", "State.1")], 1, normalisedCosts)
 }
 
 normaliseDeathsAndInjuries <- function() {
   # ... for population-inflated deaths and injuries
-  ecnd.database$Deaths.normalised <<- apply(ecnd.database[c("Year.financial", "Deaths")], 1, normalisedPopulation)
-  ecnd.database$Injuries.normalised <<- apply(ecnd.database[c("Year.financial", "Injuries")], 1, normalisedPopulation)
+  ecnd.database$Deaths.normalised <<- apply(ecnd.database[c("Year.financial", "Deaths", "State.1")], 1, normalisedPopulation)
+  ecnd.database$Injuries.normalised <<- apply(ecnd.database[c("Year.financial", "Injuries", "State.1")], 1, normalisedPopulation)
 }
 
 
@@ -810,8 +824,8 @@ computedDirectCosts <- function(events) {
 
   # Normalised values
   # THESE FIGURES ARE ALREADY NORMALISED
-  # events$directCost.normalised <- apply(events[c("Year.financial", "directCost")], 1, normalisedCosts)
-  events$directCost.normalised <- apply(events[c("Year.financial", "directCost")], 1, normalisedCostsWithoutIndexation)
+  # events$directCost.normalised <- apply(events[c("Year.financial", "directCost", "State.1")], 1, normalisedCosts)
+  events$directCost.normalised <- apply(events[c("Year.financial", "directCost", "State.1")], 1, normalisedCostsWithoutIndexation)
 
   return (events)
 }
@@ -1012,7 +1026,7 @@ indirectCosts <- function(events) {
 
   events$indirectCost <- total
   # Normalised values - but figures already normalised?
-  events$indirectCost.normalised <- apply(events[c("Year.financial", "indirectCost")], 1, normalisedCostsWithoutIndexation)
+  events$indirectCost.normalised <- apply(events[c("Year.financial", "indirectCost", "State.1")], 1, normalisedCostsWithoutIndexation)
 
   return (events)
 }
@@ -1100,7 +1114,7 @@ intangibleCosts <- function(events) {
   events$nonDeathAndInjuryIntangibles <- nonDeathAndInjuryIntangibles
   events$intangibleCost <- deathAndInjuryCosts + nonDeathAndInjuryIntangibles
 
-  nonDeathAndInjuryIntangiblesNormalised <- apply(events[c("Year.financial", "nonDeathAndInjuryIntangibles")], 1, normalisedCostsWithoutIndexation)
+  nonDeathAndInjuryIntangiblesNormalised <- apply(events[c("Year.financial", "nonDeathAndInjuryIntangibles", "State.1")], 1, normalisedCostsWithoutIndexation)
   events$deathAndInjuryCosts.normalised <- deathAndInjuryCostsNormalised
   events$deathAndInjuryCosts.normalised.millions <- events$deathAndInjuryCosts.normalised / 1000000
   events$nonDeathAndInjuryIntangibles.normalised <- nonDeathAndInjuryIntangiblesNormalised
@@ -1138,8 +1152,8 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
   # multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplierJoy)
   
   events$Insured.Cost.multiplied <- events$Insured.Cost * multipliers
-  events$Insured.Cost.multiplied.indexed <- apply(events[c("Year.financial", "Insured.Cost.multiplied")], 1, indexCosts)
-  events$Insured.Cost.multiplied.normalised <- apply(events[c("Year.financial", "Insured.Cost.multiplied")], 1, normalisedCosts)
+  events$Insured.Cost.multiplied.indexed <- apply(events[c("Year.financial", "Insured.Cost.multiplied", "State.1")], 1, indexCosts)
+  events$Insured.Cost.multiplied.normalised <- apply(events[c("Year.financial", "Insured.Cost.multiplied", "State.1")], 1, normalisedCosts)
   events$Insured.Cost.multiplied.normalised.millions <- events$Insured.Cost.multiplied.normalised / 1000000
   
   events$Reported.Cost.interpolated.millions <- events$Reported.Cost.interpolated / 1000000
@@ -1149,7 +1163,7 @@ totalCostForEvent <- function(resourceTypeParam = NULL) {
   events$Reported.Cost.indexed.millions <- events$Reported.Cost.indexed / 1000000
   events$Reported.Cost.WithDeathsAndInjuries.indexed <- events$Reported.Cost.indexed + events$deathAndInjuryCosts
   events$Reported.Cost.WithDeathsAndInjuries.indexed.millions <- events$Reported.Cost.WithDeathsAndInjuries.indexed / 1000000
-  events$Reported.Cost.normalised <- apply(events[c("Year.financial", "Reported.Cost.interpolated")], 1, normalisedCosts)
+  events$Reported.Cost.normalised <- apply(events[c("Year.financial", "Reported.Cost.interpolated", "State.1")], 1, normalisedCosts)
   events$Reported.Cost.normalised.millions <- events$Reported.Cost.normalised / 1000000
   events$Reported.Cost.WithDeathsAndInjuries.normalised <- events$Reported.Cost.normalised +  events$deathAndInjuryCosts.normalised
   events$Reported.Cost.WithDeathsAndInjuries.normalised.millions <- events$Reported.Cost.WithDeathsAndInjuries.normalised / 1000000

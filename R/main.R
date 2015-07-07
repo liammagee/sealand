@@ -22,6 +22,9 @@ initialise <- function(database.file) {
 
 # Generate
 run <- function() {
+  # Set up global options
+  useStateNormalisations(TRUE)
+  
   # Set up the data
   database.file = "./data/database_25042015.xlsx"
   # Clear the main data object
