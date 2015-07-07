@@ -4,15 +4,15 @@ library(gdata)
 library(reshape2)
 
 # Sources
-source("R/figures.R", TRUE)
-source("R/functions.R", TRUE)
+source("R/figures.R", FALSE)
+source("R/functions.R", FALSE)
 
 
 ## Ignores "NA" values for standard functions
 initialise <- function(database.file) {
   # Hack to clear the console - http://stackoverflow.com/questions/14260340/function-to-clear-the-console-in-r
   cat("\014")
-
+  
   # Load the data
   loadData(database.file)
 
@@ -22,8 +22,12 @@ initialise <- function(database.file) {
 
 # Generate
 run <- function() {
-    # Set up the data
+  # Set up the data
   database.file = "./data/database_25042015.xlsx"
+  # Clear the main data object
+  if (exists("ecnd.database")) {
+    rm(ecnd.database)
+  }
   initialise(database.file)
 
   # Write out the data for checking

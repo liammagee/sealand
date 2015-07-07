@@ -87,7 +87,7 @@ financialYear <- function(range) {
 }
 
 ## Generates a population value for a given year
-popForYear <- function(year, state = NULL) {
+popForYear <- function(year, state = NA) {
   year <- as.numeric(year)
   if ((year - 1967) < 14) {
     popRow <- 10 + (year - 1967)
@@ -96,6 +96,7 @@ popForYear <- function(year, state = NULL) {
   }
 
   # Obtain column reference
+  if (!is.na(state)) {
   state.col.ref <- switch(state, 
     "New South Wales" = 20,
     "Victoria" = 21,
@@ -106,7 +107,7 @@ popForYear <- function(year, state = NULL) {
     "Northern Territory" = 26,
     "Australian Capital Territory" = 27
   )
-  if (is.na(state)) {
+  } else {
     state.col.ref <- 28
   }
 
@@ -115,38 +116,39 @@ popForYear <- function(year, state = NULL) {
 }
 
 ## Provides a population ratio (based on June 2013)
-popRatio <- function(baseYear, state = NULL) {
+popRatio <- function(baseYear, state = NA) {
   popTest <- popForYear(baseYear, state)
   pop2013 <- popForYear(2013, state)
   return(pop2013 / popTest)
 }
 
 ## Provides a CPI value for a given year
-cpiForYear <- function(year, state = NULL) {
+cpiForYear <- function(year, state = NA) {
   year <- as.numeric(year)
   cpiRow <- 85 + (year - 1967) * 4
 
   # Obtain column reference
-  state.col.ref <- switch(state, 
-    "New South Wales" = 2,
-    "Victoria" = 3,
-    "Queensland" = 4,
-    "South Australia" = 5,
-    "Western Australia" = 6,
-    "Tasmania" = 7,
-    "Northern Territory" = 8,
-    "Australian Capital Territory" = 9
-  )
-  if (is.na(state)) {
+  if (!is.na(state)) {
+    state.col.ref <- switch(state, 
+      "New South Wales" = 2,
+      "Victoria" = 3,
+      "Queensland" = 4,
+      "South Australia" = 5,
+      "Western Australia" = 6,
+      "Tasmania" = 7,
+      "Northern Territory" = 8,
+      "Australian Capital Territory" = 9
+    )
+  } else {
     state.col.ref <- 10
   }
 
-  cpiValue <- as.numeric(pop.data[cpiRow, state.col.ref])
+  cpiValue <- as.numeric(cpi.data[cpiRow, state.col.ref])
   return (cpiValue)
 }
 
 ## Generates a cpi ratio (based on June 2013)
-cpiRatio <- function(baseYear, state = NULL) {
+cpiRatio <- function(baseYear, state = NA) {
 
   cpiRow <- 85 + (baseYear - 1967) * 4
   cpiTest <- cpiForYear(baseYear, state)
@@ -160,45 +162,45 @@ cpiRatio <- function(baseYear, state = NULL) {
 }
 
 ## Generates a gdp ratio based on chain volume measures (based on June 2013)
-gdpRatio <- function(baseYear, state = NULL) {
-  gdpRow <- 41 + (baseYear - 1967) * 4
-  gdpTest <- as.numeric(gdp.data$Gross.domestic.product..Chain.volume.measures..[gdpRow])
-  gdp2013 <- as.numeric(gdp.data$Gross.domestic.product..Chain.volume.measures..[225])
-  if ( is.na( gdpTest ) )   {
-    gdpTest <- gdp2013
-  }
-  gdpGross <- (gdp2013 / gdpTest)
-  # Correct for Pop ratio to correct for per capita
-  gdpGross <- gdpGross / popRatio(baseYear)
-  return(gdpGross)
-}
-
-## Generates a gdp ratio based on chain volume measures (based on June 2013)
-gdpNominalRatio <- function(baseYear, state = NULL) {
+gdpRatio <- function(baseYear, state = NA) {
   gdp.national.row <- 17 + (baseYear - 1967) * 1
   gdp.national.test <- gdpNominalValues(baseYear)
   gdp.national.2013 <- gdpNominalValues(2013)
   if ( is.na( gdp.national.test ) )   {
-    gdp.national.test <- gdp2013
+    gdp.national.test <- gdp.national.2013
   }
   gdp.gross <- ( gdp.national.2013 / gdp.national.test )
+  # Correct for Pop ratio to correct for per capita
+  gdp.gross <- gdp.gross / popRatio(baseYear, state)
   return( gdp.gross )
 }
 
-gdpValues <- function(baseYear, state = NULL) {
-  gdpRow <- 41 + (baseYear - 1967) * 4
-  gdpValue <- as.numeric(gdp.data$Gross.domestic.product..Chain.volume.measures..[gdpRow])
-  return(gdpValue)
-}
-
-gdpNominalValues <- function(baseYear, state = NULL) {
+gdpValues <- function(baseYear, state = NA) {
   gdp.national.row <- 17 + (baseYear - 1967) * 1
-  gdp.national.value <- as.numeric(gdp.national.data$GROSS.DOMESTIC.PRODUCT..Current.prices..[gdp.national.row])
+  
+  # Obtain column reference
+  if (!is.na(state)) {
+    state.col.ref <- switch(state, 
+                            "New South Wales" = 2,
+                            "Victoria" = 3,
+                            "Queensland" = 4,
+                            "South Australia" = 5,
+                            "Western Australia" = 6,
+                            "Tasmania" = 7,
+                            "Northern Territory" = 8,
+                            "Australian Capital Territory" = 9
+    )
+  } else {
+    state.col.ref <- 10
+  }
+
+  # gdp.national.value <- as.numeric(gdp.national.data$GROSS.DOMESTIC.PRODUCT..Current.prices..[gdp.national.row])
+  gdp.national.value <- as.numeric(gdp.national.data$GDP.per.capita..Current.prices..[gdp.national.row])
   return(gdp.national.value)
 }
 
 ## Combined CPI, population and GDP ratio
-combinedRatio <- function(baseYear, state = NULL) {
+combinedRatio <- function(baseYear, state = NA) {
   return (cpiRatio(baseYear, state) * popRatio(baseYear, state) * gdpRatio(baseYear, state))
 }
 
@@ -206,7 +208,10 @@ combinedRatio <- function(baseYear, state = NULL) {
 indexCosts <- function(range) {
   baseYear <- range[1]
   insuredCost <- range[2]
-  state <- range[3]
+  state <- NA
+  if (length(range) > 2) {
+    state <- range[3]
+  }
   return(insuredCost * cpiRatio(baseYear, state))
 }
 
@@ -214,7 +219,10 @@ indexCosts <- function(range) {
 normalisedCosts <- function(range) {
   baseYear <- range[1]
   cost <- range[2]
-  state <- range[3]
+  state <- NA
+  if (length(range) > 2) {
+    state <- range[3]
+  }
   # Normalise for [1] inflation; [2] population growth; [3] wealth increase (GDP as a temporary proxy)
   # TODO: Add at least state-based equivalents
   return(cost * cpiRatio(baseYear, state) * popRatio(baseYear, state) * gdpRatio(baseYear, state))
@@ -239,10 +247,6 @@ normalisedPopulation <- function(range) {
 
 ## Load data
 loadData <- function(database.file) {
-  # Clear the main data object
-  if (exists('ecnd.database')) {
-    rm(ecnd.database)
-  }
   
   perl <- 'D:/strawberry/perl/bin/perl.exe'
   # ecnd.database <<- read.xls("./data/database.xlsx", 2, perl = perl)
@@ -286,6 +290,7 @@ interpolateReportedCosts <- function() {
   ecnd.database <<- merge(ecnd.database[, ], ag[,c("resourceType", "Event.Factor")], by="resourceType", all.x = TRUE)
   ecnd.database$Reported.Cost.interpolated <<- ecnd.database$Reported.Cost
   # Interpolate reported cost based on event multiplier * insured cost
+  ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Reported.Cost.interpolated <<- ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Insured.Cost * ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Event.Factor
   ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Reported.Cost.interpolated <<- ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Insured.Cost * ecnd.database[is.na(ecnd.database$Reported.Cost.interpolated), ]$Event.Factor
 }
 

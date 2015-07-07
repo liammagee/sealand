@@ -198,7 +198,7 @@ doAxis <- function(number, at=NULL, labels=NULL) {
 
 ## Generates a sheet with all the data and computed values
 generateCompleteData <- function() {
-  write.table(mydata, file = "./output/database_computed.csv", append = FALSE, quote = TRUE, sep = ",",
+  write.table(ecnd.database, file = "./output/database_computed.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = TRUE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
@@ -1622,7 +1622,7 @@ totalCostAsPercentageOfGdp <- function() {
   totalCostsByYear <- with(totalCosts, aggregate(Reported.Cost.interpolated.millions, by=list(Year.financial), FUN=safeSum))
   
   totalCostsByYear$Reported.Cost.interpolated.millions <- totalCostsByYear$x
-  totalCostsByYear$gdp <- apply(cbind(totalCostsByYear$Group.1), 1, gdpNominalValues)
+  totalCostsByYear$gdp <- apply(cbind(totalCostsByYear$Group.1), 1, gdpValues)
   totalCostsByYear$percentOfGDP <- 100 * totalCostsByYear$Reported.Cost.interpolated.millions / totalCostsByYear$gdp
   # For graphing purposes
   totalCostsByYear$x <- totalCostsByYear$percentOfGDP
