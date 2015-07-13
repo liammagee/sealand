@@ -11,12 +11,19 @@ options(scipen=999)
 # Functions
 
 ## Global Settings
-useStateNormalisations <-function(value)  state.normalisations <<- value
+useStateNormalisations <- function(value)  use.state.normalisations <<- value
+useHeatwaves <- function(value)            use.heatwaves <<- value
 
 normaliseByState <- function() {
-  if (!exists('state.normalisations'))
-    state.normalisations <- FALSE
-  return(state.normalisations)
+  if (!exists('use.state.normalisations'))
+    use.state.normalisations <- FALSE
+  return (use.state.normalisations)
+}
+
+includeHeatwaves <- function() {
+  if (!exists('use.heatwaves'))
+    use.heatwaves <- FALSE
+  return (use.heatwaves)
 }
 
 ## Ignores "NA" values for standard functions
@@ -522,9 +529,15 @@ getRawEvents <- function(resourceTypeParam = NULL) {
     "Environmental_Count.i"
     )
   ]
+  # Restrict to a given resource type
   if (! is.null(resourceTypeParam)) {
     events <- subset(events, resourceType == resourceTypeParam)
   }
+  # Include / exclude heatwaves
+  if (! includeHeatwaves()) {
+    events <- events[events$resourceType != 'Heatwave',]
+  }
+
   events <- events[events$Year.financial <= 2013,]
   return (events)
 }
@@ -1114,6 +1127,7 @@ intangibleCosts <- function(events) {
   events$nonDeathAndInjuryIntangibles <- nonDeathAndInjuryIntangibles
   events$intangibleCost <- deathAndInjuryCosts + nonDeathAndInjuryIntangibles
 
+  print(length(events))
   nonDeathAndInjuryIntangiblesNormalised <- apply(events[c("Year.financial", "nonDeathAndInjuryIntangibles", "State.1")], 1, normalisedCostsWithoutIndexation)
   events$deathAndInjuryCosts.normalised <- deathAndInjuryCostsNormalised
   events$deathAndInjuryCosts.normalised.millions <- events$deathAndInjuryCosts.normalised / 1000000

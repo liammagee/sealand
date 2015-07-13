@@ -24,9 +24,10 @@ initialise <- function(database.file) {
 run <- function() {
   # Set up global options
   useStateNormalisations(TRUE)
+  useHeatwaves(FALSE)
   
   # Set up the data
-  database.file = "./data/database_25042015.xlsx"
+  database.file = "./data/database_11072015.xlsx"
   # Clear the main data object
   if (exists("ecnd.database")) {
     rm(ecnd.database)
