@@ -24,6 +24,11 @@ source("R/functions.r", TRUE)
 title.size <- 0.8
 character.size <- 0.6
 
+# Colour-friendly palette from http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
+# The palette with black:
+cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+blackPalette <- c("#000000")
+
 # Functions for generating figures
 
 yearBreaks <- function(years) {
@@ -32,12 +37,19 @@ yearBreaks <- function(years) {
   return (years)
 }
 
+
 yearLabels <- function(years) {
   years <- yearBreaks(years)
   output <- paste(formatC((years - 1) %% 100, width = 2, format = "d", flag = "0"), 
                   "/", 
                   formatC(years %% 100, width = 2, format = "d", flag = "0"), sep = "")
   return (output)
+}
+
+
+palette <- function() {
+  # Returns the default palette
+  return (blackPalette)
 }
 
 
@@ -1617,10 +1629,18 @@ totalDeathsAsPercentageOfPop <- function() {
 
 
 ## Generate Figure 3.38
-totalCostAsPercentageOfGdp <- function() {
+totalCostAsPercentageOfGdp <- function(state, fatalities = FALSE) {
   # Store the total costs by year
   total.costs <- totalCostForEventFiltered(NULL, FALSE, FALSE)
-  total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.interpolated.millions, by=list(Year.financial), FUN=safeSum))
+  if (exists('state')) {
+    total.costs <- total.costs[total.costs$State.1 == state, ] 
+  }
+  if (fatalities == FALSE) {
+    total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.interpolated.millions, by=list(Year.financial), FUN=safeSum))
+  }
+  else {
+    total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.interpolated.millions, by=list(Year.financial), FUN=safeSum))    
+  }
   
   total.costs.by.year$Reported.Cost.interpolated.millions <- total.costs.by.year$x
   total.costs.by.year$gdp <- apply(cbind(total.costs.by.year$Group.1), 1, gdpValues)
@@ -1692,9 +1712,11 @@ total.costsRawIndexedNormalised <- function() {
   
   # Calculate range from 0 to max value of costs
   x.scale <- scale_x_continuous(name = x.label, breaks = yearBreaks(data$Group.1), labels = yearLabels(data$Group.1))
-  p <- ggplot(data=data, aes(x=Group.1, y = x, group = Cost.Type, colour=Cost.Type)) + 
-    geom_line() + 
+  # p <- ggplot(data=data, aes(x=Group.1, y = x, group = Cost.Type, colour=Cost.Type)) + 
+  p <- ggplot(data=data, aes(x=Group.1, y = x, group = Cost.Type)) + 
+    geom_line(aes(linetype=Cost.Type), size = 1.0) + 
     ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) + 
+    # scale_colour_manual(values = palette())  +
     theme(plot.title = element_text(colour = foreground, lineheight=.8, face="bold"),
           panel.grid.minor.y=element_blank(), 
           panel.grid.major.y=element_line(colour = foreground),
@@ -1735,7 +1757,7 @@ totalAverageCostsNationallyAndByState <- function() {
 }
 
 ## Generate Figure 3.42
-totalCostsQldNswVic <- function(start.at.year = 1967) {
+totalCostsQldNswVic_3_42 <- function(start.at.year = 1967) {
   # Store the total costs by state
   total.costs <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
@@ -1767,11 +1789,14 @@ totalCostsQldNswVic <- function(start.at.year = 1967) {
   foreground <- '#D08728'
   text.color <- '#888888'
   
+
   # Calculate range from 0 to max value of costs
   x.scale <- scale_x_continuous(name = x.label, breaks = yearBreaks(data$Group.2), labels = yearLabels(data$Group.2))
-  p <- ggplot(data=total.costs.by.state, aes(x=Group.2, y = x, group = Group.1, colour=Group.1)) + 
-    geom_line() + 
+  # p <- ggplot(data=total.costs.by.state, aes(x=Group.2, y = x, group = Group.1, color = Group.1)) + 
+  p <- ggplot(data=total.costs.by.state, aes(x=Group.2, y = x, group = Group.1)) + 
+    geom_line(aes(linetype=Group.1), size = 1.0) + 
     ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) + 
+    # scale_colour_manual(values = palette())  +
     theme(plot.title = element_text(colour = foreground, lineheight=.8, face="bold"),
           panel.grid.minor.y=element_blank(), 
           panel.grid.major.y=element_line(colour = foreground),

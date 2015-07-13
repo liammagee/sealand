@@ -82,7 +82,7 @@ run <- function() {
   insuredCostAsPercentageOfTotalCost()
   totalCostsRawIndexedNormalised()
   totalAverageCostsNationallyAndByState()
-  totalCostsQldNswVic()
+  totalCostsQldNswVic_3_42()
   averageAnnualCostOfNaturalDisastersByStateAndTerritory()
   deathsAndInjuriesByHazardType()
   multipliersJoyVsDerived()
