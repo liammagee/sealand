@@ -938,7 +938,7 @@ publicServiceDisruptionCosts <- function(events) {
   cleanup.damaged.loss <- damaged * indexCosts(c(2011, 15000))
   cleanup.costs <- cleanup.destroyed.loss + cleanup.damaged.loss
 
-  total <- loss.of.production.and.services + cleanupCosts
+  total <- loss.of.production.and.services + cleanup.costs
 
   return (total)
 }

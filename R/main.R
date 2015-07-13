@@ -23,8 +23,8 @@ initialise <- function(database.file) {
 # Generate
 run <- function() {
   # Set up global options
-  useStateNormalisations(TRUE)
-  useHeatwaves(FALSE)
+  useStateNormalisations(FALSE)
+  useHeatwaves(TRUE)
   
   # Set up the data
   database.file = "./data/database_11072015.xlsx"
