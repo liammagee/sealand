@@ -1195,16 +1195,16 @@ totalCostForEventWithoutHeatwwave <- function(resource.type.param = NULL) {
 }
 
 ## Total cost for events filtered by resourceType, reported costs and no heatwaves
-totalCostForEventFiltered <- function(resource.type.param = NULL, reportedCostsOnly = TRUE, noHeatwaves = FALSE) {
+totalCostForEventFiltered <- function(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE) {
   events <- totalCostForEvent(resource.type.param)
 
   # Remove heatwaves
-  if (reportedCostsOnly == TRUE) {
+  if (reported.costs.only == TRUE) {
     events <- events[events$Reported.Cost.normalised.millions > 0,]
   }
 
   # Remove heatwaves
-  if (noHeatwaves == TRUE) {
+  if (no.heatwaves == TRUE) {
     events <- events[events$resourceType != 'Heatwave',]
   }
 
