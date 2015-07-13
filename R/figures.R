@@ -707,13 +707,13 @@ costsByTypeOfDisasterAndStateAndTerritory <- function() {
   total.costs$Reported.Cost.normalised.millions.state.2 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.2.percent
   total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.1, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
   total.costs.by.state2 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.2, by=list(State.abbreviated.2, resourceType), FUN=safeSum))
-  total.costs.by.stateAndDisasterType <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
-  total.costs.by.stateAndDisasterType$x <- rowSums(cbind(total.costs.by.stateAndDisasterType$x.x, total.costs.by.stateAndDisasterType$x.y), na.rm = TRUE)
-  # total.costs.by.stateAndDisasterType <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
-  total.costs.by.stateAndDisasterType$x <- round(total.costs.by.stateAndDisasterType$x)
-  state.totals <- aggregate(x ~ Group.1, data=total.costs.by.stateAndDisasterType, sum, na.rm=TRUE)
+  total.costs.by.state.and.disaster.type <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
+  total.costs.by.state.and.disaster.type$x <- rowSums(cbind(total.costs.by.state.and.disaster.type$x.x, total.costs.by.state.and.disaster.type$x.y), na.rm = TRUE)
+  # total.costs.by.state.and.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
+  total.costs.by.state.and.disaster.type$x <- round(total.costs.by.state.and.disaster.type$x)
+  state.totals <- aggregate(x ~ Group.1, data=total.costs.by.state.and.disaster.type, sum, na.rm=TRUE)
   names(state.totals)[2] = "Total"
-  totals.with.state.aggregates <- merge(total.costs.by.stateAndDisasterType, state.totals, by = "Group.1", all.x = TRUE)
+  totals.with.state.aggregates <- merge(total.costs.by.state.and.disaster.type, state.totals, by = "Group.1", all.x = TRUE)
   totals.with.state.aggregates$percentage <- totals.with.state.aggregates$x / totals.with.state.aggregates$Total
   totals.with.state.aggregates <- totals.with.state.aggregates[order(-totals.with.state.aggregates$Total),]
   
@@ -773,11 +773,11 @@ costsByTypeOfDisasterAndStateAndTerritory <- function() {
 totalAndInsuranceCostsByDisasterType <- function() {
   # Store the total costs by year
   total.costs <- totalCostForEventFiltered(NULL, TRUE, FALSE)
-  total.costsByDisasterType <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
-  total.costsByDisasterType <- total.costsByDisasterType[with(total.costsByDisasterType, order(-x)), ]
+  total.costs.by.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
+  total.costs.by.disaster.type <- total.costs.by.disaster.type[with(total.costs.by.disaster.type, order(-x)), ]
   insuredCostsByDisasterType <- with(total.costs, aggregate(Insured.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
   insuredCostsByDisasterType <- insuredCostsByDisasterType[with(insuredCostsByDisasterType, order(-x)), ]
-  merged.costs <- merge(total.costsByDisasterType, insuredCostsByDisasterType, by="Group.1", all.x = TRUE)
+  merged.costs <- merge(total.costs.by.disaster.type, insuredCostsByDisasterType, by="Group.1", all.x = TRUE)
   names(merged.costs)[2] <- paste("Reported Cost")
   names(merged.costs)[3] <- paste("Insured Cost")
   melted.merged.costs <- melt(merged.costs, id.var = "Group.1")
@@ -792,19 +792,19 @@ totalAndInsuranceCostsByDisasterType <- function() {
 		)
   
   # Get percentages
-  total.costsByDisasterType$percentages <- data.frame(total.costsByDisasterType$x / (sum(total.costsByDisasterType$x))) 
+  total.costs.by.disaster.type$percentages <- data.frame(total.costs.by.disaster.type$x / (sum(total.costs.by.disaster.type$x))) 
   print("Percentages of disaster type")
-  print(total.costsByDisasterType)
+  print(total.costs.by.disaster.type)
   
   print("Combined percentage of top 3 events")
-  print(sum(head(total.costsByDisasterType[order(-total.costsByDisasterType$percentages),]$percentages, 3)))
+  print(sum(head(total.costs.by.disaster.type[order(-total.costs.by.disaster.type$percentages),]$percentages, 3)))
   
   # Test for the inclusion of deaths and injuries
-  total.costsByDisasterType.WithDeathsAndInjuries <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(resourceType), FUN=safeSum))
-  total.costsByDisasterType.WithDeathsAndInjuries <- total.costsByDisasterType.WithDeathsAndInjuries[with(total.costsByDisasterType.WithDeathsAndInjuries, order(-x)), ]
-  total.costsByDisasterType.WithDeathsAndInjuries$percentages <- data.frame(total.costsByDisasterType.WithDeathsAndInjuries$x / (sum(total.costsByDisasterType.WithDeathsAndInjuries$x))) 
+  total.costs.by.disaster.type.WithDeathsAndInjuries <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(resourceType), FUN=safeSum))
+  total.costs.by.disaster.type.WithDeathsAndInjuries <- total.costs.by.disaster.type.WithDeathsAndInjuries[with(total.costs.by.disaster.type.WithDeathsAndInjuries, order(-x)), ]
+  total.costs.by.disaster.type.WithDeathsAndInjuries$percentages <- data.frame(total.costs.by.disaster.type.WithDeathsAndInjuries$x / (sum(total.costs.by.disaster.type.WithDeathsAndInjuries$x))) 
   print("Combined percentage of top 3 events with deaths and injuries included")
-  print(sum(head(total.costsByDisasterType.WithDeathsAndInjuries[order(-total.costsByDisasterType.WithDeathsAndInjuries$percentages),]$percentages, 3)))
+  print(sum(head(total.costs.by.disaster.type.WithDeathsAndInjuries[order(-total.costs.by.disaster.type.WithDeathsAndInjuries$percentages),]$percentages, 3)))
 
 
   # Show major events by disaster type
@@ -1735,7 +1735,7 @@ totalAverageCostsNationallyAndByState <- function() {
 }
 
 ## Generate Figure 3.42
-total.costsQldNswVic <- function() {
+totalCostsQldNswVic <- function(start.at.year = 1967) {
   # Store the total costs by state
   total.costs <- totalCostForEventFiltered(NULL, TRUE, FALSE)
   total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
@@ -1749,6 +1749,11 @@ total.costsQldNswVic <- function() {
   total.costs.by.state <- total.costs.by.state[total.costs.by.state$Group.1 %in% c('QLD', 'NSW', 'VIC'),]
   # Order by year
   total.costs.by.state <- total.costs.by.state[order(-total.costs.by.state$Group.2),]
+  # Filter by year
+  if (exists('start.at.year')) {
+    start.at.year <- as.numeric(start.at.year)
+    total.costs.by.state <- total.costs.by.state[total.costs.by.state$Group.2 >= start.at.year,]
+  }
 
   data <- total.costs.by.state
   file.name <- "fig3_42_total_costs_qld_nsw_vic"
@@ -1791,13 +1796,13 @@ averageAnnualCostOfNaturalDisastersByStateAndTerritory <- function() {
   total.costs$Reported.Cost.normalised.millions.state.2 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.2.percent
   total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.1, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
   total.costs.by.state2 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.2, by=list(State.abbreviated.2, resourceType), FUN=safeSum))
-  total.costs.by.stateAndDisasterType <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
-  total.costs.by.stateAndDisasterType$x <- rowSums(cbind(total.costs.by.stateAndDisasterType$x.x, total.costs.by.stateAndDisasterType$x.y), na.rm = TRUE)
-  # total.costs.by.stateAndDisasterType <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
-  total.costs.by.stateAndDisasterType$x <- round(total.costs.by.stateAndDisasterType$x)
+  total.costs.by.state.and.disaster.type <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
+  total.costs.by.state.and.disaster.type$x <- rowSums(cbind(total.costs.by.state.and.disaster.type$x.x, total.costs.by.state.and.disaster.type$x.y), na.rm = TRUE)
+  # total.costs.by.state.and.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
+  total.costs.by.state.and.disaster.type$x <- round(total.costs.by.state.and.disaster.type$x)
   
   # Very brittle conversion to a table
-  pivotted.data <- dcast(total.costs.by.stateAndDisasterType, Group.1 ~ Group.2, value.var = "x", sum, margins = TRUE)
+  pivotted.data <- dcast(total.costs.by.state.and.disaster.type, Group.1 ~ Group.2, value.var = "x", sum, margins = TRUE)
   cols <- length(pivotted.data)
   rows <- length(pivotted.data$Group.1)
   pivotted.data <- pivotted.data[order(-pivotted.data[cols]),]
@@ -1819,13 +1824,13 @@ averageAnnualCostOfNaturalDisastersByStateAndTerritory <- function() {
   total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.2 <- total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions * total.costs$State.2.percent
   total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.1, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
   total.costs.by.state2 <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.2, by=list(State.abbreviated.2, resourceType), FUN=safeSum))
-  total.costs.by.stateAndDisasterType <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
-  total.costs.by.stateAndDisasterType$x <- rowSums(cbind(total.costs.by.stateAndDisasterType$x.x, total.costs.by.stateAndDisasterType$x.y), na.rm = TRUE)
-  # total.costs.by.stateAndDisasterType <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
-  total.costs.by.stateAndDisasterType$x <- round(total.costs.by.stateAndDisasterType$x)
+  total.costs.by.state.and.disaster.type <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
+  total.costs.by.state.and.disaster.type$x <- rowSums(cbind(total.costs.by.state.and.disaster.type$x.x, total.costs.by.state.and.disaster.type$x.y), na.rm = TRUE)
+  # total.costs.by.state.and.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
+  total.costs.by.state.and.disaster.type$x <- round(total.costs.by.state.and.disaster.type$x)
   
   # Very brittle conversion to a table
-  pivotted.data <- dcast(total.costs.by.stateAndDisasterType, Group.1 ~ Group.2, value.var = "x", sum, margins = TRUE)
+  pivotted.data <- dcast(total.costs.by.state.and.disaster.type, Group.1 ~ Group.2, value.var = "x", sum, margins = TRUE)
   cols <- length(pivotted.data)
   rows <- length(pivotted.data$Group.1)
   pivotted.data <- pivotted.data[order(-pivotted.data[cols]),]
@@ -1853,20 +1858,20 @@ deathsAndInjuriesByHazardType <- function() {
   totalNumberOfInjuriesByResourceType <- with(total.costs, aggregate(Injuries, by=list(resourceType), FUN=safeSum))
   totalNumberOfInjuriesByResourceType.n <- with(total.costs, aggregate(Injuries.normalised, by=list(resourceType), FUN=safeSum))
   total.costsOfDeathsInjuriesByResourceType <- with(total.costs, aggregate(deathAndInjuryCosts.normalised.millions, by=list(resourceType), FUN=safeSum))
-  total.costsByDisasterType <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
-  total.costsByDisasterType$incl.deaths <- total.costsByDisasterType$x + total.costsOfDeathsInjuriesByResourceType$x
-  total.costsByDisasterType$percent.deaths <- total.costsOfDeathsInjuriesByResourceType$x / total.costsByDisasterType$incl.deaths
+  total.costs.by.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
+  total.costs.by.disaster.type$incl.deaths <- total.costs.by.disaster.type$x + total.costsOfDeathsInjuriesByResourceType$x
+  total.costs.by.disaster.type$percent.deaths <- total.costsOfDeathsInjuriesByResourceType$x / total.costs.by.disaster.type$incl.deaths
   merged.data <- merge(totalNumberOfDeathsByResourceType, totalNumberOfDeathsByResourceType.n, by = "Group.1", all = TRUE, suffixes = c(".a", ".b"))
   merged.data <- merge(merged.data, totalNumberOfInjuriesByResourceType, by = "Group.1", all = TRUE, suffixes = c(".b", ".c"))
   merged.data <- merge(merged.data, totalNumberOfInjuriesByResourceType.n, by = "Group.1", all = TRUE, suffixes = c(".c", ".d"))
   merged.data <- merge(merged.data, total.costsOfDeathsInjuriesByResourceType, by = "Group.1", all = TRUE, suffixes = c(".d", ".e"))
-  merged.data <- merge(merged.data, total.costsByDisasterType, by = "Group.1", all = TRUE, suffixes = c(".e", ".f", ".g", ".h"))
+  merged.data <- merge(merged.data, total.costs.by.disaster.type, by = "Group.1", all = TRUE, suffixes = c(".e", ".f", ".g", ".h"))
   merged.data <- merged.data[order(-merged.data$x.e),]
   merged.data[, seq(2, 9)] <- round(merged.data[, seq(2, 9)])
   merged.data[, seq(2, 9)] <- format(merged.data[, seq(2, 9)], big.mark=",")
   
   print("Percentages of deaths by disaster type")
-  print(total.costsByDisasterType)
+  print(total.costs.by.disaster.type)
   
   write.table(merged.data, file = "./figs/table3_2_deaths_injuries_by_disaster_type.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = TRUE,

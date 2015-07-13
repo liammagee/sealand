@@ -23,7 +23,7 @@ initialise <- function(database.file) {
 # Generate
 run <- function() {
   # Set up global options
-  useStateNormalisations(FALSE)
+  useStateNormalisations(TRUE)
   useHeatwaves(TRUE)
   
   # Set up the data
