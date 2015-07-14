@@ -1629,10 +1629,10 @@ totalDeathsAsPercentageOfPop <- function() {
 
 
 ## Generate Figure 3.38
-totalCostAsPercentageOfGdp <- function(state, fatalities = FALSE) {
+totalCostAsPercentageOfGdp <- function(state = NULL, fatalities = FALSE) {
   # Store the total costs by year
   total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
-  if (exists('state')) {
+  if (exists("state") & !is.null(state)) {
     total.costs <- total.costs[total.costs$State.1 == state, ] 
   }
   if (fatalities == FALSE) {
@@ -1766,7 +1766,6 @@ totalCostsQldNswVic_3_42 <- function(start.at.year = 1967) {
   total.costs.by.state2 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.2, by=list(State.abbreviated.2, Year.financial), FUN=safeSum))
   total.costs.by.state <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
   total.costs.by.state$x <- rowSums(cbind(total.costs.by.state$x.x, total.costs.by.state$x.y), na.rm = TRUE)
-  total.costs.by.state <- total.costs.by.state[with(total.costs.by.state, order(-x)), ]
   # Only QLD, NSW, VIC
   total.costs.by.state <- total.costs.by.state[total.costs.by.state$Group.1 %in% c('QLD', 'NSW', 'VIC'),]
   # Order by year
@@ -1776,7 +1775,8 @@ totalCostsQldNswVic_3_42 <- function(start.at.year = 1967) {
     start.at.year <- as.numeric(start.at.year)
     total.costs.by.state <- total.costs.by.state[total.costs.by.state$Group.2 >= start.at.year,]
   }
-
+  total.costs.by.state <- total.costs.by.state[with(total.costs.by.state, order(-x)), ]
+    
   data <- total.costs.by.state
   file.name <- "fig3_42_total_costs_qld_nsw_vic"
   title <- "FIGURE 3.42: TOTAL COSTS - QLD vs NSW vs VIC, 1967-2013"
@@ -1795,6 +1795,7 @@ totalCostsQldNswVic_3_42 <- function(start.at.year = 1967) {
   # p <- ggplot(data=total.costs.by.state, aes(x=Group.2, y = x, group = Group.1, color = Group.1)) + 
   p <- ggplot(data=total.costs.by.state, aes(x=Group.2, y = x, group = Group.1)) + 
     geom_line(aes(linetype=Group.1), size = 1.0) + 
+    # geom_line() + 
     ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) + 
     # scale_colour_manual(values = palette())  +
     theme(plot.title = element_text(colour = foreground, lineheight=.8, face="bold"),

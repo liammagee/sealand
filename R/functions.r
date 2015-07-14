@@ -113,7 +113,7 @@ popForYear <- function(year, state = NA) {
 
   # Obtain column reference
   if (!is.na(state) && normaliseByState()) {
-  state.col.ref <- switch(state, 
+  state.col.ref <- switch(state,
     "New South Wales" = 20,
     "Victoria" = 21,
     "Queensland" = 22,
@@ -145,7 +145,7 @@ cpiForYear <- function(year, state = NA) {
 
   # Obtain column reference
   if (!is.na(state) && normaliseByState()) {
-    state.col.ref <- switch(state, 
+    state.col.ref <- switch(state,
       "New South Wales" = 2,
       "Victoria" = 3,
       "Queensland" = 4,
@@ -179,8 +179,8 @@ cpiRatio <- function(base.year, state = NA) {
 ## Generates a gdp ratio based on chain volume measures (based on June 2013)
 gdpRatio <- function(base.year, state = NA) {
   gdp.national.row <- 17 + (base.year - 1967) * 1
-  gdp.national.test <- gdpNominalValues(base.year)
-  gdp.national.2013 <- gdpNominalValues(2013)
+  gdp.national.test <- gdpValues(base.year)
+  gdp.national.2013 <- gdpValues(2013)
   if ( is.na( gdp.national.test ) )   {
     gdp.national.test <- gdp.national.2013
   }
@@ -192,10 +192,10 @@ gdpRatio <- function(base.year, state = NA) {
 
 gdpValues <- function(base.year, state = NA) {
   gdp.national.row <- 17 + (base.year - 1967) * 1
-  
+
   # Obtain column reference
   if (!is.na(state)) {
-    state.col.ref <- switch(state, 
+    state.col.ref <- switch(state,
                             "New South Wales" = 2,
                             "Victoria" = 3,
                             "Queensland" = 4,
@@ -268,7 +268,7 @@ normalisedPopulation <- function(range) {
 
 ## Load data
 loadData <- function(database.file) {
-  
+
   perl <- 'D:/strawberry/perl/bin/perl.exe'
   # ecnd.database <<- read.xls("./data/database.xlsx", 2, perl = perl)
   # # Hack to ignore any rows without a year value - such as rows added for computation
@@ -356,7 +356,7 @@ computeColumns <- function() {
 
   # Interpolate reported costs
   interpolateReportedCosts()
-  
+
   # Index and normalise costs
   normaliseInsuredCost()
   normaliseReportedCost()
@@ -593,7 +593,7 @@ costOfCommercialBuildingsGeneral <- function(events) {
 
   damaged.rate <- 0.25
   general.per.building.cost <- 431232
-  costs.general.structure <- destroyed.general * general.per.building.cost + 
+  costs.general.structure <- destroyed.general * general.per.building.cost +
                             damaged.general * general.per.building.cost * damaged.rate
   costs.general.contents <- 0
 
@@ -609,7 +609,7 @@ costOfCommercialBuildingsIndustrial <- function(events) {
 
   damaged.rate <- 0.25
   industrial.per.building.cost <- 498750
-  costs.industrial.structure <- destroyed.industrial * industrial.per.building.cost + 
+  costs.industrial.structure <- destroyed.industrial * industrial.per.building.cost +
                                 damaged.industrial * industrial.per.building.cost * damaged.rate
   costs.industrial.contents <- 0
 
@@ -625,7 +625,7 @@ costOfCommercialBuildingsHotels <- function(events) {
 
   damaged.rate <- 0.25
   hotels.per.building.cost <- indexCosts(c(2005, 3885000))
-  costs.hotels.structural <- destroyed.hotels * hotels.per.building.cost + 
+  costs.hotels.structural <- destroyed.hotels * hotels.per.building.cost +
                             damaged.hotels * hotels.per.building.cost * damaged.rate
   costs.hotels.contents <- 0
 
@@ -704,17 +704,17 @@ costOfInfrastructure <- function(events) {
     destroyed.rail.dollars <- destroyed.rail * indexCosts(c(2009, 3904406))
   }
 
-  destroyed.costs <-  destroyed.roads.urban * indexCosts(c(2003, 1633993)) + 
-            destroyed.roads.rural * indexCosts(c(2003, 573669)) + 
-            destroyed.bridges * indexCosts(c(2006, 4214400)) + 
-            destroyed.rail.dollars + 
-            destroyed.power.poles * indexCosts(c(2013, 9000)) 
+  destroyed.costs <-  destroyed.roads.urban * indexCosts(c(2003, 1633993)) +
+            destroyed.roads.rural * indexCosts(c(2003, 573669)) +
+            destroyed.bridges * indexCosts(c(2006, 4214400)) +
+            destroyed.rail.dollars +
+            destroyed.power.poles * indexCosts(c(2013, 9000))
 
-  damaged.costs <-  damaged.roads.urban * indexCosts(c(2011, 2168975)) + 
-            damaged.roads.rural * indexCosts(c(2011, 666600)) + 
-            damaged.bridges * indexCosts(c(2006, 4214400)) + 
-            damaged.rail * indexCosts(c(2007, 1300000)) + 
-            damaged.power.poles * indexCosts(c(2013, 9000)) 
+  damaged.costs <-  damaged.roads.urban * indexCosts(c(2011, 2168975)) +
+            damaged.roads.rural * indexCosts(c(2011, 666600)) +
+            damaged.bridges * indexCosts(c(2006, 4214400)) +
+            damaged.rail * indexCosts(c(2007, 1300000)) +
+            damaged.power.poles * indexCosts(c(2013, 9000))
 
   costs <- destroyed.costs + damaged.costs
 
@@ -903,8 +903,8 @@ commercialDisruptionCosts <- function(events) {
   damaged[is.na(damaged)] <- 0
 
   # Taken from Kershaw 2013
-  loss.of.production.and.services <- costOfCommercialBuildingsGeneral(events)  * 0.2 + 
-                                  costOfCommercialBuildingsIndustrial(events)  * 0.65 + 
+  loss.of.production.and.services <- costOfCommercialBuildingsGeneral(events)  * 0.2 +
+                                  costOfCommercialBuildingsIndustrial(events)  * 0.65 +
                                   costOfCommercialBuildingsHotels(events)  * 0.2
 
   # NOTE: COST BASIS FOR DAMAGED & DESTROYED IS THE SAME, AS PER SANDRA'S / DELOITTE'S COMMENTS
@@ -1157,18 +1157,18 @@ totalCostForEvent <- function(resource.type.param = NULL) {
   events <- totalCostForEventSynthetic(resource.type.param)
 
   # Add insured and reported costs
-  
+
 
   # Use Derived multipliers
   multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplierDerived)
   # Use Joy's multipliers
   # multipliers <- apply(cbind(events['resourceType']), 1, eventTypeMultiplierJoy)
-  
+
   events$Insured.Cost.multiplied <- events$Insured.Cost * multipliers
   events$Insured.Cost.multiplied.indexed <- apply(events[c("Year.financial", "Insured.Cost.multiplied", "State.1")], 1, indexCosts)
   events$Insured.Cost.multiplied.normalised <- apply(events[c("Year.financial", "Insured.Cost.multiplied", "State.1")], 1, normalisedCosts)
   events$Insured.Cost.multiplied.normalised.millions <- events$Insured.Cost.multiplied.normalised / 1000000
-  
+
   events$Reported.Cost.interpolated.millions <- events$Reported.Cost.interpolated / 1000000
   events$Reported.Cost.WithDeathsAndInjuries.interpolated <- events$Reported.Cost.interpolated +  events$deathAndInjuryCosts
   events$Reported.Cost.WithDeathsAndInjuries.interpolated.millions <- events$Reported.Cost.WithDeathsAndInjuries.interpolated / 1000000
@@ -1301,7 +1301,7 @@ generateDerivedMultipliers <- function() {
   resourceTypes <- data.frame(resourceType = cbind(unique(unlist(ecnd.database$resourceType))))
   ag <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, ecnd.database, sum)
   ag <- merge(ag[,], resourceTypes, by="resourceType", all = TRUE)
-  ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost 
+  ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost
   # Don't convert N/As to 1.0
   ag[is.na(ag$Event.Factor),"Event.Factor"] <- 1.0
   return (ag)
@@ -1795,18 +1795,18 @@ writeEventDataSummary <- function() {
     "Synthetic.Cost.normalised"
     )
   ]
-  
+
   Reported.Cost.normalised.nonzero <- events$Reported.Cost.normalised[events$Reported.Cost.normalised != 0]
   Reported.Cost.normalised.sum <- sum(Reported.Cost.normalised.nonzero, na.rm = TRUE)
   Reported.Cost.normalised.average <- mean(Reported.Cost.normalised.nonzero, na.rm = TRUE)
   Reported.Cost.normalised.stddev <- sd(Reported.Cost.normalised.nonzero, na.rm = TRUE)
   Reported.Cost.normalised.nonzero.percentage <- ( Reported.Cost.normalised.nonzero * 100 ) / Reported.Cost.normalised.sum
   Reported.Cost.normalised.nonzero.sorted <- sort(Reported.Cost.normalised.nonzero, TRUE)
-  
+
   print(paste("Total costs: $",format(Reported.Cost.normalised.sum, big.mark=","), sep="" ))
   print(paste("Average cost: $",format(Reported.Cost.normalised.average, big.mark=","), sep="" ))
   print(paste("Standard deviation: $",format(Reported.Cost.normalised.stddev, big.mark=","), sep="" ))
-  
+
   write.table(summary, file = "./output/data_events_summary.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "", dec = ".", row.names = FALSE,
               col.names = TRUE, qmethod = c("escape", "double"),
