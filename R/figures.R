@@ -84,7 +84,7 @@ standardBarChart <- function(data, file.name, title, x.label, y.label, use.years
           axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0, size = 8)
       )
   
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""))
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)
   return (p)
 }
 
@@ -124,7 +124,7 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
           axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0, size = 8),
           legend.position="bottom")
   
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""))
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)
 }
 
 
@@ -146,7 +146,7 @@ standardPieChart <- function(data, file.name, title) {
   p = p + ggtitle(title)
   p
   
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""))
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)
 }
 
 
@@ -562,7 +562,7 @@ numberOfDisastersPerMillionPeople <- function() {
           axis.title=element_text(color=text.color),
           axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0))
   
-  ggsave(file=paste("./figs/fig3_9_number_of_disasters_per_million_people.png", sep=""))
+  ggsave(file=paste("./figs/fig3_9_number_of_disasters_per_million_people.png", sep=""), units = "cm", width = 32, height = 24)
   
   # Show regression
   print("Regression fit for population")
@@ -761,7 +761,7 @@ costsByTypeOfDisasterAndStateAndTerritory <- function() {
   #p = p + annotate(geom = "text", label = label)
   p
     
-  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory", ".png", sep=""))  
+  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory", ".png", sep=""), units = "cm", width = 32, height = 24)  
   
   # Stacked bar chart version
   p = ggplot(data = totals.with.state.aggregates, aes(x = Group.1, y = x, fill = factor(Group.2)))
@@ -771,13 +771,13 @@ costsByTypeOfDisasterAndStateAndTerritory <- function() {
   p = p + theme(axis.ticks = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank())
   p = p + xlab('States') + ylab('(2013 Dollars in $millions)') + labs(fill = 'Disaster Type') 
   p
-  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked", ".png", sep=""))  
+  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked", ".png", sep=""), units = "cm", width = 32, height = 24)  
   
   p = ggplot(data = totals.with.state.aggregates, aes(x = Group.1, y = percentage, fill = factor(Group.2)))
   p = p + geom_bar(width = 0.5, stat = "identity") 
   p = p + xlab('States') + ylab('(2013 Dollars in $millions)') + labs(fill = 'Disaster Type') 
   p
-  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked_percent", ".png", sep=""))  
+  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked_percent", ".png", sep=""), units = "cm", width = 32, height = 24)  
 }
 
 
@@ -1727,7 +1727,7 @@ total.costsRawIndexedNormalised <- function() {
           axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0, size=6))
   p
   
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""))  
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)  
 }
 
 

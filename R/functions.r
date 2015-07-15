@@ -185,9 +185,11 @@ gdpRatio <- function(base.year, state = NA) {
     gdp.national.test <- gdp.national.2013
   }
   gdp.gross <- ( gdp.national.2013 / gdp.national.test )
+  # Correct for inflation ratio
+  gdp.real <- gdp.gross / cpiRatio(base.year)
   # Correct for Pop ratio to correct for per capita
-  gdp.gross <- gdp.gross / popRatio(base.year, state)
-  return( gdp.gross )
+  gdp.real.per.capita <- gdp.real / popRatio(base.year)
+  return( gdp.real.per.capita )
 }
 
 gdpValues <- function(base.year, state = NA) {
@@ -209,8 +211,8 @@ gdpValues <- function(base.year, state = NA) {
     state.col.ref <- 10
   }
 
-  # gdp.national.value <- as.numeric(gdp.national.data$GROSS.DOMESTIC.PRODUCT..Current.prices..[gdp.national.row])
-  gdp.national.value <- as.numeric(gdp.national.data$GDP.per.capita..Current.prices..[gdp.national.row])
+  gdp.national.value <- as.numeric(gdp.national.data$GROSS.DOMESTIC.PRODUCT..Current.prices..[gdp.national.row])
+  # gdp.national.value <- as.numeric(gdp.national.data$GDP.per.capita..Current.prices..[gdp.national.row])
   return(gdp.national.value)
 }
 
