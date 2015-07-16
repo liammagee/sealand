@@ -7,6 +7,9 @@ library(reshape2)
 source("R/figures.R", FALSE)
 source("R/functions.R", FALSE)
 
+# Set up the data
+database.file = "./data/database_11072015.xlsx"
+
 
 ## Ignores "NA" values for standard functions
 initialise <- function(database.file) {
@@ -23,11 +26,9 @@ initialise <- function(database.file) {
 # Generate
 run <- function() {
   # Set up global options
-  useStateNormalisations(TRUE)
+  useStateNormalisations(FALSE)
   useHeatwaves(TRUE)
   
-  # Set up the data
-  database.file = "./data/database_11072015.xlsx"
   # Clear the main data object
   if (exists("ecnd.database")) {
     rm(ecnd.database)
@@ -83,10 +84,10 @@ run <- function() {
   totalCostsRawIndexedNormalised()
   totalAverageCostsNationallyAndByState()
   totalCostsQldNswVic_3_42()
-  averageAnnualCostOfNaturalDisastersByStateAndTerritory()
   deathsAndInjuriesByHazardType()
   multipliersJoyVsDerived()
   costsByYearAndState()
   costSummary()
+  averageAnnualCostOfNaturalDisastersByStateAndTerritory()
 }
 run()

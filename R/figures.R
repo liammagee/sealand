@@ -23,6 +23,28 @@ source("R/functions.r", TRUE)
 # Global variables
 title.size <- 0.8
 character.size <- 0.6
+graph.title.size <- 18
+axis.title.size <- 16
+axis.text.size <- 12
+# Set colours
+# Quasi-BTE
+# background <- '#F0D2AF'
+# foreground <- '#D08728'
+# text.color <- '#888888'
+
+# Experiment 1
+background.color <- '#F6FFC7'
+foreground.color <- '#668E39'
+title.color <- '#667566'
+text.color <- '#202020'
+
+# Experiment 2
+# background.color <- '#FFFBE3'
+# foreground.color <- '#FF7260'
+# title.color <- '#129793'
+# text.color <- '#202020'
+
+
 
 # Colour-friendly palette from http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
 # The palette with black:
@@ -56,17 +78,13 @@ palette <- function() {
 ## Provides a single function for generating bar charts
 standardBarChart <- function(data, file.name, title, x.label, y.label, use.years=TRUE) {
   
-  # Set colours
-  background <- '#F0D2AF'
-  foreground <- '#D08728'
-  text.color <- '#888888'
-  
+
   # Ensure the order remains the same
   if (use.years==FALSE) {
     data$Group.1 <- factor(data$Group.1, as.character(data$Group.1))  
   }
   # Calculate range from 0 to max value of costs
-  p <- ggplot(data, aes(x=Group.1, y = x)) + geom_bar(width=0.5, stat="identity", fill=foreground, colour=foreground)
+  p <- ggplot(data, aes(x=Group.1, y = x)) + geom_bar(width=0.5, stat="identity", fill=foreground.color, colour=foreground.color)
   p
   if (use.years==TRUE) {
     x.scale <- scale_x_continuous(name = x.label, breaks = yearBreaks(data$Group.1), labels = yearLabels(data$Group.1))
@@ -74,16 +92,18 @@ standardBarChart <- function(data, file.name, title, x.label, y.label, use.years
     x.scale <- xlab(x.label)
   }
   p + ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) + 
-    theme(plot.title = element_text(colour = foreground, lineheight=1.0, face="bold"),
+    # scale_fill_gradient(low = "pink", high = "green") + 
+    theme(plot.title = element_text(colour = title.color, lineheight=1.0, face="bold", size=graph.title.size),
           panel.grid.minor.y=element_blank(), 
-          panel.grid.major.y=element_line(colour = foreground),
+          panel.grid.major.y=element_line(colour = foreground.color),
           panel.grid.minor.x=element_blank(), 
           panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background, colour = foreground),
-          axis.title=element_text(color=text.color, lineheight=1.0, size = 12),
-          axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0, size = 8)
+          panel.background = element_rect(fill = background.color, colour = foreground.color),
+          axis.title=element_text(color=title.color, lineheight=1.0, size = axis.title.size),
+          axis.text.x=element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+          axis.text.y=element_text(color=text.color, size = axis.text.size)
       )
-  
+
   ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)
   return (p)
 }
@@ -114,14 +134,15 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
   }
   # Note: title height is 0.9, due to presence of legend on clustered charts
   clustered.chart + ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) + 
-    theme(plot.title = element_text(colour = foreground, lineheight=0.9, face="bold"),
+    theme(plot.title = element_text(colour = foreground.color, lineheight=1.0, face="bold", size=graph.title.size),
           panel.grid.minor.y=element_blank(), 
-          panel.grid.major.y=element_line(colour = foreground),
+          panel.grid.major.y=element_line(colour = foreground.color),
           panel.grid.minor.x=element_blank(), 
           panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background, colour = foreground),
-          axis.title=element_text(color=text.color, lineheight=1.0, size = 12),
-          axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0, size = 8),
+          panel.background = element_rect(fill = background.color, colour = foreground.color),
+          axis.title=element_text(color=text.color, lineheight=1.0, size = axis.title.size),
+          axis.text.x=element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+          axis.text.y=element_text(color=text.color, size = axis.text.size),
           legend.position="bottom")
   
   ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)
@@ -550,17 +571,18 @@ numberOfDisastersPerMillionPeople <- function() {
   y.label <- "Number of disasters per million people"
   
   # Calculate range from 0 to max value of costs
-  p <- ggplot(mergedCounts, aes(x=Group.1, y = popRatios)) + geom_point(colour = foreground, size = 4) +
+  p <- ggplot(mergedCounts, aes(x=Group.1, y = popRatios)) + geom_point(colour = foreground.color, size = 4) +
     geom_smooth(method="lm", fill=NA, colour = "#000000")
   p + ggtitle(title) + scale_x_continuous(name=x.label, breaks=yearBreaks(mergedCounts$Group.1)) + scale_y_continuous(name=y.label, labels=comma) + 
-    theme(plot.title = element_text(colour = foreground, lineheight=.8, face="bold"),
+    theme(plot.title = element_text(colour = foreground.color, lineheight=.8, face="bold"),
           panel.grid.minor.y=element_blank(), 
-          panel.grid.major.y=element_line(colour = foreground),
+          panel.grid.major.y=element_line(colour = foreground.color),
           panel.grid.minor.x=element_blank(), 
           panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background, colour = foreground),
-          axis.title=element_text(color=text.color),
-          axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0))
+          panel.background = element_rect(fill = background.color, colour = foreground.color),
+          axis.title=element_text(color=title.color),
+          axis.text.x=element_text(color=text.color, size = axis.text.size, angle=45, vjust=1.0, hjust=1.0),
+          axis.text.y=element_text(color=text.color, size = axis.text.size))
   
   ggsave(file=paste("./figs/fig3_9_number_of_disasters_per_million_people.png", sep=""), units = "cm", width = 32, height = 24)
   
@@ -1705,11 +1727,7 @@ total.costsRawIndexedNormalised <- function() {
   y.label <- "(2013 Dollars in $millions)"
   use.years <- TRUE
   
-  # Set colours
-  background <- '#F0F0F0'
-  foreground <- '#D08728'
-  text.color <- '#888888'
-  
+ 
   # Calculate range from 0 to max value of costs
   x.scale <- scale_x_continuous(name = x.label, breaks = yearBreaks(data$Group.1), labels = yearLabels(data$Group.1))
   # p <- ggplot(data=data, aes(x=Group.1, y = x, group = Cost.Type, colour=Cost.Type)) + 
@@ -1717,14 +1735,15 @@ total.costsRawIndexedNormalised <- function() {
     geom_line(aes(linetype=Cost.Type), size = 1.0) + 
     ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) + 
     # scale_colour_manual(values = palette())  +
-    theme(plot.title = element_text(colour = foreground, lineheight=.8, face="bold"),
+    theme(plot.title = element_text(colour = foreground.color, lineheight=.8, face="bold"),
           panel.grid.minor.y=element_blank(), 
-          panel.grid.major.y=element_line(colour = foreground),
+          panel.grid.major.y=element_line(colour = foreground.color),
           panel.grid.minor.x=element_blank(), 
           panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background, colour = foreground),
-          axis.title=element_text(color=text.color),
-          axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0, size=6))
+          panel.background = element_rect(fill = background.color, colour = foreground.color),
+          axis.title=element_text(color=title.color),
+          axis.text.x=element_text(color=text.color, size = axis.text.size, angle=45, vjust=1.0, hjust=1.0),
+          axis.text.y=element_text(color=text.color, size = axis.text.size))
   p
   
   ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)  
@@ -1798,14 +1817,15 @@ totalCostsQldNswVic_3_42 <- function(start.at.year = 1967) {
     # geom_line() + 
     ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) + 
     # scale_colour_manual(values = palette())  +
-    theme(plot.title = element_text(colour = foreground, lineheight=.8, face="bold"),
+    theme(plot.title = element_text(colour = foreground.color, lineheight=.8, face="bold"),
           panel.grid.minor.y=element_blank(), 
-          panel.grid.major.y=element_line(colour = foreground),
+          panel.grid.major.y=element_line(colour = foreground.color),
           panel.grid.minor.x=element_blank(), 
           panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background, colour = foreground),
+          panel.background = element_rect(fill = background.color, colour = foreground.color),
           axis.title=element_text(color=text.color),
-          axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0, size=6))
+          axis.text.x=element_text(color=text.color, size = axis.text.size, angle=45, vjust=1.0, hjust=1.0),
+          axis.text.y=element_text(color=text.color, size = axis.text.size))
   p
   
   ggsave(file=paste("./figs/", file.name, ".png", sep=""))  
@@ -1816,62 +1836,117 @@ totalCostsQldNswVic_3_42 <- function(start.at.year = 1967) {
 
 ## Generate Table 3.1
 averageAnnualCostOfNaturalDisastersByStateAndTerritory <- function() {
-  # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
-  total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
-  total.costs$Reported.Cost.normalised.millions.state.2 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.2.percent
-  total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.1, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
-  total.costs.by.state2 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.2, by=list(State.abbreviated.2, resourceType), FUN=safeSum))
-  total.costs.by.state.and.disaster.type <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
-  total.costs.by.state.and.disaster.type$x <- rowSums(cbind(total.costs.by.state.and.disaster.type$x.x, total.costs.by.state.and.disaster.type$x.y), na.rm = TRUE)
-  # total.costs.by.state.and.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
-  total.costs.by.state.and.disaster.type$x <- round(total.costs.by.state.and.disaster.type$x)
+  pivotCostsByStateAndDisasterType <- function(with.deaths.and.injuries = FALSE, year = NULL) {
+    # Store the total costs by year
+    total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+    if (!is.null(year)) {
+      total.costs <- total.costs[total.costs$Year.financial >= year, ]
+    }
+    if (with.deaths.and.injuries) {
+      total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.1 <- total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions * total.costs$State.1.percent
+      total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.2 <- total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions * total.costs$State.2.percent
+      total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.1, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
+      total.costs.by.state2 <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.2, by=list(State.abbreviated.2, resourceType), FUN=safeSum))
+    }
+    else {
+      total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
+      total.costs$Reported.Cost.normalised.millions.state.2 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.2.percent
+      total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.1, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
+      total.costs.by.state2 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.2, by=list(State.abbreviated.2, resourceType), FUN=safeSum))
+    }
+    total.costs.by.state.and.disaster.type <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
+    total.costs.by.state.and.disaster.type$x <- rowSums(cbind(total.costs.by.state.and.disaster.type$x.x, total.costs.by.state.and.disaster.type$x.y), na.rm = TRUE)
+    # total.costs.by.state.and.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
+    total.costs.by.state.and.disaster.type$x <- round(total.costs.by.state.and.disaster.type$x)
+    
+    # Very brittle conversion to a table
+    pivotted.data <- dcast(total.costs.by.state.and.disaster.type, Group.1 ~ Group.2, value.var = "x", sum, margins = TRUE)
+    cols <- length(pivotted.data)
+    rows <- length(pivotted.data$Group.1)
+    pivotted.data <- pivotted.data[order(-pivotted.data[cols]),]
+    pivotted.data[rows + 1,] <- pivotted.data[1,]
+    pivotted.data <- pivotted.data[seq(2, rows + 1),]
+    pivotted.data <- pivotted.data[,order(-pivotted.data[rows,])]
+    pivotted.data[,cols+1] <- pivotted.data[,1]
+    pivotted.data[,1] <- pivotted.data[,cols]
+    pivotted.data <- pivotted.data[,c(seq(1:(cols - 1)), cols + 1)]
+    pivotted.data[1:rows, 2:cols] <- format(pivotted.data[1:rows, 2:cols], nsmall = 0, big.mark=",")
+    # Get rid of unhelpful row and col names
+    colnames(pivotted.data)[1] <- ""
+    colnames(pivotted.data)[cols] <- "Totals"
+    return (pivotted.data)
+  }
   
-  # Very brittle conversion to a table
-  pivotted.data <- dcast(total.costs.by.state.and.disaster.type, Group.1 ~ Group.2, value.var = "x", sum, margins = TRUE)
-  cols <- length(pivotted.data)
-  rows <- length(pivotted.data$Group.1)
-  pivotted.data <- pivotted.data[order(-pivotted.data[cols]),]
-  pivotted.data[rows + 1,] <- pivotted.data[1,]
-  pivotted.data <- pivotted.data[seq(2, rows + 1),]
-  pivotted.data <- pivotted.data[,order(-pivotted.data[rows,])]
-  pivotted.data[,cols+1] <- pivotted.data[,1]
-  pivotted.data[,1] <- pivotted.data[,cols]
-  pivotted.data <- pivotted.data[,c(seq(1:(cols - 1)), cols + 1)]
-  pivotted.data[1:rows, 2:cols] <- format(pivotted.data[1:rows, 2:cols], nsmall = 0, big.mark=",")
+  
+  old.value <- use.state.normalisations
 
-  write.table(pivotted.data, file = "./figs/table3_1_totals_by_state_and_disaster_type.csv", append = FALSE, quote = TRUE, sep = ",",
+  # NORMED BY NATIONAL AVERAGES
+  useStateNormalisations(FALSE)
+  if (exists("ecnd.database")) {
+    rm(ecnd.database)
+  }
+  initialise(database.file)
+  data <- pivotCostsByStateAndDisasterType(with.deaths.and.injuries = FALSE)
+  write.table(data, file = "./figs/table3_1_a_totals_by_state_and_disaster_type.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = FALSE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
-
-  # Repeat for deaths and injuries
-  total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.1 <- total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions * total.costs$State.1.percent
-  total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.2 <- total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions * total.costs$State.2.percent
-  total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.1, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
-  total.costs.by.state2 <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions.state.2, by=list(State.abbreviated.2, resourceType), FUN=safeSum))
-  total.costs.by.state.and.disaster.type <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
-  total.costs.by.state.and.disaster.type$x <- rowSums(cbind(total.costs.by.state.and.disaster.type$x.x, total.costs.by.state.and.disaster.type$x.y), na.rm = TRUE)
-  # total.costs.by.state.and.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
-  total.costs.by.state.and.disaster.type$x <- round(total.costs.by.state.and.disaster.type$x)
   
-  # Very brittle conversion to a table
-  pivotted.data <- dcast(total.costs.by.state.and.disaster.type, Group.1 ~ Group.2, value.var = "x", sum, margins = TRUE)
-  cols <- length(pivotted.data)
-  rows <- length(pivotted.data$Group.1)
-  pivotted.data <- pivotted.data[order(-pivotted.data[cols]),]
-  pivotted.data[rows + 1,] <- pivotted.data[1,]
-  pivotted.data <- pivotted.data[seq(2, rows + 1),]
-  pivotted.data <- pivotted.data[,order(-pivotted.data[rows,])]
-  pivotted.data[,cols+1] <- pivotted.data[,1]
-  pivotted.data[,1] <- pivotted.data[,cols]
-  pivotted.data <- pivotted.data[,c(seq(1:(cols - 1)), cols + 1)]
-  pivotted.data[1:rows, 2:cols] <- format(pivotted.data[1:rows, 2:cols], nsmall = 0, big.mark=",")
-
-  write.table(pivotted.data, file = "./figs/table3_1_totals_by_state_and_disaster_type_with_deaths_and_injuries.csv", append = FALSE, quote = TRUE, sep = ",",
+  data <- pivotCostsByStateAndDisasterType(with.deaths.and.injuries = TRUE)
+  write.table(data, file = "./figs/table3_1_e_totals_by_state_and_disaster_type_with_deaths_and_injuries.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = FALSE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
+  
+  data <- pivotCostsByStateAndDisasterType(with.deaths.and.injuries = FALSE, year = 2000)
+  write.table(data, file = "./figs/table3_1_c_totals_by_state_and_disaster_type_2000.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+  
+  data <- pivotCostsByStateAndDisasterType(with.deaths.and.injuries = TRUE, year = 2000)
+  write.table(data, file = "./figs/table3_1_f_totals_by_state_and_disaster_type_with_deaths_and_injuries_2000.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+  
+  
+  # NORMED BY STATE AVERAGES
+  useStateNormalisations(TRUE)
+  if (exists("ecnd.database")) {
+    rm(ecnd.database)
+  }
+  initialise(database.file)
+  data <- pivotCostsByStateAndDisasterType(with.deaths.and.injuries = FALSE)
+  write.table(data, file = "./figs/table3_1_b_totals_by_state_and_disaster_type_normed_by_state.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+  
+  data <- pivotCostsByStateAndDisasterType(with.deaths.and.injuries = TRUE)
+  write.table(data, file = "./figs/table3_1_g_totals_by_state_and_disaster_type_with_deaths_and_injuries_normed_by_state.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+  
+  data <- pivotCostsByStateAndDisasterType(with.deaths.and.injuries = FALSE, year = 2000)
+  write.table(data, file = "./figs/table3_1_d_totals_by_state_and_disaster_type_2000_normed_by_state.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+  
+  data <- pivotCostsByStateAndDisasterType(with.deaths.and.injuries = TRUE, year = 2000)
+  write.table(data, file = "./figs/table3_1_h_totals_by_state_and_disaster_type_with_deaths_and_injuries_2000_normed_by_state.csv", append = FALSE, quote = TRUE, sep = ",",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = TRUE, qmethod = c("escape", "double"),
+              fileEncoding = "")
+  
+  useStateNormalisations(old.value)
+  if (exists("ecnd.database")) {
+    rm(ecnd.database)
+  }
+  initialise(database.file)
+  
 }
 
 ## Generate Table 3.2
