@@ -113,12 +113,6 @@ standardBarChart <- function(data, file.name, title, x.label, y.label, use.years
 ## Provides a single function for generating bar charts
 standardBarChartClustered <- function(data, file.name, title, x.label, y.label, use.years=TRUE) {
   
-  # Set colours
-  background <- '#F0D2AF'
-  background2 <- '#888888'
-  foreground <- '#D08728'
-  text.color <- '#888888'
-  
   # Ensure the order remains the same
   if (use.years==FALSE) {
     data$Group.1 <- factor(data$Group.1, as.character(data$Group.1))  
@@ -127,7 +121,7 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
   # Calculate range from 0 to max value of costs
   clustered.chart <- ggplot(data, aes(x=Group.1, y = value)) + 
         geom_bar(aes(fill=variable), width=0.75,position = "dodge", stat="identity") +  
-        scale_fill_manual(name="", values=c(foreground, background2))
+        scale_fill_manual(name="", values=c(foreground.color, text.color))
   clustered.chart
   if (use.years==TRUE) {
     x.scale <- scale_x_continuous(name=x.label, breaks=yearBreaks(data$Group.1), labels = yearLabels(data$Group.1))
