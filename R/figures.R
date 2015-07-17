@@ -56,6 +56,8 @@ blackPalette <- c("#000000")
 yearBreaks <- function(years) {
   # Every third year
   # years <-years[(years-1967) %% 3 == 0];
+  # Every second year
+  years <-years[(years-1967) %% 2 == 0];
   return (years)
 }
 
@@ -1658,9 +1660,11 @@ totalCostAsPercentageOfGdp <- function(state = NULL, fatalities = FALSE) {
     total.costs <- total.costs[total.costs$State.1 == state, ] 
   }
   if (fatalities == FALSE) {
+    file.name <- "fig3_38_total_cost_as_percentage_of_gdp_without_fatalities"
     total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.interpolated.millions, by=list(Year.financial), FUN=safeSum))
   }
   else {
+    file.name <- "fig3_38_total_cost_as_percentage_of_gdp_with_fatalities"
     total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.interpolated.millions, by=list(Year.financial), FUN=safeSum))    
   }
   
@@ -1672,7 +1676,7 @@ totalCostAsPercentageOfGdp <- function(state = NULL, fatalities = FALSE) {
   
   # Graph the results
   standardBarChart(total.costs.by.year,
-                   "fig3_38_total_cost_as_percentage_of_gdp",
+                   file.name,
                    "FIGURE 3.38: TOTAL COSTS AS PERCENTAGES OF GDP, 1967-2013",
                    "Years (financial)",
                    "(Per Cent)", 
@@ -1776,7 +1780,7 @@ totalAverageCostsNationallyAndByState <- function() {
 }
 
 ## Generate Figure 3.42
-totalCostsQldNswVic_3_42 <- function(start.at.year = 1967) {
+totalCostsQldNswVic <- function(start.at.year = 1967) {
   # Store the total costs by state
   total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
   total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent

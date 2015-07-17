@@ -1,17 +1,3 @@
-.pkgs = c("gdata", "reshape2", "RJSONIO", "RCurl", "devtools")
-
-# Install required packages from CRAN (if not)
-.inst <- .pkgs %in% installed.packages()
-if(length(.pkgs[!.inst]) > 0) install.packages(.pkgs[!.inst])
-
-# Install plotly package from Github
-if(! "plotly" %in% installed.packages()) {
-  require(devtools)
-  devtools::install_github("plotly/R-api")
-}
-
-# Load package
-library(plotly)
 
 # Imports
 library(gdata)
@@ -93,11 +79,12 @@ run <- function() {
   totalCostOfNaturalDisastersSynthetic()
   totalCostOfNaturalDisastersByDecadeSynthetic()
   totalDeathsAsPercentageOfPop()
-  totalCostAsPercentageOfGdp()
+  totalCostAsPercentageOfGdp(state = NULL, fatalities = FALSE)
+  totalCostAsPercentageOfGdp(state = NULL, fatalities = TRUE)
   insuredCostAsPercentageOfTotalCost()
   totalCostsRawIndexedNormalised()
   totalAverageCostsNationallyAndByState()
-  totalCostsQldNswVic_3_42()
+  totalCostsQldNswVic()
   deathsAndInjuriesByHazardType()
   multipliersJoyVsDerived()
   costsByYearAndState()
