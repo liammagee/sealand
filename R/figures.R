@@ -652,16 +652,16 @@ disasterCostsByStateAndTerritory <- function() {
   names(orderedCosts)
 	orderedCosts <- orderedCosts[order(-orderedCosts$total.costsPercentages),]
 	print(merged.costs[,c("Group.1", "total.costsPercentages")])
-  
-  print("Top 2 percentages")
-	print(sum(head(merged.costs[order(-merged.costs$total.costsPercentages),]$total.costsPercentages, n = 2)))
-	
-	print("Top 3 percentages")
-	print(sum(head(merged.costs[order(-merged.costs$total.costsPercentages),]$total.costsPercentages, n = 3)))
+  	
+	print("Combined percentage of top 2 events")
+	combined.costs.top.2 <- sum(head(merged.costs[order(-merged.costs$total.costsPercentages),]$total.costsPercentages, n = 2))
+	print(combined.costs.top.2)
 	
 	print("Combined percentage of top 3 events")
-	print(sum(head(merged.costs[order(-merged.costs$total.costsPercentages),]$total.costsPercentages, 3)))
-	  
+	combined.costs.top.3 <- sum(head(merged.costs[order(-merged.costs$total.costsPercentages),]$total.costsPercentages, n = 3))
+	print(combined.costs.top.3)
+	
+	
   print("Percentage of Population in Queensland, New South Wales and Victoria")
   # Taken from ABS June 2014  - http://www.abs.gov.au/ausstats/abs@.nsf/mf/3101.0
   print((7518.5 + 5841.7 + 4722.4) / 23490.7)
@@ -826,15 +826,18 @@ totalAndInsuranceCostsByDisasterType <- function() {
   print("Percentages of disaster type")
   print(total.costs.by.disaster.type)
   
-  print("Combined percentage of top 3 events")
-  print(sum(head(total.costs.by.disaster.type[order(-total.costs.by.disaster.type$percentages),]$percentages, 3)))
+  print("Combined percentage of top 3 disaster types")
+  total.costs.by.disaster.type.top.3 <- sum(head(total.costs.by.disaster.type[order(-total.costs.by.disaster.type$percentages),]$percentages, 3))
+  print(total.costs.by.disaster.type.top.3)
   
   # Test for the inclusion of deaths and injuries
   total.costs.by.disaster.type.WithDeathsAndInjuries <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(resourceType), FUN=safeSum))
   total.costs.by.disaster.type.WithDeathsAndInjuries <- total.costs.by.disaster.type.WithDeathsAndInjuries[with(total.costs.by.disaster.type.WithDeathsAndInjuries, order(-x)), ]
   total.costs.by.disaster.type.WithDeathsAndInjuries$percentages <- data.frame(total.costs.by.disaster.type.WithDeathsAndInjuries$x / (sum(total.costs.by.disaster.type.WithDeathsAndInjuries$x))) 
+  
   print("Combined percentage of top 3 events with deaths and injuries included")
-  print(sum(head(total.costs.by.disaster.type.WithDeathsAndInjuries[order(-total.costs.by.disaster.type.WithDeathsAndInjuries$percentages),]$percentages, 3)))
+  total.costs.by.disaster.type.incl.deathss.top.3 <- sum(head(total.costs.by.disaster.type.WithDeathsAndInjuries[order(-total.costs.by.disaster.type.WithDeathsAndInjuries$percentages),]$percentages, 3))
+  print(total.costs.by.disaster.type.incl.deathss.top.3)
 
 
   # Show major events by disaster type
@@ -869,16 +872,20 @@ numberOfEventsByDisasterType <- function() {
   print(totalCountsByDisasterType)
   
   print("Combined percentage of top 3 events")
-  print(sum(head(totalCountsByDisasterType[order(-totalCountsByDisasterType$percentages),]$percentages, 3)))
+  total.number.by.disaster.type.top.3 <- sum(head(totalCountsByDisasterType[order(-totalCountsByDisasterType$percentages),]$percentages, 3))
+  print(total.number.by.disaster.type.top.3)
 
   # Test for the inclusion of deaths and injuries
   totalCountsByDisasterType.WithDeathsAndInjuries <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(resourceType), FUN=length))
   totalCountsByDisasterType.WithDeathsAndInjuries <- totalCountsByDisasterType.WithDeathsAndInjuries[with(totalCountsByDisasterType.WithDeathsAndInjuries, order(-x)), ]
   totalCountsByDisasterType.WithDeathsAndInjuries$percentages <- data.frame(totalCountsByDisasterType.WithDeathsAndInjuries$x / (sum(totalCountsByDisasterType.WithDeathsAndInjuries$x))) 
+
   print("Percentages of disaster type frequency, with deaths and injuries included")
   print(totalCountsByDisasterType.WithDeathsAndInjuries)
+
   print("Combined percentage of top 3 events, with deaths and injuries included")
-  print(sum(head(totalCountsByDisasterType.WithDeathsAndInjuries[order(-totalCountsByDisasterType.WithDeathsAndInjuries$percentages),]$percentages, 3)))
+  total.number.by.disaster.type.incl.deaths.top.3 <- sum(head(totalCountsByDisasterType.WithDeathsAndInjuries[order(-totalCountsByDisasterType.WithDeathsAndInjuries$percentages),]$percentages, 3))
+  print(total.number.by.disaster.type.incl.deaths.top.3)
 }
 
 
@@ -1417,7 +1424,8 @@ costOfDeathsAndInjuries <- function() {
 	total.costsOfDeathsAndInjuriesByDisasterType <- with(total.costs, aggregate(deathAndInjuryCosts.normalised.millions, by=list(resourceType), FUN=safeSum))
 	total.costsOfDeathsAndInjuriesByDisasterType <- total.costsOfDeathsAndInjuriesByDisasterType[order(-total.costsOfDeathsAndInjuriesByDisasterType$x),]
 	total.costsOfDeathsAndInjuriesByDisasterType$percentages <- total.costsOfDeathsAndInjuriesByDisasterType$x / sum(total.costsOfDeathsAndInjuriesByDisasterType$x)
-	print("Total cost of deaths and injuries by disaster type")
+
+  print("Total cost of deaths and injuries by disaster type")
 	print(total.costsOfDeathsAndInjuriesByDisasterType)
 }
 

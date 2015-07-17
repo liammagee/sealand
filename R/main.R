@@ -88,7 +88,8 @@ run <- function() {
   deathsAndInjuriesByHazardType()
   multipliersJoyVsDerived()
   costsByYearAndState()
-  costSummary()
   averageAnnualCostOfNaturalDisastersByStateAndTerritory()
+  costSummary()
+  
 }
 run()
