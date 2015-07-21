@@ -427,10 +427,12 @@ proportionOfHospitalisedInjury <- function() {
 getRawEvents <- function(resource.type.param = NULL) {
 
   events <- ecnd.database[c(
+    "id",
     "Year.financial",
     "Year",
     "title",
     "resourceType",
+    "description",
     "State.1",
     "State.abbreviated.1",
     "State.1.percent",
