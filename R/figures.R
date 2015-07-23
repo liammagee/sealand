@@ -16,6 +16,7 @@
 library(ggplot2)
 library(scales)
 library(reshape2)
+library(ggthemes)
 
 # Sources
 source("R/functions.r", TRUE)
@@ -24,8 +25,12 @@ source("R/functions.r", TRUE)
 title.size <- 0.8
 character.size <- 0.6
 graph.title.size <- 18
-axis.title.size <- 16
-axis.text.size <- 12
+axis.title.size <- 12
+axis.text.size <- 10
+
+png.width = 8
+png.height = 6
+
 # Set colours
 # Quasi-BTE
 # background <- '#F0D2AF'
@@ -88,27 +93,49 @@ standardBarChart <- function(data, file.name, title, x.label, y.label, use.years
     data$Group.1 <- factor(data$Group.1, as.character(data$Group.1))
   }
   # Calculate range from 0 to max value of costs
-  p <- ggplot(data, aes(x=Group.1, y = x)) + geom_bar(width=0.5, stat="identity", fill=foreground.color, colour=foreground.color)
-  p
+  # p <- ggplot(data, aes(x=Group.1, y = x)) +
+  #         geom_bar(width=0.5,
+  #              stat="identity",
+  #              fill=foreground.color,
+  #              colour=foreground.color,
+  #              expand = c(0,0))
+  p <- ggplot(data, aes(x=Group.1, y = x)) +
+          geom_bar(width=0.75, stat="identity")
+
   if (use.years==TRUE) {
-    x.scale <- scale_x_continuous(name = x.label, breaks = yearBreaks(data$Group.1), labels = yearLabels(data$Group.1))
+    x.scale <- scale_x_continuous(name = x.label,
+                                  breaks = yearBreaks(data$Group.1),
+                                  labels = yearLabels(data$Group.1))
   } else {
     x.scale <- xlab(x.label)
   }
-  p + ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) +
-    # scale_fill_gradient(low = "pink", high = "green") +
-    theme(plot.title = element_text(colour = title.color, lineheight=1.0, face="bold", size=graph.title.size),
-          panel.grid.minor.y=element_blank(),
-          panel.grid.major.y=element_line(colour = foreground.color),
-          panel.grid.minor.x=element_blank(),
-          panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background.color, colour = foreground.color),
-          axis.title=element_text(color=title.color, lineheight=1.0, size = axis.title.size),
-          axis.text.x=element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
-          axis.text.y=element_text(color=text.color, size = axis.text.size)
-      )
 
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)
+  p +
+      theme_tufte() +
+      # ggtitle(title) +
+      x.scale +
+      scale_y_continuous(name=y.label, labels=comma, expand = c(0,0)) +
+      theme(
+        # plot.title = element_text(colour = title.color, lineheight=1.0, face="bold", size=graph.title.size),
+        panel.grid.minor.y = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        # panel.grid.major.y = element_line(colour = foreground.color),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        # panel.background = element_rect(fill = background.color, colour = foreground.color),
+        # axis.title = element_text(color=title.color, lineheight=1.0, size = axis.title.size),
+        axis.title = element_text(lineheight=1.0, size = axis.title.size),
+        axis.title.x = element_text(size = axis.title.size, vjust = -0.25),
+        axis.title.y = element_text(size = axis.title.size, vjust = 0.5),
+        axis.line = element_line(colour = "black"),
+        # axis.text.x = element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+        # axis.text.y = element_text(color=text.color, size = axis.text.size)
+        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+        axis.text.y = element_text(size = axis.text.size
+      )
+  )
+
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""), width = png.width, height = png.height)
   return (p)
 }
 
@@ -122,28 +149,39 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
 
   # Calculate range from 0 to max value of costs
   clustered.chart <- ggplot(data, aes(x=Group.1, y = value)) +
-        geom_bar(aes(fill=variable), width=0.75,position = "dodge", stat="identity") +
-        scale_fill_manual(name="", values=c(foreground.color, text.color))
-  clustered.chart
+        geom_bar(aes(fill = variable), width=0.75, position = "dodge", stat="identity")
+        # + scale_fill_manual(name="", values=c(foreground.color, text.color))
+
   if (use.years==TRUE) {
     x.scale <- scale_x_continuous(name=x.label, breaks=yearBreaks(data$Group.1), labels = yearLabels(data$Group.1))
   } else {
     x.scale <- xlab(x.label)
   }
   # Note: title height is 0.9, due to presence of legend on clustered charts
-  clustered.chart + ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) +
-    theme(plot.title = element_text(colour = foreground.color, lineheight=1.0, face="bold", size=graph.title.size),
+  clustered.chart +
+    theme_tufte() +
+    # ggtitle(title) +
+    x.scale +
+    scale_y_continuous(name = y.label, labels = comma, expand = c(0,0)) +
+    scale_fill_manual(values = c("#333333","#FF9900")) +
+    theme(
+          # plot.title = element_text(colour = foreground.color, lineheight=1.0, face="bold", size=graph.title.size),
           panel.grid.minor.y=element_blank(),
-          panel.grid.major.y=element_line(colour = foreground.color),
+          # panel.grid.major.y=element_line(colour = foreground.color),
           panel.grid.minor.x=element_blank(),
           panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background.color, colour = foreground.color),
-          axis.title=element_text(color=text.color, lineheight=1.0, size = axis.title.size),
-          axis.text.x=element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
-          axis.text.y=element_text(color=text.color, size = axis.text.size),
-          legend.position="bottom")
+          # panel.background = element_rect(fill = background.color, colour = foreground.color),
+          axis.line = element_line(colour = "black"),
+          axis.title.x = element_text(size = axis.title.size, vjust = -0.25),
+          axis.title.y = element_text(size = axis.title.size, vjust = 0.5),
+          # axis.text.x=element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+          # axis.text.y=element_text(color=text.color, size = axis.text.size),
+          axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+          axis.text.y=element_text(size = axis.text.size),
+          legend.position="bottom",
+          legend.title = element_blank())
 
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""), width = png.width, height = png.height)
 }
 
 
@@ -425,7 +463,7 @@ australianNaturalDisasterCostsByDecade <- function() {
 		"(2013 Dollars in $millions)",
     FALSE
 		)
-  
+
   # Percentage of Newcastle earthquake event
   cost.nineties <- total.costs.by.decade[4,2]
 	cost.newcastle.earthquake <- total.costs[total.costs$id == "58",]$Reported.Cost.normalised.millions
@@ -866,7 +904,7 @@ totalAndInsuranceCostsByDisasterType <- function() {
   total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
   total.costs.by.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
   total.costs.by.disaster.type <- total.costs.by.disaster.type[with(total.costs.by.disaster.type, order(-x)), ]
-  
+
   insuredCostsByDisasterType <- with(total.costs, aggregate(Insured.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
   insuredCostsByDisasterType <- insuredCostsByDisasterType[with(insuredCostsByDisasterType, order(-x)), ]
   merged.costs <- merge(total.costs.by.disaster.type, insuredCostsByDisasterType, by="Group.1", all.x = TRUE)
@@ -1044,16 +1082,16 @@ annualNumberOfFloodsInAustralia <- function() {
 	print(res)
 	summary(res)
   # plot(merged.costsCounts[,c(1,4)])
-	
+
 	# Total number of floods
 	print("Total number of floods")
 	print(sum(numberByYear$x))
-	
-	
+
+
 	# Average number of floods
 	print("Average number of floods")
 	print(mean(numberByYear$x))
-	
+
 	top10FloodsByCount <- head(numberByYear[order(-numberByYear$x),], 10)
 	print("Top 10 Floods Years by Count")
 	print(top10FloodsByCount)
@@ -1091,14 +1129,14 @@ annualCostOfSevereStormsByDecade <- function() {
 	print("Significance test for cost of floods by year")
 	print(res)
 	summary(res)
-  
+
   # Remove top events
 	top3 <- head(total.costs[order(-total.costs$Reported.Cost.normalised.millions),], n = 3)
   len <- length(total.costs[,1])
 	total.costs.minus.top.events <- tail(total.costs[order(-total.costs$Reported.Cost.normalised.millions),], n = len - 2)
 	total.costs.by.year.minus.top.events <- with(total.costs.minus.top.events, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
 	total.costs.by.year.minus.top.events <- includeAllYears(total.costs.by.year.minus.top.events)
-		
+
 	# Run the significance test
 	res <- significanceTest_MannKendall(total.costs.by.year.minus.top.events)
 	print("Significance test for cost of floods by year, minus top 1 event")
@@ -1250,7 +1288,7 @@ annualNumberOfCyclonesCausingMoreThan10MillionDamageInAustralia <- function() {
 	# Maximu number of cyclones
 	print("Year with maximum number of cyclones")
 	print(max(numberByYear$x))
-		
+
 	print("Average number of cyclones")
 	print(mean(numberByYear$x))
 	print("Average annual cost of cyclones since 1999")
@@ -1270,10 +1308,10 @@ totalCostOfEarthquakesByDecade <- function() {
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Earthquake", reported.costs.only = TRUE, no.heatwaves = FALSE)
 	total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
 	total.costs.by.year <- includeAllYears(total.costs.by.year)
-	
+
 	print("Total cost of earthquakes")
 	print(sum(total.costs.by.year$x))
-	
+
 	# Filter by decade
 	decades <- unique(floor(total.costs$Year.financial / 10)) * 10
 	total.costs.by.decade <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(floor(Year.financial / 10)), FUN=safeSum))
@@ -1524,25 +1562,40 @@ costOfDeathsAndInjuries <- function() {
 
   print("Total cost of deaths and injuries by disaster type")
 	print(total.costsOfDeathsAndInjuriesByDisasterType)
-	
+
 	total.costs.by.disaster.type <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(resourceType), FUN=safeSum))
 	total.costs.by.disaster.type <- total.costs.by.disaster.type[order(-total.costs.by.disaster.type$x),]
 	total.costs.by.disaster.type.merged <- merge(total.costsOfDeathsAndInjuriesByDisasterType, total.costs.by.disaster.type, by="Group.1", all.x = TRUE)
 	total.costs.by.disaster.type.merged$proportion <- total.costs.by.disaster.type.merged$x.x / total.costs.by.disaster.type.merged$x.y
-  
+
 	print("Total cost of deaths and injuries by disaster type, as proportions of total costs")
 	print(total.costs.by.disaster.type.merged)
-	
-	
+
+
 	total.costs.full <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
 	total.costs.full.by.year <- with(total.costs.full, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
 	total.costs.full.by.year <- includeAllYears(total.costs.full.by.year)
   total.costs.incl.deaths.and.injuries <- sum(total.costs.full.by.year$x)
 	total.costs.excl.deaths.and.injuries <- total.costs.incl.deaths.and.injuries - total.cost.of.deaths.and.injuries
-  
+
+	print("Total costs inclusive of deaths and injuries")
+	print(total.costs.incl.deaths.and.injuries)
+
+	print("Total costs exclusive of deaths and injuries")
+	print(total.costs.excl.deaths.and.injuries)
+
+	print("Min and max proportions of deaths and injuries to total costs (inclusive)")
+  merged.costs <- merge(total.costs.by.year, total.costs.full.by.year, by = "Group.1", all.x = TRUE)
+	merged.costs$percentages <- merged.costs$x.x / merged.costs$x.y
+	print(min(merged.costs$percentages))
+	print(max(merged.costs$percentages))
+	print(mean(merged.costs$percentages))
+
+
+
   print("Costs of deaths and injuries as a proportion of total costs (inclusive)")
 	print(total.cost.of.deaths.and.injuries / total.costs.incl.deaths.and.injuries)
-	
+
 	print("Costs of deaths and injuries as a proportion of total costs (exclusive)")
 	print(total.cost.of.deaths.and.injuries / total.costs.excl.deaths.and.injuries)
 }
@@ -1610,6 +1663,7 @@ totalCostOfNaturalDisasters <- function() {
   print("Top 3 years by Cost (incl. deaths and injuries)")
   print(top3Years)
 
+
   bottom3Years <- head(total.costs.by.year[order(total.costs.by.year$x),], 3)
   print("Bottom 3 years by Cost (incl. deaths and injuries)")
   print(bottom3Years)
@@ -1618,11 +1672,18 @@ totalCostOfNaturalDisasters <- function() {
   print(top3Years[1,2] / bottom3Years[1,2])
 
   # Exclude 3 biggest years
-  total.costsTop3 <- head(total.costs[order(-total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions),], n = 3)
-  total.costsMinusTop3 <- tail(total.costs[order(-total.costs$Reported.Cost.WithDeathsAndInjuries.normalised.millions),], n = -3)
+  total.costsTop3 <- head(total.costs[order(-total.costs$deathAndInjuryCosts.normalised.millions),], n = 3)
+  total.costsMinusTop3 <- tail(total.costs[order(-total.costs$deathAndInjuryCosts.normalised.millions),], n = -3)
   total.costs.by.yearMinusTop3 <- with(total.costsMinusTop3, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
+
   print("Average annual cost of all disasters (incl. deaths and injuries) MINUS TOP 3")
   print(mean(total.costs.by.yearMinusTop3$x))
+
+  print("Standard deviation of annual cost of all disasters (incl. deaths and injuries)")
+  print(sd(total.costs.by.yearMinusTop3$x))
+
+  print("Maximum annual cost of all disasters (incl. deaths and injuries)")
+  print(total.costs.by.yearMinusTop3[total.costs.by.yearMinusTop3$x == max(total.costs.by.yearMinusTop3$x),])
 
   # Test
   resMK <- significanceTest_MannKendall(total.costs.by.year)

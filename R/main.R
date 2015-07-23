@@ -1,4 +1,12 @@
 
+# Install dependencies
+.pkgs = c("gdata", "reshape2", "scales", "ggplot2", "ggthemes")
+
+# Install required packages from CRAN (if not)
+.inst <- .pkgs %in% installed.packages()
+if(length(.pkgs[!.inst]) > 0) install.packages(.pkgs[!.inst])
+
+
 # Imports
 library(gdata)
 library(reshape2)
@@ -15,7 +23,7 @@ database.file = "./data/database_11072015.xlsx"
 initialise <- function(database.file) {
   # Hack to clear the console - http://stackoverflow.com/questions/14260340/function-to-clear-the-console-in-r
   cat("\014")
-  
+
   # Load the data
   loadData(database.file)
 
@@ -28,7 +36,7 @@ run <- function() {
   # Set up global options
   useStateNormalisations(FALSE)
   useHeatwaves(TRUE)
-  
+
   # Clear the main data object
   if (exists("ecnd.database")) {
     rm(ecnd.database)
@@ -90,6 +98,6 @@ run <- function() {
   costsByYearAndState()
   averageAnnualCostOfNaturalDisastersByStateAndTerritory()
   costSummary()
-  
+
 }
 run()
