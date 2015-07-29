@@ -71,7 +71,7 @@ saCosts <- function() {
 }
 
 # Generate
-run <- function() {
+runAdHoc <- function() {
   # Set up global options
   useStateNormalisations(FALSE)
   useHeatwaves(TRUE)
@@ -79,4 +79,4 @@ run <- function() {
   saCosts()
 
 }
-run()
+runAdHoc()
