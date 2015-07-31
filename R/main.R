@@ -98,6 +98,5 @@ run <- function() {
   costsByYearAndState()
   averageAnnualCostOfNaturalDisastersByStateAndTerritory()
   costSummary()
-
 }
 run()

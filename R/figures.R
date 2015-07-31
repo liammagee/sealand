@@ -131,11 +131,13 @@ standardBarChart <- function(data, file.name, title, x.label, y.label, use.years
         # axis.text.x = element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
         # axis.text.y = element_text(color=text.color, size = axis.text.size)
         axis.text.x = element_text(angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
-        axis.text.y = element_text(size = axis.text.size
-      )
-  )
+        axis.text.y = element_text(size = axis.text.size)
+    )
 
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""), width = png.width, height = png.height)
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""),
+      width = png.width,
+      height = png.height
+    )
   return (p)
 }
 
@@ -181,7 +183,10 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
           legend.position="bottom",
           legend.title = element_blank())
 
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""), width = png.width, height = png.height)
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""),
+    width = png.width,
+    height = png.height
+  )
 }
 
 
@@ -203,7 +208,10 @@ standardPieChart <- function(data, file.name, title) {
   p = p + ggtitle(title)
   p
 
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""),
+    width = png.width,
+    height = png.height
+  )
 }
 
 
@@ -298,7 +306,7 @@ totalCostsOfDisastersInAustralia <- function() {
   data <- total.costs.normalised
   title <- "FIGURE 3.0: TOTAL COST OF DISASTERS, 1967-2013"
   x.label <- "Years (financial)"
-  y.label <- "(2013 Dollars in $millions)"
+  y.label <- "2013 Dollars in $millions"
   # Graph the results
   standardBarChart(total.costs.normalised,
                    "fig3_0_total_costs_of_disasters_in_australia",
@@ -417,7 +425,7 @@ annualTotalCostsOfDisastersInAustralia <- function() {
   data <- total.costs.by.year
   title <- "FIGURE 3.1: ANNUAL TOTAL COST OF DISASTERS, 1967-2013"
   x.label <- "Years (financial)"
-  y.label <- "(2013 Dollars in $millions)"
+  y.label <- "2013 Dollars in $millions"
 
   # Graph the results
   standardBarChart(total.costs.by.year,
@@ -436,7 +444,7 @@ annualTotalCostsOfDisastersInAustralia <- function() {
     "fig3_1_annual_total_costs_of_disasters_in_australia_incl_deaths_injuries",
     "FIGURE 3.1: ANNUAL TOTAL COST OF DISASTERS, 1967-2013",
     "Years (financial)",
-    "(2013 Dollars in $millions)",
+    "2013 Dollars in $millions",
     TRUE
     )
 }
@@ -460,7 +468,7 @@ australianNaturalDisasterCostsByDecade <- function() {
 		"fig3_2_australian_natural_disaster_costs_by_decade",
 		"FIGURE 3.2: AUSTRALIAN NATURAL DISASTER COSTS BY DECADE, 1967-2013",
 		"Decades",
-		"(2013 Dollars in $millions)",
+		"2013 Dollars in $millions",
     FALSE
 		)
 
@@ -483,7 +491,7 @@ averageCostPerEvent <- function() {
 		"fig3_3_average_cost_per_event",
 		"FIGURE 3.3: AVERAGE COST PER EVENT, 1967-2013",
 		"Years (financial)",
-		"(2013 Dollars in $millions)"
+		"2013 Dollars in $millions"
 		)
 
 	# Run the significance test
@@ -507,20 +515,20 @@ distributionOfDisasters <- function() {
 	total.cost.distribution.percentages$percentage <- total.cost.distribution.percentages$x / sum(total.cost.distribution.percentages$x)
 	total.cost.distribution.costs$Group.1 <- codeCostLabels()[total.cost.distribution.costs$Group.1]
 	total.cost.distribution.costs$percentage <- total.cost.distribution.costs$x / sum(total.cost.distribution.costs$x)
-	
-	
+
+
   # Print table of cost distributions, using BTE 1999 brackets
   print("Distribution of normalised reported costs, by frequency")
 	print(total.cost.distribution.percentages)
-	
+
 	# Print table of cost distributions, using BTE 1999 brackets
 	print("Distribution of normalised reported costs, by cost")
 	print(total.cost.distribution.costs)
-	
-	
+
+
 	standardBarChart(total.cost.distribution,
 		"fig3_4_distribution_of_disasters",
-		"FIGURE 3.4: DISTRIBUTION OF DISASTERS (FREQUENCY) BY COSTS, 1967-2013",
+		"FIGURE 3.4: DISTRIBUTION OF DISASTERS (FREQUENCY) BY NORMALISED COSTS, 1967-2013",
 		"Cost distributions",
 		"Frequency",
     FALSE
@@ -537,7 +545,7 @@ annualInsuranceCostOfDisasters <- function() {
 		"fig3_5_annual_insurance_costs_of_disasters_in_australia",
 		"FIGURE 3.5: ANNUAL INSURANCE COSTS OF DISASTERS, 1967-2013",
 		"Years (financial)",
-		"(2013 Dollars in $millions)"
+		"2013 Dollars in $millions"
 		)
 
 	print("Total insurance cost of all disasters")
@@ -652,18 +660,29 @@ numberOfDisastersPerMillionPeople <- function() {
   # Calculate range from 0 to max value of costs
   p <- ggplot(mergedCounts, aes(x=Group.1, y = popRatios)) + geom_point(colour = foreground.color, size = 4) +
     geom_smooth(method="lm", fill=NA, colour = "#000000")
-  p + ggtitle(title) + scale_x_continuous(name=x.label, breaks=yearBreaks(mergedCounts$Group.1)) + scale_y_continuous(name=y.label, labels=comma) +
-    theme(plot.title = element_text(colour = foreground.color, lineheight=.8, face="bold"),
-          panel.grid.minor.y=element_blank(),
-          panel.grid.major.y=element_line(colour = foreground.color),
-          panel.grid.minor.x=element_blank(),
-          panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background.color, colour = foreground.color),
-          axis.title=element_text(color=title.color),
-          axis.text.x=element_text(color=text.color, size = axis.text.size, angle=45, vjust=1.0, hjust=1.0),
-          axis.text.y=element_text(color=text.color, size = axis.text.size))
+  p + theme_tufte() +
+      ggtitle(title) +
+      scale_x_continuous(name = x.label, breaks = yearBreaks(mergedCounts$Group.1)) +
+      scale_y_continuous(name = y.label, labels = comma) +
+      theme(
+        # plot.title = element_text(colour = foreground.color, lineheight=.8, face="bold"),
+        panel.grid.minor.y = element_blank(),
+        # panel.grid.major.y=element_line(colour = foreground.color),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        # panel.background = element_rect(fill = background.color, colour = foreground.color),
+        axis.title = element_text(lineheight=1.0, size = axis.title.size),
+        axis.title.x = element_text(size = axis.title.size, vjust = -0.25),
+        axis.title.y = element_text(size = axis.title.size, vjust = 0.5),
+        axis.line = element_line(colour = "black"),
+        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+        axis.text.y = element_text(size = axis.text.size)
+      )
 
-  ggsave(file=paste("./figs/fig3_9_number_of_disasters_per_million_people.png", sep=""), units = "cm", width = 32, height = 24)
+  ggsave(file=paste("./figs/fig3_9_number_of_disasters_per_million_people.png", sep=""),
+      width = png.width,
+      height = png.height
+  )
 
   # Show regression
   print("Regression fit for ratio of number of events to population")
@@ -717,14 +736,14 @@ disasterCostsByStateAndTerritory <- function() {
 	# Cache variables
 	data <- total.costs.by.state
 	x.label <- "States"
-	y.label <- "(2013 Dollars in $millions)"
+	y.label <- "2013 Dollars in $millions"
 	title <- "FIGURE 3.10: DISASTER COSTS BY STATE AND TERRITORY"
 
   standardBarChart(total.costs.by.state,
 		"fig3_10_disaster_costs_by_state_and_territory",
 		"FIGURE 3.10: DISASTER COSTS BY STATE AND TERRITORY",
 		"States",
-		"(2013 Dollars in $millions)",
+		"2013 Dollars in $millions",
     FALSE
 		)
 
@@ -832,10 +851,10 @@ numberOfDisasterEventsByStateAndTerritory <- function() {
 
   print("Combined percentage of top 2 states by frequency")
   print(sum(head(totalCountsByState$totalCountsPercentages, 2)))
-  
+
   print("Combined percentage of top 3 states by frequency")
   print(sum(head(totalCountsByState$totalCountsPercentages, 3)))
-  
+
 }
 
 
@@ -880,35 +899,62 @@ costsByTypeOfDisasterAndStateAndTerritory <- function() {
   # Integrated pie chart
   totals.with.state.aggregates$total.neg = factor(-totals.with.state.aggregates$Total, labels = unique(totals.with.state.aggregates$Group.1))
 
-  p = ggplot(data = totals.with.state.aggregates, aes(x = factor(1), y = percentage, fill = factor(Group.2)))
-  p = p + scale_fill_manual(values=cbPalette)
-  p = p + geom_bar(width = 1, stat = "identity")
-  p = p + facet_wrap(~ total.neg, ncol=2)
-  p = p + coord_polar(theta="y")
-  p = p + theme(axis.ticks = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank())
-  p = p + xlab('') + ylab('') + labs(fill = 'Disaster Type')
+  p <- ggplot(data = totals.with.state.aggregates, aes(x = factor(1), y = percentage, fill = factor(Group.2)))
+  p <- p + theme_tufte()
+  p <- p + scale_fill_manual(values = cbPalette)
+  p <- p + geom_bar(width = 1, stat = "identity")
+  p <- p + facet_wrap(~ total.neg, ncol = 4)
+  p <- p + coord_polar(theta = "y")
+  p <- p + theme(axis.ticks = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank())
+  p <- p + xlab('') + ylab('') + labs(fill = 'Disaster Type')
+  p <- p + theme(
+        # # plot.title = element_text(colour = title.color, lineheight=1.0, face="bold", size=graph.title.size),
+        # panel.grid.minor.y = element_blank(),
+        # # panel.grid.major.y = element_blank(),
+        # # panel.grid.major.y = element_line(colour = foreground.color),
+        # panel.grid.minor.x = element_blank(),
+        # panel.grid.major.x = element_blank(),
+        # # panel.background = element_rect(fill = background.color, colour = foreground.color),
+        # # axis.title = element_text(color=title.color, lineheight=1.0, size = axis.title.size),
+        # axis.title = element_text(lineheight=1.0, size = axis.title.size),
+        # axis.title.x = element_text(size = axis.title.size, vjust = -0.25),
+        # axis.title.y = element_text(size = axis.title.size, vjust = 0.5),
+        # axis.line = element_line(colour = "black"),
+        # # axis.text.x = element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+        # # axis.text.y = element_text(color=text.color, size = axis.text.size)
+        # axis.text.x = element_text(angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+        # axis.text.y = element_text(size = axis.text.size)
+      )
   #p = p + annotate(geom = "text", label = label)
-  p
 
-  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory", ".png", sep=""), units = "cm", width = 32, height = 24)
+  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory", ".png", sep=""),
+      width = png.width,
+      height = png.height
+  )
 
   # Stacked bar chart version
-  p = ggplot(data = totals.with.state.aggregates, aes(x = Group.1, y = x, fill = factor(Group.2)))
-  p = p + scale_fill_manual(values=cbPalette)
-  p = p + geom_bar(width = 0.5, stat = "identity")
-  p = p + facet_wrap(~ total.neg, ncol=2)
-  p = p + coord_polar(theta="y")
-  p = p + theme(axis.ticks = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank())
-  p = p + xlab('States') + ylab('(2013 Dollars in $millions)') + labs(fill = 'Disaster Type')
-  p
-  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked", ".png", sep=""), units = "cm", width = 32, height = 24)
+  p <- ggplot(data = totals.with.state.aggregates, aes(x = Group.1, y = x, fill = factor(Group.2)))
+  p <- p + theme_tufte()
+  p <- p + scale_fill_manual(values = cbPalette)
+  p <- p + geom_bar(width = 0.5, stat = "identity")
+  p <- p + facet_wrap(~ total.neg, ncol=2)
+  p <- p + coord_polar(theta="y")
+  p <- p + theme(axis.ticks = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank())
+  p <- p + xlab('States') + ylab('Proportion of Total Disasters') + labs(fill = 'Disaster Type')
+  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked", ".png", sep=""),
+    width = png.width,
+    height = png.height
+  )
 
-  p = ggplot(data = totals.with.state.aggregates, aes(x = Group.1, y = percentage, fill = factor(Group.2)))
-  p = p + scale_fill_manual(values=cbPalette)
-  p = p + geom_bar(width = 0.5, stat = "identity")
-  p = p + xlab('States') + ylab('(2013 Dollars in $millions)') + labs(fill = 'Disaster Type')
-  p
-  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked_percent", ".png", sep=""), units = "cm", width = 32, height = 24)
+  p <- ggplot(data = totals.with.state.aggregates, aes(x = Group.1, y = percentage, fill = factor(Group.2)))
+  p <- p + theme_tufte()
+  p <- p + scale_fill_manual(values = cbPalette)
+  p <- p + geom_bar(width = 0.5, stat = "identity")
+  p <- p + xlab('States') + ylab('2013 Dollars in $millions') + labs(fill = 'Disaster Type')
+  ggsave(file=paste("./figs/", "fig3_12_costs_by_type_of_disaster_and_state_and_territory_stacked_percent", ".png", sep=""),
+    width = png.width,
+    height = png.height
+  )
 }
 
 
@@ -931,7 +977,7 @@ totalAndInsuranceCostsByDisasterType <- function() {
 		"fig3_13_total_and_insurance_costs_by_disaster_type",
 		"FIGURE 3.13: TOTAL AND INSURANCE COSTS BY DISASTER TYPE, 1967-2013",
 		"Disaster Type",
-		"(2013 Dollars in $millions)",
+		"2013 Dollars in $millions",
     FALSE
 		)
 
@@ -943,33 +989,33 @@ totalAndInsuranceCostsByDisasterType <- function() {
   print("Combined percentage of top 3 disaster types")
   total.costs.by.disaster.type.top.3 <- sum(head(total.costs.by.disaster.type[order(-total.costs.by.disaster.type$percentages),]$percentages, 3))
   print(total.costs.by.disaster.type.top.3)
-  
+
   print("Combined percentage of top 4 disaster types")
   total.costs.by.disaster.type.top.4 <- sum(head(total.costs.by.disaster.type[order(-total.costs.by.disaster.type$percentages),]$percentages, 4))
   print(total.costs.by.disaster.type.top.4)
-    
+
   # Test for the inclusion of deaths and injuries
   total.costs.by.disaster.type.WithDeathsAndInjuries <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(resourceType), FUN=safeSum))
   total.costs.by.disaster.type.WithDeathsAndInjuries <- total.costs.by.disaster.type.WithDeathsAndInjuries[with(total.costs.by.disaster.type.WithDeathsAndInjuries, order(-x)), ]
   total.costs.by.disaster.type.WithDeathsAndInjuries$percentages <- data.frame(total.costs.by.disaster.type.WithDeathsAndInjuries$x / (sum(total.costs.by.disaster.type.WithDeathsAndInjuries$x)))
-  
+
   print("Percentages of disaster type, with deaths and injuries included")
   print(total.costs.by.disaster.type.WithDeathsAndInjuries)
-  
+
   print("Combined percentage of top 3 events with deaths and injuries included")
   total.costs.by.disaster.type.incl.deathss.top.3 <- sum(head(total.costs.by.disaster.type.WithDeathsAndInjuries[order(-total.costs.by.disaster.type.WithDeathsAndInjuries$percentages),]$percentages, 3))
   print(total.costs.by.disaster.type.incl.deathss.top.3)
 
-  
+
   # Test for just deaths and injuries
   total.costs.by.disaster.type.deaths.injuries <- with(total.costs, aggregate(deathAndInjuryCosts.normalised.millions, by=list(resourceType), FUN=safeSum))
   total.costs.by.disaster.type.deaths.injuries <- total.costs.by.disaster.type.deaths.injuries[with(total.costs.by.disaster.type.deaths.injuries, order(-x)), ]
   total.costs.by.disaster.type.deaths.injuries$percentages <- data.frame(total.costs.by.disaster.type.deaths.injuries$x / (sum(total.costs.by.disaster.type.deaths.injuries$x)))
-  
+
   print("Percentages of disaster type, with deaths and injuries included")
   print(total.costs.by.disaster.type.deaths.injuries)
-  
-  
+
+
   # Show major events by disaster type
   sortedByTypeAndCost <- total.costs[with(total.costs,order(resourceType, -Reported.Cost.normalised.millions)),]
   sortedByTypeAndCost <- with(sortedByTypeAndCost, data.frame(resourceType, title, Year, Year.financial, Reported.Cost.normalised.millions))
@@ -1004,11 +1050,11 @@ numberOfEventsByDisasterType <- function() {
   print("Combined percentage of top 3 disaster types, in frequencies")
   total.number.by.disaster.type.top.3 <- sum(head(totalCountsByDisasterType[order(-totalCountsByDisasterType$percentages),]$percentages, 3))
   print(total.number.by.disaster.type.top.3)
-  
+
   print("Combined percentage of top 4 disaster types, in frequencies")
   total.number.by.disaster.type.top.4 <- sum(head(totalCountsByDisasterType[order(-totalCountsByDisasterType$percentages),]$percentages, 4))
   print(total.number.by.disaster.type.top.4)
-  
+
   # Test for the inclusion of deaths and injuries
   totalCountsByDisasterType.WithDeathsAndInjuries <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(resourceType), FUN=length))
   totalCountsByDisasterType.WithDeathsAndInjuries <- totalCountsByDisasterType.WithDeathsAndInjuries[with(totalCountsByDisasterType.WithDeathsAndInjuries, order(-x)), ]
@@ -1035,7 +1081,7 @@ annualCostOfFloodsInAustralia <- function() {
 		"fig3_15_annual_cost_of_floods_in_australia",
 		"FIGURE 3.15: ANNUAL TOTAL COSTS OF FLOODS, 1967-2013",
 		"Years (financial)",
-		"(2013 Dollars in $millions)"
+		"2013 Dollars in $millions"
 		)
 
   # Show key statistics
@@ -1074,7 +1120,7 @@ totalCostOfFloodsByDecade <- function() {
 		"fig3_16_australian_flood_costs_by_decade",
 		"FIGURE 3.16: AUSTRALIAN FLOOD COSTS BY DECADE, 1967-2013",
 		"Decades",
-		"(2013 Dollars in $millions)",
+		"2013 Dollars in $millions",
     FALSE
 		)
 
@@ -1144,7 +1190,7 @@ annualCostOfSevereStormsByDecade <- function() {
 		"fig3_18_annual_cost_of_severe_storms_in_australia",
 		"FIGURE 3.18: ANNUAL TOTAL COSTS OF SEVERE STORMS, 1967-2013",
 		"Years (financial)",
-		"(2013 Dollars in $millions)"
+		"2013 Dollars in $millions"
 		)
 
 	# Show key statistics
@@ -1196,7 +1242,7 @@ totalCostOfSevereStormsByDecade <- function() {
 		"fig3_19_australian_severe_storm_costs_by_decade",
 		"FIGURE 3.19: AUSTRALIAN SEVERE STORM COSTS BY DECADE, 1967-2013",
 		"Decades",
-		"(2013 Dollars in $millions)",
+		"2013 Dollars in $millions",
     FALSE
 		)
 }
@@ -1249,7 +1295,7 @@ annualCostOfCyclonesInAustralia <- function() {
 		"fig3_21_annual_cost_of_cyclone_in_australia",
 		"FIGURE 3.21: ANNUAL TOTAL COSTS OF CYCLONES, 1967-2013",
 		"Years (financial)",
-		"(2013 Dollars in $millions)"
+		"2013 Dollars in $millions"
 		)
 
 
@@ -1294,7 +1340,7 @@ totalCostOfCyclonesByDecade <- function() {
 		"fig3_22_australian_cyclone_costs_by_decade",
 		"FIGURE 3.22: AUSTRALIAN CYCLONES COSTS BY DECADE, 1967-2013",
 		"Decades",
-		"(2013 Dollars in $millions)",
+		"2013 Dollars in $millions",
     FALSE
 		)
 }
@@ -1364,7 +1410,7 @@ totalCostOfEarthquakesByDecade <- function() {
 		"fig3_24_australian_earthquake_costs_by_decade",
 		"FIGURE 3.24: AUSTRALIAN EARTHQUAKE COSTS BY DECADE, 1967-2013",
 		"Decades",
-		"(2013 Dollars in $millions)",
+		"2013 Dollars in $millions",
     FALSE
 		)
 
@@ -1388,7 +1434,7 @@ annualCostOfBushfiresInAustralia <- function() {
 		"fig3_25_annual_cost_of_bushfire_in_australia",
 		"FIGURE 3.25: ANNUAL TOTAL COSTS OF BUSHFIRES, 1967-2013",
 		"Years (financial)",
-		"(2013 Dollars in $millions)"
+		"2013 Dollars in $millions"
 		)
 
 
@@ -1421,7 +1467,7 @@ totalCostOfBushfiresByDecade <- function() {
 		"fig3_26_australian_bushfire_costs_by_decade",
 		"FIGURE 3.26: AUSTRALIAN BUSHFIRE COSTS BY DECADE, 1967-2013",
 		"Decades",
-		"(2013 Dollars in $millions)",
+		"2013 Dollars in $millions",
     FALSE
 		)
 }
@@ -1544,7 +1590,7 @@ numberOfDeathsByDecade <- function() {
     "fig3_30_number_of_deaths_by_decade",
     "FIGURE 3.30: COST OF DEATHS BY NATURAL DISASTERS BY DECADE, 1967-2013",
     "Decades",
-    "(2013 Dollars in $millions)",
+    "2013 Dollars in $millions",
     FALSE
     )
 
@@ -1580,7 +1626,7 @@ costOfDeathsAndInjuries <- function() {
 		"fig3_31_cost_of_deaths_and_injuries",
 		"FIGURE 3.31: COST OF DEATH AND INJURIES BY NATURAL DISASTERS, 1967-2013",
 		"Years (financial)",
-		"(2013 Dollars in $millions)"
+		"2013 Dollars in $millions"
 		)
 
 	print("Average annual cost of deaths and injuries")
@@ -1651,7 +1697,7 @@ costOfDeathsAndInjuriesByDecade <- function() {
 		"fig3_32_cost_of_deaths_and_injuries_by_decade",
 		"FIGURE 3.32: COST OF DEATHS AND INJURIES BY DECADE, 1967-2013",
 		"Decades",
-		"(2013 Dollars in $millions)",
+		"2013 Dollars in $millions",
     FALSE
 		)
 }
@@ -1668,7 +1714,7 @@ totalCostOfNaturalDisasters <- function() {
                    "fig3_33_total_cost_of_natural_disasters",
                    "FIGURE 3.33: TOTAL COSTS OF DISASTERS, 1967-2013",
                    "Years (financial)",
-                   "(2013 Dollars in $millions)"
+                   "2013 Dollars in $millions"
   )
 
   # Show key statistics
@@ -1749,7 +1795,7 @@ totalCostOfNaturalDisastersByDecade <- function() {
                    "fig3_34_total_cost_of_natural_disasters_by_decade",
                    "FIGURE 3.34: TOTAL COST OF NATURAL DISASTERS BY DECADE, 1967-2013",
                    "Decades",
-                   "(2013 Dollars in $millions)",
+                   "2013 Dollars in $millions",
                    FALSE
   )
 }
@@ -1765,7 +1811,7 @@ totalCostOfNaturalDisastersSynthetic <- function() {
                    "fig3_35_total_cost_of_natural_disasters_synthetic",
                    "FIGURE 3.35: TOTAL COSTS (SYNTHETIC) OF DISASTERS, 1967-2013",
                    "Years (financial)",
-                   "(2013 Dollars in $millions)"
+                   "2013 Dollars in $millions"
   )
 
   # Show key statistics
@@ -1837,7 +1883,7 @@ totalCostOfNaturalDisastersByDecadeSynthetic <- function() {
                    "fig3_36_total_cost_of_natural_disasters_by_decade_synthetic",
                    "FIGURE 3.36: TOTAL COST (SYNTHETIC) OF NATURAL DISASTERS BY DECADE, 1967-2013",
                    "Decades",
-                   "(2013 Dollars in $millions)",
+                   "2013 Dollars in $millions",
                    FALSE
   )
 }
@@ -1943,7 +1989,7 @@ totalCostsRawIndexedNormalised <- function() {
   file.name <- "fig3_40_total_costs_raw_indexed_normalised"
   title <- "FIGURE 3.40: TOTAL COSTS - RAW vs INDEXED vs NORMALISED, 1967-2013"
   x.label <- "Years (financial)"
-  y.label <- "(2013 Dollars in $millions)"
+  y.label <- "2013 Dollars in $millions"
   use.years <- TRUE
 
 
@@ -1951,24 +1997,35 @@ totalCostsRawIndexedNormalised <- function() {
   x.scale <- scale_x_continuous(name = x.label, breaks = yearBreaks(data$Group.1), labels = yearLabels(data$Group.1))
   # p <- ggplot(data=data, aes(x=Group.1, y = x, group = Cost.Type, colour=Cost.Type)) +
   p <- ggplot(data=data, aes(x=Group.1, y = x, group = Cost.Type)) +
-    geom_line(aes(linetype=Cost.Type), size = 1.0) +
-    ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) +
-    # scale_colour_manual(values = palette())  +
-    theme(plot.title = element_text(colour = foreground.color, lineheight=.8, face="bold"),
-          panel.grid.minor.y=element_blank(),
-          panel.grid.major.y=element_line(colour = foreground.color),
-          panel.grid.minor.x=element_blank(),
-          panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background.color, colour = foreground.color),
-          axis.title=element_text(color=title.color),
-          axis.text.x=element_text(color=text.color, size = axis.text.size, angle=45, vjust=1.0, hjust=1.0),
-          axis.text.y=element_text(color=text.color, size = axis.text.size))
+      theme_tufte() +
+      geom_line(aes(linetype=Cost.Type), size = 1.0) +
+      ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) +
+      # scale_colour_manual(values = palette())  +
+      theme(
+        # plot.title = element_text(colour = title.color, lineheight=1.0, face="bold", size=graph.title.size),
+        panel.grid.minor.y = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        # panel.grid.major.y = element_line(colour = foreground.color),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        # panel.background = element_rect(fill = background.color, colour = foreground.color),
+        # axis.title = element_text(color=title.color, lineheight=1.0, size = axis.title.size),
+        axis.title = element_text(lineheight=1.0, size = axis.title.size),
+        axis.title.x = element_text(size = axis.title.size, vjust = -0.25),
+        axis.title.y = element_text(size = axis.title.size, vjust = 0.5),
+        axis.line = element_line(colour = "black"),
+        # axis.text.x = element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+        # axis.text.y = element_text(color=text.color, size = axis.text.size)
+        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+        axis.text.y = element_text(size = axis.text.size)
+    )
   p
 
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""), units = "cm", width = 32, height = 24)
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""),
+    width = png.width,
+    height = png.height
+  )
 }
-
-
 
 
 ## Generate Figure 3.41
@@ -1982,7 +2039,7 @@ totalAverageCostsNationallyAndByState <- function() {
   data <- averageCostsByYear
   title <- "FIGURE 3.41: ANNUAL AVERAGE COST OF DISASTERS, 1967-2013"
   x.label <- "Years (financial)"
-  y.label <- "(2013 Dollars in $millions)"
+  y.label <- "2013 Dollars in $millions"
 
   # Graph the results
   standardBarChart(averageCostsByYear,
@@ -2019,7 +2076,7 @@ totalCostsQldNswVic <- function(start.at.year = 1967) {
   file.name <- "fig3_42_total_costs_qld_nsw_vic"
   title <- "FIGURE 3.42: TOTAL COSTS - QLD vs NSW vs VIC, 1967-2013"
   x.label <- "Years (financial)"
-  y.label <- "(2013 Dollars in $millions)"
+  y.label <- "2013 Dollars in $millions"
   use.years <- TRUE
 
   # Set colours
@@ -2032,22 +2089,35 @@ totalCostsQldNswVic <- function(start.at.year = 1967) {
   x.scale <- scale_x_continuous(name = x.label, breaks = yearBreaks(data$Group.2), labels = yearLabels(data$Group.2))
   # p <- ggplot(data=total.costs.by.state, aes(x=Group.2, y = x, group = Group.1, color = Group.1)) +
   p <- ggplot(data=total.costs.by.state, aes(x=Group.2, y = x, group = Group.1)) +
+      theme_tufte() +
     geom_line(aes(linetype=Group.1), size = 1.0) +
     # geom_line() +
     ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) +
-    # scale_colour_manual(values = palette())  +
-    theme(plot.title = element_text(colour = foreground.color, lineheight=.8, face="bold"),
-          panel.grid.minor.y=element_blank(),
-          panel.grid.major.y=element_line(colour = foreground.color),
-          panel.grid.minor.x=element_blank(),
-          panel.grid.major.x=element_blank(),
-          panel.background = element_rect(fill = background.color, colour = foreground.color),
-          axis.title=element_text(color=text.color),
-          axis.text.x=element_text(color=text.color, size = axis.text.size, angle=45, vjust=1.0, hjust=1.0),
-          axis.text.y=element_text(color=text.color, size = axis.text.size))
+    # scale_colour_manual(values = palette()) +
+    theme(
+        # plot.title = element_text(colour = title.color, lineheight=1.0, face="bold", size=graph.title.size),
+        panel.grid.minor.y = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        # panel.grid.major.y = element_line(colour = foreground.color),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        # panel.background = element_rect(fill = background.color, colour = foreground.color),
+        # axis.title = element_text(color=title.color, lineheight=1.0, size = axis.title.size),
+        axis.title = element_text(lineheight=1.0, size = axis.title.size),
+        axis.title.x = element_text(size = axis.title.size, vjust = -0.25),
+        axis.title.y = element_text(size = axis.title.size, vjust = 0.5),
+        axis.line = element_line(colour = "black"),
+        # axis.text.x = element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+        # axis.text.y = element_text(color=text.color, size = axis.text.size)
+        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
+        axis.text.y = element_text(size = axis.text.size)
+    )
   p
 
-  ggsave(file=paste("./figs/", file.name, ".png", sep=""))
+  ggsave(file=paste("./figs/", file.name, ".png", sep=""),
+    width = png.width,
+    height = png.height
+  )
 }
 
 
