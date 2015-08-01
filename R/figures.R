@@ -1900,6 +1900,11 @@ totalDeathsAsPercentageOfPop <- function() {
   numberByYearDenormalised$Deaths <- numberByYearDenormalised$x
   numberByYearDenormalised$TotalPop <- apply(cbind(numberByYearDenormalised$Group.1), 1, popForYear)
   numberByYearDenormalised$percentOfPop <- 100 * numberByYearDenormalised$Deaths / numberByYearDenormalised$TotalPop
+  
+  # Average loss of life as a percentage
+  print("Average loss of life as a percentage")
+  print(mean(numberByYearDenormalised$percentOfPop))
+  
   # For graphing purposes
   numberByYearDenormalised$x <- numberByYearDenormalised$percentOfPop
 
@@ -2293,15 +2298,31 @@ multipliersJoyVsDerived <- function() {
 
 ## Generate Table 3.4
 costsByYearAndState <- function() {
+
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(
+                  resource.type.param = NULL, 
+                  reported.costs.only = FALSE, 
+                  no.heatwaves = FALSE
+                  )
+
+  # Determine reported costs by state proportions
   total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
   total.costs$Reported.Cost.normalised.millions.state.2 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.2.percent
+
+  # Determine state.1 and state.2 total costs
   total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.1, by=list(State.abbreviated.1, Year.financial), FUN=safeSum))
   total.costs.by.state2 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.2, by=list(State.abbreviated.2, Year.financial), FUN=safeSum))
+
+  # Merge these costs to a single data frame
   total.costs.by.stateAndYear <- merge(total.costs.by.state1, total.costs.by.state2, by=c("Group.1", "Group.2"), all.x = TRUE )
+  # Sum the state.1 and state.2 values
   total.costs.by.stateAndYear$x <- rowSums(cbind(total.costs.by.stateAndYear$x.x, total.costs.by.stateAndYear$x.y), na.rm = TRUE)
+
+  # Summarise into a new structure
   state.year.totals <- total.costs.by.stateAndYear[,c("Group.2", "Group.1", "x")]
+
+  # Rename the columns
   names(state.year.totals)[1] = "Year"
   names(state.year.totals)[2] = "State"
   names(state.year.totals)[3] = "Total"
@@ -2310,6 +2331,7 @@ costsByYearAndState <- function() {
 
   # state.year.totals <- state.year.totals[order(state.year.totals$Year, state.year.totals$State),]
 
+  # Write this out to a table
   write.table(pivotted.data, file = "./figs/table3_4_costs_by_year_and_state.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = TRUE,
               col.names = TRUE, qmethod = c("escape", "double"),

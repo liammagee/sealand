@@ -1303,11 +1303,12 @@ eventTypeMultiplierDerived <- function(eventType) {
 # Generates a list of derived multipliers
 generateDerivedMultipliers <- function() {
   resourceTypes <- data.frame(resourceType = cbind(unique(unlist(ecnd.database$resourceType))))
+  event.counts <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, ecnd.database, length)
   ag <- aggregate(cbind(Insured.Cost.cleaned, Reported.Cost) ~ resourceType, ecnd.database, sum)
   ag <- merge(ag[,], resourceTypes, by="resourceType", all = TRUE)
   ag$Event.Factor <- ag$Reported.Cost / ag$Insured.Cost
-  # Don't convert N/As to 1.0
-  ag[is.na(ag$Event.Factor),"Event.Factor"] <- 1.0
+  # Convert N/As to 1.0
+  ag[is.na(ag$Event.Factor), "Event.Factor"] <- 1.0
   return (ag)
 }
 
