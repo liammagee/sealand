@@ -21,13 +21,14 @@ library(ggthemes)
 # Sources
 source("R/functions.r", TRUE)
 
-# Global variables
+# Global variables for graphs
 title.size <- 0.8
 character.size <- 0.6
 graph.title.size <- 18
 axis.title.size <- 12
 axis.text.size <- 10
-
+x.axis.vjust <- -0.25
+y.axis.vjust <- 0.5
 png.width = 8
 png.height = 6
 
@@ -64,6 +65,7 @@ blackPalette <- c("#000000")
 ## COMMON FUNCTIONS USED IN GENERATING FIGURES
 
 
+# Generates year breaks to use on X axis
 yearBreaks <- function(years) {
   
   # Every third year
@@ -76,42 +78,46 @@ yearBreaks <- function(years) {
   # years <- years
 
   return (years)
+
 }
 
 
+# Generates financial year labels for a series of years, e.g. "66/67"
 yearLabels <- function(years) {
+
   years <- yearBreaks(years)
+  
+  # Formats the year into financial year form, e.g. "66/67"
   output <- paste(formatC((years - 1) %% 100, width = 2, format = "d", flag = "0"),
                   "/",
                   formatC(years %% 100, width = 2, format = "d", flag = "0"), sep = "")
+  
   return (output)
+
 }
 
 
+# Provides the default palette
 palette <- function() {
+
   # Returns the default palette
   return (blackPalette)
+
 }
 
 
 ## Provides a single function for generating bar charts
 standardBarChart <- function(data, file.name, title, x.label, y.label, use.years=TRUE) {
 
-
   # Ensure the order remains the same
   if (use.years==FALSE) {
     data$Group.1 <- factor(data$Group.1, as.character(data$Group.1))
   }
-  # Calculate range from 0 to max value of costs
-  # p <- ggplot(data, aes(x=Group.1, y = x)) +
-  #         geom_bar(width=0.5,
-  #              stat="identity",
-  #              fill=foreground.color,
-  #              colour=foreground.color,
-  #              expand = c(0,0))
+  
   p <- ggplot(data, aes(x=Group.1, y = x)) +
           geom_bar(width=0.75, stat="identity")
 
+  # Change the X axis for time series
   if (use.years==TRUE) {
     x.scale <- scale_x_continuous(name = x.label,
                                   breaks = yearBreaks(data$Group.1),
@@ -121,8 +127,8 @@ standardBarChart <- function(data, file.name, title, x.label, y.label, use.years
   }
 
   p +
-      theme_tufte() +
-      # ggtitle(title) +
+      theme_tufte() +    # FOR CONSISTENT LOOK AND FEEL
+      # ggtitle(title) + # NO TITLE FOR NOW
       x.scale +
       scale_y_continuous(name=y.label, labels=comma, expand = c(0,0)) +
       theme(
@@ -135,8 +141,8 @@ standardBarChart <- function(data, file.name, title, x.label, y.label, use.years
         # panel.background = element_rect(fill = background.color, colour = foreground.color),
         # axis.title = element_text(color=title.color, lineheight=1.0, size = axis.title.size),
         axis.title = element_text(lineheight=1.0, size = axis.title.size),
-        axis.title.x = element_text(size = axis.title.size, vjust = -0.25),
-        axis.title.y = element_text(size = axis.title.size, vjust = 0.5),
+        axis.title.x = element_text(size = axis.title.size, vjust = x.axis.vjust),
+        axis.title.y = element_text(size = axis.title.size, vjust = y.axis.vjust),
         axis.line = element_line(colour = "black"),
         # axis.text.x = element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
         # axis.text.y = element_text(color=text.color, size = axis.text.size)
@@ -144,12 +150,14 @@ standardBarChart <- function(data, file.name, title, x.label, y.label, use.years
         axis.text.y = element_text(size = axis.text.size)
     )
 
+  # Save the plot
   ggsave(file=paste("./figs/", file.name, ".png", sep=""),
       width = png.width,
       height = png.height
     )
-  return (p)
+
 }
+
 
 ## Provides a single function for generating bar charts
 standardBarChartClustered <- function(data, file.name, title, x.label, y.label, use.years=TRUE) {
@@ -164,15 +172,17 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
         geom_bar(aes(fill = variable), width=0.75, position = "dodge", stat="identity")
         # + scale_fill_manual(name="", values=c(foreground.color, text.color))
 
+  # Change the X axis for time series
   if (use.years==TRUE) {
     x.scale <- scale_x_continuous(name=x.label, breaks=yearBreaks(data$Group.1), labels = yearLabels(data$Group.1))
   } else {
     x.scale <- xlab(x.label)
   }
+
   # Note: title height is 0.9, due to presence of legend on clustered charts
   clustered.chart +
-    theme_tufte() +
-    # ggtitle(title) +
+    theme_tufte() +    # FOR CONSISTENT LOOK AND FEEL
+    # ggtitle(title) + # NO TITLE FOR NOW
     x.scale +
     scale_y_continuous(name = y.label, labels = comma, expand = c(0,0)) +
     scale_fill_manual(values = c("#333333","#FF9900")) +
@@ -184,8 +194,8 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
           panel.grid.major.x=element_blank(),
           # panel.background = element_rect(fill = background.color, colour = foreground.color),
           axis.line = element_line(colour = "black"),
-          axis.title.x = element_text(size = axis.title.size, vjust = -0.25),
-          axis.title.y = element_text(size = axis.title.size, vjust = 0.5),
+          axis.title.x = element_text(size = axis.title.size, vjust = x.axis.vjust),
+          axis.title.y = element_text(size = axis.title.size, vjust = y.axis.vjust),
           # axis.text.x=element_text(color=text.color, angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
           # axis.text.y=element_text(color=text.color, size = axis.text.size),
           axis.text.x=element_text(angle=45, vjust=1.0, hjust=1.0, size = axis.text.size),
@@ -193,6 +203,7 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
           legend.position="bottom",
           legend.title = element_blank())
 
+  # Save the plot 
   ggsave(file=paste("./figs/", file.name, ".png", sep=""),
     width = png.width,
     height = png.height
@@ -203,12 +214,6 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
 ## Provides a single function for generating pie charts (for 3.12)
 standardPieChart <- function(data, file.name, title) {
 
-  # Set colours
-  background <- '#F0D2AF'
-  background2 <- '#888888'
-  foreground <- '#D08728'
-  text.color <- '#888888'
-
   # Calculate range from 0 to max value of costs
   p = ggplot(data = data, aes(x = factor(1), y = percentage, fill = factor(Group.2)))
   p = p + geom_bar(width = 1, stat = "identity")
@@ -218,10 +223,12 @@ standardPieChart <- function(data, file.name, title) {
   p = p + ggtitle(title)
   p
 
+  # Save the plot 
   ggsave(file=paste("./figs/", file.name, ".png", sep=""),
     width = png.width,
     height = png.height
   )
+
 }
 
 
