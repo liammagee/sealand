@@ -235,58 +235,19 @@ standardPieChart <- function(data, file.name, title) {
 # Merges a sequence of all years to ensure graphs are complete
 # Assumes a two-column data frame with columns named "Group.1" (years) and "x" (values)
 includeAllYears <- function(data) {
+ 
   # Merge with a sequence, to ensure years with zero events are represented
   allYears <- data.frame(seq(1967, 2013))
   names(allYears)[1] <- "Group.1"
   data <- merge(allYears, data, by = "Group.1", all.x = TRUE)
+
+  # Replace NAs with 0
   if (length(data[is.na(data$x),]$x) > 0) {
     data[is.na(data$x),]$x <- 0
   }
+
   return (data)
-}
 
-## Provides a single function for generating bar charts
-standardBarChart_Plot <- function(data, file.name, title, x.label, y.label, y.range=NULL, axes=TRUE) {
-
-  # Plot a basic graph of costs
-  # pdf(file=paste("./figs/", file.name, ".pdf", sep=""))
-  png(filename=paste("./figs/", file.name, ".png", sep=""))
-
-  # Set an upper y value based on the data passed in
-  # Note: this will often be too little
-  if (is.null(y.range)) {
-    y.range <- range(0, data)
-  }
-
-  # Calculate range from 0 to max value of costs
-  plot(data, type="h", col="blue", ylim=y.range, axes=axes, ann=FALSE,
-       cex=character.size,
-       cex.lab=character.size,
-       cex.axis=character.size,
-       cex.main=character.size,
-       cex.sub=character.size)
-
-  # Add title
-  title(title, col.main = "blue",
-        cex=title.size,
-        cex.lab=title.size,
-        cex.axis=title.size,
-        cex.main=title.size,
-        cex.sub=title.size)
-
-  # Label the x and y axes with dark green text
-  title(xlab=x.label, col.lab=rgb(0,0.5,0))
-  title(ylab=y.label, col.lab=rgb(0,0.5,0))
-}
-
-## Generates an axis with character widths
-doAxis <- function(number, at=NULL, labels=NULL) {
-  # axis(number, at=at, labels=labels,
-  #      cex=character.size,
-  #      cex.lab=character.size,
-  #      cex.axis=character.size,
-  #      cex.main=character.size,
-  #      cex.sub=character.size)
 }
 
 
