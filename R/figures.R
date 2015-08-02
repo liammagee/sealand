@@ -31,6 +31,9 @@ axis.text.size <- 10
 png.width = 8
 png.height = 6
 
+
+## DECLARE COMMON COLOURS AND PALETTES 
+
 # Set colours
 # Quasi-BTE
 # background <- '#F0D2AF'
@@ -49,8 +52,6 @@ text.color <- '#202020'
 # title.color <- '#129793'
 # text.color <- '#202020'
 
-
-
 # Colour-friendly palette from http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/#a-colorblind-friendly-palette
 # The palette with grey:
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -58,13 +59,22 @@ cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2",
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 blackPalette <- c("#000000")
 
-# Functions for generating figures
+
+
+## COMMON FUNCTIONS USED IN GENERATING FIGURES
+
 
 yearBreaks <- function(years) {
+  
   # Every third year
   # years <-years[(years-1967) %% 3 == 0];
+  
   # Every second year
-  years <-years[(years-1967) %% 2 == 0];
+  years <- years[(years-1967) %% 2 == 0];
+  
+  # Every year
+  # years <- years
+
   return (years)
 }
 
@@ -661,7 +671,8 @@ numberOfDisastersPerMillionPeople <- function() {
   p <- ggplot(mergedCounts, aes(x=Group.1, y = popRatios)) + geom_point(colour = foreground.color, size = 4) +
     geom_smooth(method="lm", fill=NA, colour = "#000000")
   p + theme_tufte() +
-      ggtitle(title) +
+      # INGORE TITLE FOR NOW
+      # ggtitle(title) +
       scale_x_continuous(name = x.label, breaks = yearBreaks(mergedCounts$Group.1)) +
       scale_y_continuous(name = y.label, labels = comma) +
       theme(
@@ -1912,7 +1923,7 @@ totalDeathsAsPercentageOfPop <- function() {
                             "fig3_37_number_of_natural_disasters_deaths",
                             "FIGURE 3.37: NUMBER OF DEATHS AS PERCENTAGES OF POPULATION, 1967-2013",
                             "Years (financial)",
-                            "(Per Cent)",
+                            "Per Cent",
                             TRUE
   )
 }
@@ -1945,7 +1956,7 @@ totalCostAsPercentageOfGdp <- function(state = NULL, fatalities = FALSE) {
                    file.name,
                    "FIGURE 3.38: TOTAL COSTS AS PERCENTAGES OF GDP, 1967-2013",
                    "Years (financial)",
-                   "(Per Cent)",
+                   "Per Cent",
                    TRUE
   )
 }
@@ -1967,7 +1978,7 @@ insuredCostAsPercentageOfTotalCost <- function() {
                    "fig3_39_insured_cost_as_percentage_of_total_cost",
                    "FIGURE 3.39: INSURED COSTS AS PERCENTAGES OF TOTAL COSTS, 1967-2013",
                    "Years (financial)",
-                   "(Per Cent)",
+                   "Per Cent",
                    TRUE
   )
 
@@ -1979,11 +1990,16 @@ insuredCostAsPercentageOfTotalCost <- function() {
 ## Generate Figure 3.40
 totalCostsRawIndexedNormalised <- function() {
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
+
+  # Add raw, insured and normalised costs
   total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
   total.costs.by.yearIndexed <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.indexed.millions, by=list(Year.financial), FUN=safeSum))
   total.costs.by.yearRaw <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.interpolated.millions, by=list(Year.financial), FUN=safeSum))
 
+  # merge cost frames
   merged.costs <- merge(total.costs.by.year, total.costs.by.yearIndexed, by="Group.1", all.x = TRUE)
   merged.costs <- merge(merged.costs, total.costs.by.yearRaw, by="Group.1", all.x = TRUE)
   names(merged.costs)[2] <- paste("Normalised Cost")
@@ -2003,8 +2019,10 @@ totalCostsRawIndexedNormalised <- function() {
   # p <- ggplot(data=data, aes(x=Group.1, y = x, group = Cost.Type, colour=Cost.Type)) +
   p <- ggplot(data=data, aes(x=Group.1, y = x, group = Cost.Type)) +
       theme_tufte() +
-      geom_line(aes(linetype=Cost.Type), size = 1.0) +
-      ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) +
+      geom_line(aes(linetype=Cost.Type), size = 0.5) +
+      # IGNORE TITLE FOR NOW
+      # ggtitle(title) + 
+      x.scale + scale_y_continuous(name=y.label, labels=comma) +
       # scale_colour_manual(values = palette())  +
       theme(
         # plot.title = element_text(colour = title.color, lineheight=1.0, face="bold", size=graph.title.size),
@@ -2095,9 +2113,11 @@ totalCostsQldNswVic <- function(start.at.year = 1967) {
   # p <- ggplot(data=total.costs.by.state, aes(x=Group.2, y = x, group = Group.1, color = Group.1)) +
   p <- ggplot(data=total.costs.by.state, aes(x=Group.2, y = x, group = Group.1)) +
       theme_tufte() +
-    geom_line(aes(linetype=Group.1), size = 1.0) +
+    geom_line(aes(linetype=Group.1), size = 0.5) +
     # geom_line() +
-    ggtitle(title) + x.scale + scale_y_continuous(name=y.label, labels=comma) +
+    # IGNORE TITLE FOR NOW
+    # ggtitle(title) + 
+    x.scale + scale_y_continuous(name=y.label, labels=comma) +
     # scale_colour_manual(values = palette()) +
     theme(
         # plot.title = element_text(colour = title.color, lineheight=1.0, face="bold", size=graph.title.size),
@@ -2243,7 +2263,7 @@ averageAnnualCostOfNaturalDisastersByStateAndTerritory <- function() {
 
 }
 
-## Generate Table 3.2
+## Generate Table 3.2 - deaths and injuries by hazard type
 deathsAndInjuriesByHazardType <- function() {
   # Store the total costs by year
   total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
@@ -2274,37 +2294,43 @@ deathsAndInjuriesByHazardType <- function() {
               fileEncoding = "")
 }
 
-## Generate Table 3.3
+## Generate Table 3.3 - a comparison of Joy's (1991) multipliers, and those derived from the known ratios of (raw, unnormalised) reported to insured costs
 multipliersJoyVsDerived <- function() {
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                           reported.costs.only = FALSE, 
+                                           no.heatwaves = FALSE)
 
+  # Obtain the event types
   event.types <- data.frame(eventTypes = unique(total.costs$resourceType))
+  # Add Joy's multipliers
   event.types$multipliers.Joy <- apply(data.frame(event.types$eventTypes), 1, eventTypeMultiplierJoy)
+  # Add the derived multipliers
   event.types$multipliers.Derived <- apply(data.frame(event.types$eventTypes), 1, eventTypeMultiplierDerived)
 
+  # Set column names
   names(event.types)[1] <- "Hazard Type"
   names(event.types)[2] <- "Joy's (1991) multiplier"
   names(event.types)[3] <- "Derived (2015) multiplier"
 
+  # Print the results
   print("Event Type Multipliers")
   print(event.types)
 
+  # Write the results to CSV table
   write.table(event.types, file = "./figs/table3_3_multipliers_joy_vs_derived.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = FALSE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
 }
 
-## Generate Table 3.4
+## Generate Table 3.4 - costs by year and by state
 costsByYearAndState <- function() {
 
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(
-                  resource.type.param = NULL, 
-                  reported.costs.only = FALSE, 
-                  no.heatwaves = FALSE
-                  )
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                          reported.costs.only = FALSE, 
+                                          no.heatwaves = FALSE)
 
   # Determine reported costs by state proportions
   total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
@@ -2339,4 +2365,206 @@ costsByYearAndState <- function() {
 }
 
 
+
+
+## Generate Figures XXX - find best fit
+findBestFit <- function() {
+
+  # Obtain total costs
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                           reported.costs.only = TRUE, 
+                                           no.heatwaves = FALSE)
+  
+  # Annual figures
+  total.costs.annual <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=sum))
+  
+  # Get normalised reported costs 
+  x <- total.costs$Reported.Cost.normalised.millions
+  # Do annual amounts instead
+  x.annual <- total.costs.annual$x
+  x <- x[order(-x)]
+  x.annual <- x.annual[order(-x.annual)]
+  
+  # quick visual inspection
+  plot(x); lines(x)
+  plot(x.annual); lines(x.annual)
+
+  # histogram
+  hist(x, breaks=8, col="red")
+  hist(x, breaks=16, col="red")
+  hist(x, breaks=32, col="red")
+
+  hist(x.annual, breaks=8, col="red")
+  hist(x.annual, breaks=16, col="red")
+  hist(x.annual, breaks=32, col="red")
+  
+  
+  # descriptives
+  sum(x)
+  mean(x)
+  sd(x)
+  sum(x.annual)
+  mean(x.annual)
+  sd(x.annual)
+  
+  
+  # assuming normal distribution, one-tailed, 90 percentile
+  percent.90 <- mean(x) + 2 * sd(x)
+  percent.90.annual <- mean(x.annual) + 2 * sd(x.annual)
+
+  
+  # refs
+  # http://www.statmethods.net/advgraphs/probability.html
+  # https://en.wikibooks.org/wiki/R_Programming/Probability_Distributions
+  # https://cran.r-project.org/doc/contrib/Ricci-distributions-en.pdf
+  # http://stats.stackexchange.com/questions/76994/how-do-i-check-if-my-data-fits-an-exponential-distribution
+  
+  
+  # frequency density
+  plot(density(x), main="Density estimate of costs")
+  plot(density(x.annual), main="Density estimate of costs (annualised)")
+
+  # cumulative distribution
+  plot(ecdf(x),main="Empirical cumulative distribution function for costs")
+  plot(ecdf(x.annual),main="Empirical cumulative distribution function for costs (annualised)")
+
+  
+  ## NORMALS
+  
+  # qqplot comparing empirical distribution to normal
+  z <- (x - mean(x)) / sd(x) ## standardized data
+  qqnorm(z) ## drawing the QQplot
+  abline(0, 1) ## drawing a 45-degree reference line
+  z.annual <- (x.annual - mean(x.annual)) / sd(x.annual) ## standardized data
+  qqnorm(z.annual) ## drawing the QQplot
+  abline(0, 1) ## drawing a 45-degree reference line
+  
+  
+  
+  ## WEIBULL AND OTHERS
+  
+  # also consider: beta, binom, cauchy, chisq, f, gamma, geom, hyper, lnorm, multinom, nbinom, pois, t, unif
+  
+  # get best distribution fit
+  # Note that warnings may not be an issue:
+  # http://r.789695.n4.nabble.com/Warnings-in-fitdistr-from-MASS-td850731.html
+  library(MASS)
+  fit.dist.norm <- fitdistr(x, "normal")
+  fit.dist.weibull <- fitdistr(x, "weibull")
+  fit.dist.exp <- fitdistr(x, "exponential")
+  fit.dist.norm.annual <- fitdistr(x.annual, "normal")
+  fit.dist.weibull.annual <- fitdistr(x.annual, "weibull")
+  fit.dist.exp.annual <- fitdistr(x.annual, "exponential")
+  
+  # others
+  x.annual.normed <- x.annual / sum(x.annual)
+  fit.dist.beta.annual <- fitdistr(x.annual.normed, "beta", start = list(shape1=1/2,shape2=1/2))
+  fit.dist.cauchy.annual <- fitdistr(x.annual, "cauchy")
+  fit.dist.gamma.annual <- fitdistr(x.annual.normed, "gamma")
+  fit.dist.logistic.annual <- fitdistr(x.annual, "logistic")
+  fit.dist.t.annual <- fitdistr(x.annual, "t")
+  
+  # goodness of fit test
+  ks.test(x, "pweibull", fit.dist.weibull$estimate) # p-value > 0.05 -> distribution not refused
+  ks.test(x, "pnorm", fit.dist.norm$estimate) # p-value > 0.05 -> distribution not refused
+  ks.test(x, "pexp", fit.dist.exp$estimate) # p-value > 0.05 -> distribution not refused
+  
+  ks.test(x.annual, "pweibull", fit.dist.weibull.annual$estimate) # p-value > 0.05 -> distribution not refused
+  ks.test(x.annual, "pnorm", fit.dist.norm.annual$estimate) # p-value > 0.05 -> distribution not refused
+  ks.test(x.annual, "pexp", fit.dist.exp.annual$estimate) # p-value > 0.05 -> distribution not refused
+    
+  estimate.mean.norm = unlist(fit.dist.norm[1])[1]
+  estimate.sd.norm = unlist(fit.dist.norm[1])[2]
+  estimate.shape.weibull <- unlist(fit.dist.weibull[1])[1]
+  estimate.scale.weibull <- unlist(fit.dist.weibull[1])[2]
+  estimate.rate.exp <- unlist(fit.dist.exp[1])[1]
+
+  estimate.mean.norm.annual = unlist(fit.dist.norm.annual[1])[1]
+  estimate.sd.norm.annual = unlist(fit.dist.norm.annual[1])[2]
+  estimate.shape.weibull.annual <- unlist(fit.dist.weibull.annual[1])[1]
+  estimate.scale.weibull.annual <- unlist(fit.dist.weibull.annual[1])[2]
+  estimate.rate.exp.annual <- unlist(fit.dist.exp.annual[1])[1]
+  # just for annual figures
+  estimate.location.cauchy.annual <- unlist(fit.dist.cauchy.annual[1])[1]
+  estimate.scale.cauchy.annual <- unlist(fit.dist.cauchy.annual[1])[2]
+  estimate.shape.gamma.annual <- unlist(fit.dist.gamma.annual[1])[1]
+  estimate.rate.gamma.annual <- unlist(fit.dist.gamma.annual[1])[2]
+  estimate.m.t.annual <- unlist(fit.dist.t.annual[1])[1]
+  estimate.s.t.annual <- unlist(fit.dist.t.annual[1])[2]
+  estimate.df.t.annual <- unlist(fit.dist.t.annual[1])[3]
+  
+  rdist.weibull <- rweibull(n = length(x), shape = estimate.shape.weibull, scale = estimate.scale.weibull)
+  rdist.norm <- rnorm(n = length(x), mean = estimate.mean.norm, sd = estimate.sd.norm)
+  rdist.exp <- rexp(n = length(x), rate = estimate.rate.exp)
+  rdist.weibull.annual <- rweibull(n = length(x.annual), shape = estimate.shape.weibull.annual, scale = estimate.scale.weibull.annual)
+  rdist.norm.annual <- rnorm(n = length(x.annual), mean = estimate.mean.norm.annual, sd = estimate.sd.norm.annual)
+  rdist.exp.annual <- rexp(n = length(x.annual), rate = estimate.rate.exp.annual)
+  # just for annual figures
+  rdist.cauchy.annual <- rcauchy(n = length(x.annual), location = estimate.location.cauchy.annual, scale = estimate.scale.cauchy.annual)
+  rdist.gamma.annual <- rgamma(n = length(x.annual), shape = estimate.shape.gamma.annual, rate = estimate.rate.gamma.annual)
+  rdist.t.annual <- rt(n = length(x.annual), df = estimate.df.t.annual)
+  
+  # qqplot comparing empirical distribution to weibull
+  dev.copy(png,'./figs/fig_3_xx_events_individual_weibull.png')
+  qqplot(x, rdist.weibull, main = "QQ-plot distr. Weibull: Event Costs") ## drawing the QQplot
+  abline(0, 1) ## drawing a 45-degree reference line
+  dev.off()
+  
+  dev.copy(png,'./figs/fig_3_xx_events_individual_exponential.png')
+  qqplot(x, rdist.exp, main = "QQ-plot distr. Exponential: Event Costs") ## drawing the QQplot
+  abline(0, 1) ## drawing a 45-degree reference line
+  dev.off()
+  
+  dev.copy(png,'./figs/fig_3_xx_events_annual_weibull.png')
+  qqplot(x.annual, rdist.weibull.annual, main = "QQ-plot distr. Weibull: Annual Costs") ## drawing the QQplot
+  abline(0, 1) ## drawing a 45-degree reference line
+  dev.off()
+  
+  dev.copy(png,'./figs/fig_3_xx_events_annual_exponential.png')
+  qqplot(x.annual, rdist.exp.annual, main = "QQ-plot distr. Exponential: Annual Costs") ## drawing the QQplot
+  abline(0, 1) ## drawing a 45-degree reference line
+  dev.off()
+  
+  # just for annual figures  
+  qqplot(x.annual, rdist.cauchy.annual, main = "QQ-plot distr. Cauchy: Annual Costs") ## drawing the QQplot
+  abline(0, 1) ## drawing a 45-degree reference line
+  
+  qqplot(x.annual, rdist.gamma.annual, main = "QQ-plot distr. Gamma: Annual Costs") ## drawing the QQplot
+  abline(0, 1) ## drawing a 45-degree reference line
+  
+  qqplot(x.annual, rdist.t.annual, main = "QQ-plot distr. T: Annual Costs") ## drawing the QQplot
+  abline(0, 1) ## drawing a 45-degree reference line
+  
+  # Test for 90 percentile
+  print("The amount under which 90 per cent of costs are expected to fall")
+  qweibull(0.9, shape = estimate.shape.weibull.annual, scale = estimate.scale.weibull.annual)
+  
+  # chi-square
+  rdist.weibull.normed <- rdist.weibull / sum(rdist.weibull)
+  rdist.weibull.normed <- rdist.weibull.normed[order(-rdist.weibull.normed)]
+  chisq.test(x, p = rdist.weibull.normed) 
+  rdist.norm <- rnorm(n = length(x), mean = estimate.mean.norm, sd = estimate.sd.norm)
+  rdist.norm.normed <- rdist.norm - min(rdist.norm)
+  rdist.norm.normed <- rdist.norm.normed / sum(rdist.norm.normed)
+  rdist.norm.normed <- rdist.norm.normed[order(-rdist.norm.normed)]
+  chisq.test(x, p = rdist.norm.normed) 
+  rdist.exp.normed <- rdist.exp[order(-rdist.exp)]
+  rdist.exp.normed <- rdist.exp.normed / sum(rdist.exp.normed)
+  chisq.test(x, p = rdist.exp.normed)
+  chisq.test(x)
+  
+  rdist.weibull.normed.annual <- rdist.weibull.annual / sum(rdist.weibull.annual)
+  rdist.weibull.normed.annual <- rdist.weibull.normed.annual[order(-rdist.weibull.normed.annual)]
+  chisq.test(x.annual, p = rdist.weibull.normed.annual) 
+  rdist.norm.normed.annual <- rdist.norm.annual - min(rdist.norm.annual)
+  rdist.norm.normed.annual <- rdist.norm.normed.annual / sum(rdist.norm.normed.annual)
+  rdist.norm.normed.annual <- rdist.norm.normed.annual[order(-rdist.norm.normed.annual)]
+  chisq.test(x.annual, p = rdist.norm.normed.annual) 
+  rdist.exp.normed.annual <- rdist.exp.annual[order(-rdist.exp.annual)]
+  rdist.exp.normed.annual <- rdist.exp.normed.annual / sum(rdist.exp.normed.annual)
+  chisq.test(x.annual, p = rdist.exp.norme.annuald)
+  chisq.test(x)
+  
+  
+  }
 
