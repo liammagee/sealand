@@ -208,6 +208,7 @@ standardBarChartClustered <- function(data, file.name, title, x.label, y.label, 
     width = png.width,
     height = png.height
   )
+
 }
 
 
@@ -251,8 +252,9 @@ includeAllYears <- function(data) {
 }
 
 
-## Generates a sheet with all the data and computed values
+## Generates a sheet with the full database
 generateCompleteData <- function() {
+
   write.table(ecnd.database, file = "./output/database_computed.csv", append = FALSE, quote = TRUE, sep = ",",
               eol = "\n", na = "NA", dec = ".", row.names = TRUE,
               col.names = TRUE, qmethod = c("escape", "double"),
@@ -261,8 +263,30 @@ generateCompleteData <- function() {
 }
 
 
+## Prints a terse summary of costs
+costSummary <- function() {
+
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
+  total.costs.by.year.incl.deaths.and.injuries <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
+
+  print("Average annual cost of all disasters [$millions AUD]")
+  print(mean(total.costs.by.year$x))
+  print("Average annual cost of all disasters (incl. deaths and injuries) [$millions AUD]")
+  print(mean(total.costs.by.year.incl.deaths.and.injuries$x))
+
+  total.costs.all.years <- sum(total.costs.by.year$x)
+  print("Total cost of all disasters [$millions AUD]")
+  print(total.costs.all.years)
+  total.costs.all.years.incl.deaths.and.injuries <- sum(total.costs.by.year.incl.deaths.and.injuries$x)
+  print("Total cost of all disasters (incl. deaths and injuries) [$millions AUD]")
+  print(total.costs.all.years.incl.deaths.and.injuries)
+
+}
+
 ## Generates Figure 3.0
 totalCostsOfDisastersInAustralia <- function() {
+
   # Store the total costs by year
   total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
   # Just for normalised data
@@ -293,29 +317,13 @@ totalCostsOfDisastersInAustralia <- function() {
                    y.label,
                    FALSE
   )
-}
-
-costSummary <- function() {
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
-  total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
-  total.costs.by.year.incl.deaths.and.injuries <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
-
-  print("Average annual cost of all disasters [$millions AUD]")
-  print(mean(total.costs.by.year$x))
-  print("Average annual cost of all disasters (incl. deaths and injuries) [$millions AUD]")
-  print(mean(total.costs.by.year.incl.deaths.and.injuries$x))
-
-  total.costs.all.years <- sum(total.costs.by.year$x)
-  print("Total cost of all disasters [$millions AUD]")
-  print(total.costs.all.years)
-  total.costs.all.years.incl.deaths.and.injuries <- sum(total.costs.by.year.incl.deaths.and.injuries$x)
-  print("Total cost of all disasters (incl. deaths and injuries) [$millions AUD]")
-  print(total.costs.all.years.incl.deaths.and.injuries)
 
 }
+
 
 ## Generates Figure 3.1
 annualTotalCostsOfDisastersInAustralia <- function() {
+
   # Store the total costs by year
   total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
   # Just for normalised data
@@ -425,12 +433,14 @@ annualTotalCostsOfDisastersInAustralia <- function() {
     "2013 Dollars in $millions",
     TRUE
     )
+
 }
 
 
 ## Generates Figure 3.2
 australianNaturalDisasterCostsByDecade <- function() {
-	# Store the total costs by year
+	
+  # Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
 
 	# Filter by decade
@@ -456,13 +466,17 @@ australianNaturalDisasterCostsByDecade <- function() {
 	prop.newcastle.earthquake <- cost.newcastle.earthquake / cost.nineties
   print("Percentage of 90s cost apportioned to Newcastle")
   print(prop.newcastle.earthquake)
+
 }
 
 
 ## Generate Figure 3.3
 averageCostPerEvent <- function() {
-	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+	
+  # Store the total costs by year
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
 	averageCostPerYear <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeMean))
 
 	standardBarChart(averageCostPerYear,
@@ -477,12 +491,16 @@ averageCostPerEvent <- function() {
 	print("Significance test for average costs by year")
 	print(res)
 	summary(res)
+
 }
 
 ## Generate Figure 3.4
 distributionOfDisasters <- function() {
+
 	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
 
 	total.costs$Reported.Cost.normalised.code <- apply(data.matrix(total.costs$Reported.Cost.normalised.millions), 1, codeCosts)
 	total.cost.distribution <- with(total.costs, aggregate(Reported.Cost.normalised, by=list(Reported.Cost.normalised.code), FUN=length))
@@ -513,10 +531,14 @@ distributionOfDisasters <- function() {
 		)
 }
 
+
 ## Generate Figure 3.5
 annualInsuranceCostOfDisasters <- function() {
+
 	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
 	insured.costs.by.year <- with(total.costs, aggregate(Insured.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
 
 	standardBarChart(insured.costs.by.year,
@@ -555,15 +577,18 @@ annualInsuranceCostOfDisasters <- function() {
 	# top.10.events <- head(total.costs[order(-total.costs$Insured.Cost.normalised.millions),c("title", "description", "Year.financial", "Insured.Cost.normalised.millions")], n = 10)
 	top.10.events <- head(total.costs[order(-total.costs$Insured.Cost.normalised.millions),c("title", "Year.financial", "Insured.Cost.normalised.millions")], n = 10)
   print(top.10.events)
+
 }
 
 
 ## Generate Figure 3.6
 numberOfNaturalDisastersInAustralia <- function() {
+
 	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
 	numberByYear <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=length))
-	# numberByYear <- with(total.costs, aggregate(Insured.Cost.normalised.millions, by=list(Year.financial), FUN=length))
 
 	standardBarChart(numberByYear,
 		"fig3_6_number_of_natural_disasters_in_australia",
@@ -598,25 +623,17 @@ numberOfNaturalDisastersInAustralia <- function() {
 	print(sum(numberByYear[numberByYear$Group.1 > yearPoints[5],]$x) / (2013 - yearPoints[5]))
 	print(paste("Average number of disasters with insured costs since ", yearPoints[6]))
 	print(sum(numberByYear[numberByYear$Group.1 > yearPoints[6],]$x) / (2013 - yearPoints[6]))
-}
 
-
-## Generate Figure 3.7
-naturalDisastersBetween10And75Million <- function() {
-	# Correlation test
-}
-
-
-## Generate Figure 3.8
-naturalDisastersBetween75And150Million <- function() {
-	# Correlation test
 }
 
 
 ## Generate Figure 3.9
 numberOfDisastersPerMillionPeople <- function() {
+
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
   numberByYear <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=length))
   popCounts <- data.frame(seq(1967, 2013))
   names(popCounts)[1] = "Group.1"
@@ -691,13 +708,17 @@ numberOfDisastersPerMillionPeople <- function() {
   print("Regression fit for population without heatwaves")
   fit <- lm(formula = popRatios ~ Group.1, data = mergedCounts.without.heatwaves)
   summary(fit)
+
 }
 
 
 ## Generate Figure 3.10
 disasterCostsByStateAndTerritory <- function() {
+
 	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
 	total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
 	total.costs$Reported.Cost.normalised.millions.state.2 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.2.percent
   total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.1, by=list(State.abbreviated.1), FUN=safeSum))
@@ -799,8 +820,11 @@ disasterCostsByStateAndTerritory <- function() {
 
 ## Generate Figure 3.11
 numberOfDisasterEventsByStateAndTerritory <- function() {
+  
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
 
   total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
   total.costs$Reported.Cost.normalised.millions.state.2 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.2.percent
@@ -839,8 +863,12 @@ numberOfDisasterEventsByStateAndTerritory <- function() {
 
 ## Generate Figure 3.12
 costsByTypeOfDisasterAndStateAndTerritory <- function() {
+  
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
+  
   total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
   total.costs$Reported.Cost.normalised.millions.state.2 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.2.percent
   total.costs.by.state1 <- with(total.costs, aggregate(Reported.Cost.normalised.millions.state.1, by=list(State.abbreviated.1, resourceType), FUN=safeSum))
@@ -934,13 +962,17 @@ costsByTypeOfDisasterAndStateAndTerritory <- function() {
     width = png.width,
     height = png.height
   )
+
 }
 
 
 ## Generate Figure 3.13
 totalAndInsuranceCostsByDisasterType <- function() {
+  
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
   total.costs.by.disaster.type <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=safeSum))
   total.costs.by.disaster.type <- total.costs.by.disaster.type[with(total.costs.by.disaster.type, order(-x)), ]
 
@@ -1002,13 +1034,17 @@ totalAndInsuranceCostsByDisasterType <- function() {
               eol = "\n", na = "", dec = ".", row.names = FALSE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
+
 }
 
 
 ## Generate Figure 3.14
 numberOfEventsByDisasterType <- function() {
+  
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = TRUE, 
+                                            no.heatwaves = FALSE)
   # Exclude events without a reported cost
   total.costs <- total.costs[total.costs$Reported.Cost.normalised.millions > 0,]
   totalCountsByDisasterType <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(resourceType), FUN=length))
@@ -1045,12 +1081,14 @@ numberOfEventsByDisasterType <- function() {
   print("Combined percentage of top 3 events, with deaths and injuries included")
   total.number.by.disaster.type.incl.deaths.top.3 <- sum(head(totalCountsByDisasterType.WithDeathsAndInjuries[order(-totalCountsByDisasterType.WithDeathsAndInjuries$percentages),]$percentages, 3))
   print(total.number.by.disaster.type.incl.deaths.top.3)
+
 }
 
 
 ## Generate Figure 3.15
 annualCostOfFloodsInAustralia <- function() {
-	# Store the total costs by year
+	
+  # Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Flood", reported.costs.only = TRUE, no.heatwaves = FALSE)
 	total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
   total.costs.by.year <- includeAllYears(total.costs.by.year)
@@ -1085,7 +1123,8 @@ annualCostOfFloodsInAustralia <- function() {
 
 ## Generate Figure 3.16
 totalCostOfFloodsByDecade <- function() {
-		# Store the total costs by year
+	
+  # Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Flood", reported.costs.only = TRUE, no.heatwaves = FALSE)
 
 	# Filter by decade
@@ -1108,11 +1147,13 @@ totalCostOfFloodsByDecade <- function() {
 
 	print("Min and max decade cost since 1970")
 	range(total.costs.by.decade[seq(2,6),]$x)
+
 }
 
 
 ## Generate Figure 3.17
 annualNumberOfFloodsInAustralia <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Flood", reported.costs.only = TRUE, no.heatwaves = FALSE)
 	numberByYear <- with(total.costs, aggregate(resourceType, by=list(Year.financial), FUN=length))
@@ -1154,11 +1195,13 @@ annualNumberOfFloodsInAustralia <- function() {
 	top10FloodsByCount <- head(numberByYear[order(-numberByYear$x),], 10)
 	print("Top 10 Floods Years by Count")
 	print(top10FloodsByCount)
+
 }
 
 
 ## Generate Figure 3.18
 annualCostOfSevereStormsByDecade <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Severe Storm", reported.costs.only =  TRUE, no.heatwaves = FALSE)
 	total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1207,7 +1250,8 @@ annualCostOfSevereStormsByDecade <- function() {
 
 ## Generate Figure 3.19
 totalCostOfSevereStormsByDecade <- function() {
-	# Store the total costs by year
+	
+  # Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Severe Storm", reported.costs.only =  TRUE, no.heatwaves = FALSE)
 
 	# Filter by decade
@@ -1224,11 +1268,13 @@ totalCostOfSevereStormsByDecade <- function() {
 		"2013 Dollars in $millions",
     FALSE
 		)
+
 }
 
 
 ## Generate Figure 3.20
 annualNumberOfSevereStormsInAustralia <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Severe Storm", reported.costs.only =  TRUE, no.heatwaves = FALSE)
 	numberByYear <- with(total.costs, aggregate(resourceType, by=list(Year.financial), FUN=length))
@@ -1240,7 +1286,6 @@ annualNumberOfSevereStormsInAustralia <- function() {
 		"Years (financial)",
 		"Number of events"
 		)
-
 
 	# Total number of storms
 	print("Total number of storms")
@@ -1259,11 +1304,13 @@ annualNumberOfSevereStormsInAustralia <- function() {
 	print("Average number of storms post 1980")
 	# Note 'mean' does not work here - years with zero do not appear
 	print(sum(post1980$x) / (2013 - 1979))
+
 }
 
 
 ## Generate Figure 3.21
 annualCostOfCyclonesInAustralia <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Cyclone", reported.costs.only = TRUE, no.heatwaves = FALSE)
 	total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1300,11 +1347,13 @@ annualCostOfCyclonesInAustralia <- function() {
 	print("Significance test for cost of cyclones by year")
 	print(res)
 	summary(res)
+
 }
 
 
 ## Generate Figure 3.22
 totalCostOfCyclonesByDecade <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Cyclone", reported.costs.only = TRUE, no.heatwaves = FALSE)
 
@@ -1322,11 +1371,13 @@ totalCostOfCyclonesByDecade <- function() {
 		"2013 Dollars in $millions",
     FALSE
 		)
+
 }
 
 
 ## Generate Figure 3.23
 annualNumberOfCyclonesCausingMoreThan10MillionDamageInAustralia <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Cyclone", reported.costs.only = TRUE, no.heatwaves = FALSE)
 	numberByYear <- with(total.costs, aggregate(resourceType, by=list(Year.financial), FUN=length))
@@ -1358,11 +1409,13 @@ annualNumberOfCyclonesCausingMoreThan10MillionDamageInAustralia <- function() {
 	print("Significance test for number of cyclones by year")
 	print(res)
 	summary(res)
+
 }
 
 
 ## Generate Figure 3.24
 totalCostOfEarthquakesByDecade <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Earthquake", reported.costs.only = TRUE, no.heatwaves = FALSE)
 	total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1398,11 +1451,13 @@ totalCostOfEarthquakesByDecade <- function() {
 
 	print("Total cost of earthquakes")
 	print(sum(total.costs.by.decade$x))
+
 }
 
 
 ## Generate Figure 3.25
 annualCostOfBushfiresInAustralia <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Bushfire", reported.costs.only = TRUE, no.heatwaves = FALSE)
 	total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
@@ -1427,11 +1482,13 @@ annualCostOfBushfiresInAustralia <- function() {
 
 	print("Total cost of fires")
 	print(sum(total.costs.by.year$x))
+
 }
 
 
 ## Generate Figure 3.26
 totalCostOfBushfiresByDecade <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Bushfire", reported.costs.only = TRUE, no.heatwaves = FALSE)
 
@@ -1449,11 +1506,13 @@ totalCostOfBushfiresByDecade <- function() {
 		"2013 Dollars in $millions",
     FALSE
 		)
+
 }
 
 
 ## Generate Figure 3.27
 annualNumberOfBushfiresInAustralia <- function() {
+
 	# Store the total costs by year
 	total.costs <- totalCostForEventFiltered(resource.type.param = "Bushfire", reported.costs.only = TRUE, no.heatwaves = FALSE)
 	numberByYear <- with(total.costs, aggregate(resourceType, by=list(Year.financial), FUN=length))
@@ -1478,8 +1537,11 @@ annualNumberOfBushfiresInAustralia <- function() {
 
 ## Generate Figure 3.28
 numberOfNaturalDisastersDeaths <- function() {
+
 	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
 	numberByYear <- with(total.costs, aggregate(Deaths.normalised, by=list(Year.financial), FUN=sum))
   numberByYear <- includeAllYears(numberByYear)
 	numberByYearDenormalised <- with(total.costs, aggregate(Deaths, by=list(Year.financial), FUN=sum))
@@ -1520,13 +1582,17 @@ numberOfNaturalDisastersDeaths <- function() {
 	number.by.state <- number.by.state[order(-number.by.state$x),]
 	print("Total number of deaths by state")
 	print(number.by.state)
+
 }
 
 
 ## Generate Figure 3.29
 numberOfNaturalDisastersInjuries <- function() {
+
 	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
 	numberByYear <- with(total.costs, aggregate(Injuries.normalised, by=list(Year.financial), FUN=sum))
 	numberByYear <- includeAllYears(numberByYear)
   numberByYearDenormalised <- with(total.costs, aggregate(Injuries, by=list(Year.financial), FUN=sum))
@@ -1543,13 +1609,17 @@ numberOfNaturalDisastersInjuries <- function() {
     "Years (financial)",
     "Number of injuries"
     )
+
 }
 
 
 ## Generate Figure 3.30
 numberOfDeathsByDecade <- function() {
+
 	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
 
 	# Filter by decade
 	decades <- unique(floor(total.costs$Year.financial / 10)) * 10
@@ -1590,13 +1660,17 @@ numberOfDeathsByDecade <- function() {
     print("Number of deaths by decade for heatwaves")
     print(numberOfDeathsByDecadeDenormalised)
   }
+
 }
 
 
 ## Generate Figure 3.31
 costOfDeathsAndInjuries <- function() {
+
 	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
 	total.costs.by.year <- with(total.costs, aggregate(deathAndInjuryCosts.normalised.millions, by=list(Year.financial), FUN=safeSum))
 	total.costs.by.year <- includeAllYears(total.costs.by.year)
 
@@ -1631,7 +1705,9 @@ costOfDeathsAndInjuries <- function() {
 	print(total.costs.by.disaster.type.merged)
 
 
-	total.costs.full <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+	total.costs.full <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
 	total.costs.full.by.year <- with(total.costs.full, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
 	total.costs.full.by.year <- includeAllYears(total.costs.full.by.year)
   total.costs.incl.deaths.and.injuries <- sum(total.costs.full.by.year$x)
@@ -1650,20 +1726,22 @@ costOfDeathsAndInjuries <- function() {
 	print(max(merged.costs$percentages))
 	print(mean(merged.costs$percentages))
 
-
-
   print("Costs of deaths and injuries as a proportion of total costs (inclusive)")
 	print(total.cost.of.deaths.and.injuries / total.costs.incl.deaths.and.injuries)
 
 	print("Costs of deaths and injuries as a proportion of total costs (exclusive)")
 	print(total.cost.of.deaths.and.injuries / total.costs.excl.deaths.and.injuries)
+
 }
 
 
 ## Generate Figure 3.32
 costOfDeathsAndInjuriesByDecade <- function() {
-	# Store the total costs by year
-	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+	
+  # Store the total costs by year
+	total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
 
 	# Filter by decade
 	decades <- unique(floor(total.costs$Year.financial / 10)) * 10
@@ -1673,19 +1751,23 @@ costOfDeathsAndInjuriesByDecade <- function() {
 	total.costs.by.decade[,1] <- total.costs.by.decade[,1] * 10
 
 	standardBarChart(total.costs.by.decade,
-		"fig3_32_cost_of_deaths_and_injuries_by_decade",
-		"FIGURE 3.32: COST OF DEATHS AND INJURIES BY DECADE, 1967-2013",
-		"Decades",
-		"2013 Dollars in $millions",
-    FALSE
+  		"fig3_32_cost_of_deaths_and_injuries_by_decade",
+  		"FIGURE 3.32: COST OF DEATHS AND INJURIES BY DECADE, 1967-2013",
+  		"Decades",
+  		"2013 Dollars in $millions",
+      FALSE
 		)
+
 }
 
 
 ## Generate Figure 3.33
 totalCostOfNaturalDisasters <- function() {
+
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
   total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
 
   # Graph the results
@@ -1760,8 +1842,11 @@ totalCostOfNaturalDisasters <- function() {
 
 ## Generate Figure 3.34
 totalCostOfNaturalDisastersByDecade <- function() {
+
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
 
   # Filter by decade
   decades <- unique(floor(total.costs$Year.financial / 10)) * 10
@@ -1777,12 +1862,17 @@ totalCostOfNaturalDisastersByDecade <- function() {
                    "2013 Dollars in $millions",
                    FALSE
   )
+
 }
 
 ## Generate Figure 3.35 - SYNTHETIC
+
 totalCostOfNaturalDisastersSynthetic <- function() {
+  
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL,
+                                           reported.costs.only = FALSE, 
+                                           no.heatwaves = FALSE)
   total.costs.by.year <- with(total.costs, aggregate(Synthetic.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
 
   # Graph the results
@@ -1843,13 +1933,17 @@ totalCostOfNaturalDisastersSynthetic <- function() {
   print("Significance test (regression) for total costs (Synthetic)")
   print(resLR)
   summary(resLR)
+
 }
 
 
 ## Generate Figure 3.36 - SYNTHETIC
 totalCostOfNaturalDisastersByDecadeSynthetic <- function() {
+
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL,
+                                           reported.costs.only = FALSE, 
+                                           no.heatwaves = FALSE)
 
   # Filter by decade
   decades <- unique(floor(total.costs$Year.financial / 10)) * 10
@@ -1865,13 +1959,16 @@ totalCostOfNaturalDisastersByDecadeSynthetic <- function() {
                    "2013 Dollars in $millions",
                    FALSE
   )
+
 }
 
 
 ## Generate Figure 3.37
 totalDeathsAsPercentageOfPop <- function() {
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL,
+                                           reported.costs.only = FALSE, 
+                                           no.heatwaves = FALSE)
 
   numberByYearDenormalised <- with(total.costs, aggregate(Deaths, by=list(Year.financial), FUN=sum))
   numberByYearDenormalised <- includeAllYears(numberByYearDenormalised)
@@ -1900,7 +1997,9 @@ totalDeathsAsPercentageOfPop <- function() {
 ## Generate Figure 3.38
 totalCostAsPercentageOfGdp <- function(state = NULL, fatalities = FALSE) {
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL,
+                                           reported.costs.only = FALSE, 
+                                           no.heatwaves = FALSE)
   if (exists("state") & !is.null(state)) {
     total.costs <- total.costs[total.costs$State.1 == state, ]
   }
@@ -1929,10 +2028,14 @@ totalCostAsPercentageOfGdp <- function(state = NULL, fatalities = FALSE) {
   )
 }
 
+
 ## Generate Figure 3.39
 insuredCostAsPercentageOfTotalCost <- function() {
+  
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL,reported.costs.only =  FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL,
+                                            reported.costs.only =  FALSE, 
+                                            no.heatwaves = FALSE)
   total.costs.by.year <- with(total.costs, aggregate(Reported.Cost.WithDeathsAndInjuries.normalised.millions, by=list(Year.financial), FUN=safeSum))
   insuredCostsByYear <- with(total.costs, aggregate(Insured.Cost.normalised.millions, by=list(Year.financial), FUN=safeSum))
 
@@ -1952,11 +2055,13 @@ insuredCostAsPercentageOfTotalCost <- function() {
 
   print("Average percentage of insured costs")
   print(mean(merged.costs$x))
+
 }
 
 
 ## Generate Figure 3.40
 totalCostsRawIndexedNormalised <- function() {
+
   # Store the total costs by year
   total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
                                             reported.costs.only = FALSE, 
@@ -2016,6 +2121,7 @@ totalCostsRawIndexedNormalised <- function() {
     width = png.width,
     height = png.height
   )
+
 }
 
 
@@ -2044,6 +2150,7 @@ totalAverageCostsNationallyAndByState <- function() {
 
 ## Generate Figure 3.42
 totalCostsQldNswVic <- function(start.at.year = 1967) {
+
   # Store the total costs by state
   total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = TRUE, no.heatwaves = FALSE)
   total.costs$Reported.Cost.normalised.millions.state.1 <- total.costs$Reported.Cost.normalised.millions * total.costs$State.1.percent
@@ -2074,7 +2181,6 @@ totalCostsQldNswVic <- function(start.at.year = 1967) {
   background <- '#F0F0F0'
   foreground <- '#D08728'
   text.color <- '#888888'
-
 
   # Calculate range from 0 to max value of costs
   x.scale <- scale_x_continuous(name = x.label, breaks = yearBreaks(data$Group.2), labels = yearLabels(data$Group.2))
@@ -2111,13 +2217,15 @@ totalCostsQldNswVic <- function(start.at.year = 1967) {
     width = png.width,
     height = png.height
   )
+
 }
 
 
-# Tables
+### TABLES
 
 ## Generate Table 3.1
 averageAnnualCostOfNaturalDisastersByStateAndTerritory <- function() {
+
   pivotCostsByStateAndDisasterType <- function(with.deaths.and.injuries = FALSE, year = NULL) {
     # Store the total costs by year
     total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
@@ -2233,8 +2341,11 @@ averageAnnualCostOfNaturalDisastersByStateAndTerritory <- function() {
 
 ## Generate Table 3.2 - deaths and injuries by hazard type
 deathsAndInjuriesByHazardType <- function() {
+
   # Store the total costs by year
-  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, reported.costs.only = FALSE, no.heatwaves = FALSE)
+  total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
+                                            reported.costs.only = FALSE, 
+                                            no.heatwaves = FALSE)
 
   totalNumberOfDeathsByResourceType <- with(total.costs, aggregate(Deaths, by=list(resourceType), FUN=safeSum))
   totalNumberOfDeathsByResourceType.n <- with(total.costs, aggregate(Deaths.normalised, by=list(resourceType), FUN=safeSum))
@@ -2264,6 +2375,7 @@ deathsAndInjuriesByHazardType <- function() {
 
 ## Generate Table 3.3 - a comparison of Joy's (1991) multipliers, and those derived from the known ratios of (raw, unnormalised) reported to insured costs
 multipliersJoyVsDerived <- function() {
+
   # Store the total costs by year
   total.costs <- totalCostForEventFiltered(resource.type.param = NULL, 
                                            reported.costs.only = FALSE, 
@@ -2291,6 +2403,7 @@ multipliersJoyVsDerived <- function() {
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
 }
+
 
 ## Generate Table 3.4 - costs by year and by state
 costsByYearAndState <- function() {
@@ -2334,8 +2447,8 @@ costsByYearAndState <- function() {
 
 
 
-
 ## Generate Figures XXX - find best fit
+## NOTE THIS CODE IS CURRENTLY EXPERIMENTAL
 findBestFit <- function() {
 
   # Obtain total costs
@@ -2532,7 +2645,6 @@ findBestFit <- function() {
   rdist.exp.normed.annual <- rdist.exp.normed.annual / sum(rdist.exp.normed.annual)
   chisq.test(x.annual, p = rdist.exp.norme.annuald)
   chisq.test(x)
-  
-  
-  }
+    
+}
 

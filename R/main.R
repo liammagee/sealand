@@ -56,8 +56,6 @@ run <- function() {
   distributionOfDisasters()
   annualInsuranceCostOfDisasters()
   numberOfNaturalDisastersInAustralia()
-  naturalDisastersBetween10And75Million()
-  naturalDisastersBetween75And150Million()
   numberOfDisastersPerMillionPeople()
   disasterCostsByStateAndTerritory()
   numberOfDisasterEventsByStateAndTerritory()
