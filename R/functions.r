@@ -287,7 +287,6 @@ loadData <- function(database.file) {
   print(paste("Read in ", length(ecnd.database$Year), " rows."))
   cpi.data <<- read.xls("./data/cpi.xlsx", 2)
   pop.data <<- read.xls("./data/pop_consolidate.xlsx", 1)
-  gdp.data <<- read.xls("./data/5206001_key_aggregates.xlsx", 2)
   gdp.national.data <<- read.xls("./data/5204001_key_national_aggregates.xlsx", 2)
 }
 

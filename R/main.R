@@ -16,7 +16,7 @@ source("R/figures.R", FALSE)
 source("R/functions.R", FALSE)
 
 # Set up the data
-database.file = "./data/database_11072015.xlsx"
+database.file <- "./data/database_11072015.xlsx"
 
 
 ## Ignores "NA" values for standard functions
