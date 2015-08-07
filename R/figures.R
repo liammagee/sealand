@@ -1,15 +1,19 @@
 
 # NOTE: We use 3 approaches to deriving costs:
+# 
 # 1. Reported costs
 # 2. Insured costs multiplied by factors based on event type (following Joy 1991)
 # 3. Synthetic costs, where specific direct, indirect and intangible components
 # are collected, missing values interpollated, indexed to June 2013 dollar values
 # and normalised to June 2013 wealth and population levels.
+# 
 # The graphs below can be modified for each of these approaches by
 # replacing the computed total variable names as follows:
+# 
 # 1. Reported.Cost.normalised
 # 1. Insured.Cost.multiplied.normalised
 # 3. Synthetic.Cost.normalised
+#
 
 
 # Libraries
@@ -63,7 +67,6 @@ blackPalette <- c("#000000")
 
 
 ## COMMON FUNCTIONS USED IN GENERATING FIGURES
-
 
 # Generates year breaks to use on X axis
 yearBreaks <- function(years) {
@@ -882,7 +885,14 @@ costsByTypeOfDisasterAndStateAndTerritory <- function() {
   totals.with.state.aggregates <- merge(total.costs.by.state.and.disaster.type, state.totals, by = "Group.1", all.x = TRUE)
   totals.with.state.aggregates$percentage <- totals.with.state.aggregates$x / totals.with.state.aggregates$Total
   totals.with.state.aggregates <- totals.with.state.aggregates[order(-totals.with.state.aggregates$Total),]
-
+  state.totals$percentages <- state.totals$Total / sum(state.totals$Total)
+  
+  # Show relative frequencies
+  print("Percentage of event costs by state")
+  print(state.totals)
+  
+  
+  
   # For individual charts, if necessary
   act <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'ACT',]
   nsw <- totals.with.state.aggregates[totals.with.state.aggregates$Group.1 == 'NSW',]
